@@ -1,0 +1,36 @@
+# https://taskfile.dev
+
+version: '3'
+
+env:
+#      TF_LOG: debug
+
+tasks:
+  default:
+    deps:
+     - fmt
+     - lint
+     - install
+     - generate
+  build:
+    cmds:
+      - go build -v ./...
+  install:
+    cmds:
+      - go install
+  lint:
+    cmds:
+      - golangci-lint run
+  generate:
+    dir: tools
+    cmds:
+      - go generate ./...
+  fmt:
+    cmds:
+      - gofmt -s -w -e .
+  test:
+    cmds:
+      - go test -v -cover -timeout=120s -parallel=10 ./...
+  testacc:
+    cmds:
+      - INFOMANIAK_HOST=https://api.infomaniak.com INFOMANIAK_TOKEN=fs TF_ACC=1 go test -v -cover -timeout 120m ./...
