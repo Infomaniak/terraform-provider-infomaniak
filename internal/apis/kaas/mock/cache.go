@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"os"
 	"path"
 	"terraform-provider-infomaniak/internal/apis/kaas"
@@ -19,12 +19,15 @@ type KaasObject interface {
 var (
 	mockedApiStatePath = path.Join(os.TempDir(), "terraform-provider-infomaniak-kaas")
 	mockedApiState     = make(map[string][]byte)
+
+	ErrKeyNotFound  = errors.New("key not found")
+	ErrDuplicateKey = errors.New("duplicate key found")
 )
 
 func getFromCache[K KaasObject](key string) (K, error) {
 	obj, found := mockedApiState[key]
 	if !found {
-		return nil, fmt.Errorf("key '%s' not found", key)
+		return nil, ErrKeyNotFound
 	}
 
 	var buff = bytes.NewBuffer(obj)
@@ -41,7 +44,7 @@ func addToCache[K KaasObject](obj K) error {
 	key := obj.Key()
 	_, found := mockedApiState[key]
 	if found {
-		return fmt.Errorf("key '%s' already present, you can't create two of the same, think mark, think", key)
+		return ErrDuplicateKey
 	}
 
 	var buff bytes.Buffer
@@ -59,7 +62,7 @@ func updateCache[K KaasObject](obj K) error {
 	key := obj.Key()
 	cachedObject, found := mockedApiState[key]
 	if !found {
-		return fmt.Errorf("key '%s' not found", key)
+		return ErrKeyNotFound
 	}
 
 	var buff = bytes.NewBuffer(cachedObject)
@@ -84,7 +87,7 @@ func removeFromCache[K KaasObject](obj K) error {
 	key := obj.Key()
 	_, found := mockedApiState[key]
 	if !found {
-		return fmt.Errorf("key '%s' not found", key)
+		return ErrKeyNotFound
 	}
 
 	delete(mockedApiState, key)

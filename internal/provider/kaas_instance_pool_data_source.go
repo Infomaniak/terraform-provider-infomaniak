@@ -63,11 +63,11 @@ func (d *kaasInstancePoolDataSource) Schema(ctx context.Context, _ datasource.Sc
 			},
 			"name": schema.StringAttribute{
 				Computed:    true,
-				Description: "The name",
+				Description: "The name of this instance pool",
 			},
 			"flavor_name": schema.StringAttribute{
 				Computed:    true,
-				Description: "The flavor name",
+				Description: "The flavor name of the instance in this instance pool",
 			},
 			"min_instances": schema.Int32Attribute{
 				Computed:    true,
