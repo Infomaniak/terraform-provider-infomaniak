@@ -2,12 +2,18 @@ package kaas
 
 import "fmt"
 
-type Kaas struct {
-	PcpId string `json:"pcp_id"`
-	Id    string `json:"id"`
+type KaasPack struct {
+	Id          int    `json:"kaas_pack_id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+}
 
-	Region     string `json:"region"`
-	Kubeconfig string `json:"kubeconfig"`
+type Kaas struct {
+	PcpId string `json:"pcp_id,omitempty"`
+	Id    string `json:"id,omitempty"`
+
+	Region     string `json:"region,omitempty"`
+	Kubeconfig string `json:"kubeconfig,omitempty"`
 }
 
 func (kaas *Kaas) Key() string {
@@ -15,14 +21,14 @@ func (kaas *Kaas) Key() string {
 }
 
 type InstancePool struct {
-	PcpId  string `json:"pcp_id"`
-	KaasId string `json:"kaas_id"`
-	Id     string `json:"id"`
+	PcpId  string `json:"pcp_id,omitempty"`
+	KaasId string `json:"kaas_id,omitempty"`
+	Id     string `json:"id,omitempty"`
 
-	Name         string `json:"name"`
-	FlavorName   string `json:"flavor_name"`
-	MinInstances int32  `json:"min_instances"`
-	MaxInstances int32  `json:"max_instances"`
+	Name         string `json:"name,omitempty"`
+	FlavorName   string `json:"flavor_name,omitempty"`
+	MinInstances int32  `json:"min_instances,omitempty"`
+	MaxInstances int32  `json:"max_instances,omitempty"`
 }
 
 func (instancePool *InstancePool) Key() string {

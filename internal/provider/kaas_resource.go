@@ -7,11 +7,13 @@ import (
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/kaas"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -62,6 +64,14 @@ func (r *kaasResource) Configure(_ context.Context, req resource.ConfigureReques
 }
 
 func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	var availablePacks []string
+
+	packs, _ := r.client.Kaas.GetPacks()
+
+	for _, pack := range packs {
+		availablePacks = append(availablePacks, fmt.Sprint(pack.Name))
+	}
+
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"pcp_id": schema.StringAttribute{
@@ -70,6 +80,28 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				MarkdownDescription: "The id of the public cloud project where KaaS is installed",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"pack": schema.StringAttribute{
+				Required:            true,
+				Description:         "The name of the pack associated to the KaaS being installed",
+				MarkdownDescription: "The name of the pack associated to the KaaS being installed",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.OneOf(availablePacks...),
+				},
+			},
+			"kubernetes_version": schema.StringAttribute{
+				Required:            true,
+				Description:         "The version of Kubernetes associated with the KaaS being installed",
+				MarkdownDescription: "The version of Kubernetes associated with the KaaS being installed",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.OneOf(availablePacks...),
 				},
 			},
 			"id": schema.StringAttribute{
@@ -82,8 +114,8 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			},
 			"region": schema.StringAttribute{
 				Required:            true,
-				Description:         "The region",
-				MarkdownDescription: "The region",
+				Description:         "The region where the KaaS will reside.",
+				MarkdownDescription: "The region where the KaaS will reside.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 					stringplanmodifier.UseStateForUnknown(),
@@ -92,8 +124,8 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"kubeconfig": schema.StringAttribute{
 				Computed:            true,
 				Sensitive:           true,
-				Description:         "The kubeconfig",
-				MarkdownDescription: "The kubeconfig",
+				Description:         "The kubeconfig generated to access to KaaS project",
+				MarkdownDescription: "The kubeconfig generated to access to KaaS project",
 			},
 		},
 		MarkdownDescription: "The kaas resource allows the user to manage a kaas project",

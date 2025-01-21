@@ -1,5 +1,6 @@
 resource "infomaniak_kaas" "create_kluster" {
   pcp_id = "54"
+  pack = "5"
 
   region = "dc4"
 }
