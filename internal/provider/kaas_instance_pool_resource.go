@@ -92,29 +92,29 @@ func (r *kaasInstancePoolResource) Schema(ctx context.Context, req resource.Sche
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name",
-				MarkdownDescription: "The name",
+				Description:         "The name of the instance pool",
+				MarkdownDescription: "The name of the instance pool",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"flavor_name": schema.StringAttribute{
 				Required:            true,
-				Description:         "The flavor name",
-				MarkdownDescription: "The flavor name",
+				Description:         "The flavor name for the instances in the pool",
+				MarkdownDescription: "The flavor name for the instances in the pool",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"min_instances": schema.Int32Attribute{
 				Required:            true,
-				Description:         "The kubeconfig",
-				MarkdownDescription: "The kubeconfig",
+				Description:         "The minimum instances in this instance pool (should be equal to max_instance until the AutoScaling feature is released)",
+				MarkdownDescription: "The minimum instances in this instance pool (should be equal to max_instance until the AutoScaling feature is released)",
 			},
 			"max_instances": schema.Int32Attribute{
 				Required:            true,
-				Description:         "The kubeconfig",
-				MarkdownDescription: "The kubeconfig",
+				Description:         "The maximum instances in this instance pool (should be equal to min_instance until the AutoScaling feature is released)",
+				MarkdownDescription: "The maximum instances in this instance pool (should be equal to min_instance until the AutoScaling feature is released)",
 			},
 		},
 		MarkdownDescription: "The kaas instance pool resource is used to manage instance pools inside a kaas project",
