@@ -18,6 +18,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
+// Environment variables used by the provider
+const (
+	INFOMANIAK_TOKEN = "INFOMANIAK_TOKEN"
+	INFOMANIAK_HOST  = "INFOMANIAK_HOST"
+)
+
 // Ensure IkProvider satisfies various kaas interfaces.
 var (
 	_ provider.Provider              = &IkProvider{}
@@ -62,7 +68,7 @@ func (p *IkProvider) Schema(ctx context.Context, req provider.SchemaRequest, res
 				MarkdownDescription: "The base endpoint for Infomaniak's API (including scheme).",
 			},
 			"token": schema.StringAttribute{
-				Optional:            true,
+				Optional:            os.Getenv(INFOMANIAK_TOKEN) != "",
 				Sensitive:           true,
 				Description:         "The token used for authenticating against Infomaniak's API.",
 				MarkdownDescription: "The token used for authenticating against Infomaniak's API.",
@@ -113,8 +119,8 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
 		return
 	}
 
-	host := os.Getenv("INFOMANIAK_HOST")
-	token := os.Getenv("INFOMANIAK_TOKEN")
+	host := os.Getenv(INFOMANIAK_HOST)
+	token := os.Getenv(INFOMANIAK_TOKEN)
 
 	if !data.Host.IsNull() {
 		host = data.Host.ValueString()
@@ -126,6 +132,7 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
 
 	if host == "" {
 		host = DefaultHost
+		data.Host = types.StringValue(host)
 	}
 
 	if token == "" {
@@ -143,7 +150,7 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
 	}
 
 	p.ik = &IkProviderData{
-		Client: apis.NewMockClient(),
+		Client: apis.NewClient(host),
 		data:   &data,
 	}
 

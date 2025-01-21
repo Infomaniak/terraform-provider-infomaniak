@@ -1,6 +1,8 @@
 package kaas
 
 type Api interface {
+	GetPacks() ([]*KaasPack, error)
+
 	GetKaas(pcpId, kaasId string) (*Kaas, error)
 	CreateKaas(input *Kaas) (*Kaas, error)
 	UpdateKaas(input *Kaas) (*Kaas, error)

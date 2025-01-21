@@ -18,6 +18,21 @@ func New() *Client {
 	return &Client{}
 }
 
+func (c *Client) GetPacks() ([]*kaas.KaasPack, error) {
+	return []*kaas.KaasPack{
+		{
+			Id:          1,
+			Name:        "standard",
+			Description: "Standard Cluster",
+		},
+		{
+			Id:          2,
+			Name:        "pro",
+			Description: "Pro Cluster",
+		},
+	}, nil
+}
+
 func (c *Client) GetKaas(pcpId, kaasId string) (*kaas.Kaas, error) {
 	key := fmt.Sprintf("%s-%s", pcpId, kaasId)
 	obj, err := getFromCache[*kaas.Kaas](key)
