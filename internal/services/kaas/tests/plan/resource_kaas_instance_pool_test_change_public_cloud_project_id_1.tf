@@ -3,11 +3,11 @@ resource "infomaniak_kaas" "kluster" {
   public_cloud_project_id = 50
 
   kubernetes_version = "1.30"
-  region = "dc4"
+  region = "dc5"
 }
 
 resource "infomaniak_kaas_instance_pool" "instance_pool" {
-  public_cloud_id = infomaniak_kaas.kluster.public_cloud_id
+  public_cloud_id  = infomaniak_kaas.kluster.public_cloud_id
   public_cloud_id  = infomaniak_kaas.kluster.public_cloud_id
   public_cloud_project_id  = infomaniak_kaas.kluster.public_cloud_project_id
   kaas_id = infomaniak_kaas.kluster.id

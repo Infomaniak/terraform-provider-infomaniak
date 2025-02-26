@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -33,11 +34,14 @@ type kaasResource struct {
 }
 
 type KaasModel struct {
-	PcpId types.String `tfsdk:"pcp_id"`
-	Id    types.String `tfsdk:"id"`
+	PublicCloudId        types.Int64 `tfsdk:"public_cloud_id"`
+	PublicCloudProjectId types.Int64 `tfsdk:"public_cloud_project_id"`
+	Id                   types.Int64 `tfsdk:"id"`
 
-	Region     types.String `tfsdk:"region"`
-	Kubeconfig types.String `tfsdk:"kubeconfig"`
+	PackName          types.String `tfsdk:"pack_name"`
+	Region            types.String `tfsdk:"region"`
+	Kubeconfig        types.String `tfsdk:"kubeconfig"`
+	KubernetesVersion types.String `tfsdk:"kubernetes_version"`
 }
 
 func (r *kaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -66,27 +70,40 @@ func (r *kaasResource) Configure(_ context.Context, req resource.ConfigureReques
 
 func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	var availablePacks []string
+	var availableVersions []string
 
-	packs, _ := r.client.Kaas.GetPacks()
+	if r.client != nil {
+		packs, _ := r.client.Kaas.GetPacks()
 
-	for _, pack := range packs {
-		availablePacks = append(availablePacks, fmt.Sprint(pack.Name))
+		for _, pack := range packs {
+			availablePacks = append(availablePacks, fmt.Sprint(pack.Name))
+		}
+
+		availableVersions, _ = r.client.Kaas.GetVersions()
 	}
 
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"pcp_id": schema.StringAttribute{
+			"public_cloud_id": schema.Int64Attribute{
+				Required:            true,
+				Description:         "The id of the public cloud where KaaS is installed",
+				MarkdownDescription: "The id of the public cloud where KaaS is installed",
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
+				},
+			},
+			"public_cloud_project_id": schema.Int64Attribute{
 				Required:            true,
 				Description:         "The id of the public cloud project where KaaS is installed",
 				MarkdownDescription: "The id of the public cloud project where KaaS is installed",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
 				},
 			},
-			"pack": schema.StringAttribute{
+			"pack_name": schema.StringAttribute{
 				Required:            true,
-				Description:         "The name of the pack associated to the KaaS being installed",
-				MarkdownDescription: "The name of the pack associated to the KaaS being installed",
+				Description:         "The name of the pack associated to the KaaS project",
+				MarkdownDescription: "The name of the pack associated to the KaaS project",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -102,7 +119,7 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
-					stringvalidator.OneOf(availablePacks...),
+					stringvalidator.OneOf(availableVersions...),
 				},
 			},
 			"id": schema.StringAttribute{
@@ -144,8 +161,12 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	input := &kaas.Kaas{
-		PcpId:  data.PcpId.ValueString(),
-		Region: data.Region.ValueString(),
+		Project: kaas.KaasProject{
+			PublicCloudId: int(data.PublicCloudId.ValueInt64()),
+			ProjectId:     int(data.PublicCloudProjectId.ValueInt64()),
+		},
+		Region:            data.Region.ValueString(),
+		KubernetesVersion: data.KubernetesVersion.ValueString(),
 	}
 
 	// CreateKaas API call logic
@@ -158,9 +179,10 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	data.Id = types.StringValue(obj.Id)
+	data.Id = types.Int64Value(int64(obj.Id))
 	data.Kubeconfig = types.StringValue(obj.Kubeconfig)
 	data.Region = types.StringValue(obj.Region)
+	data.KubernetesVersion = types.StringValue(obj.KubernetesVersion)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -177,7 +199,11 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Read API call logic
-	obj, err := r.client.Kaas.GetKaas(data.PcpId.ValueString(), data.Id.ValueString())
+	obj, err := r.client.Kaas.GetKaas(
+		int(data.PublicCloudId.ValueInt64()),
+		int(data.PublicCloudProjectId.ValueInt64()),
+		int(data.Id.ValueInt64()),
+	)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error when reading KaaS",
@@ -186,7 +212,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	data.Id = types.StringValue(obj.Id)
+	data.Id = types.Int64Value(int64(obj.Id))
 	data.Kubeconfig = types.StringValue(obj.Kubeconfig)
 	data.Region = types.StringValue(obj.Region)
 
@@ -208,8 +234,11 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	// Update API call logic
 	input := &kaas.Kaas{
-		PcpId: data.PcpId.ValueString(),
-		Id:    state.Id.ValueString(),
+		Project: kaas.KaasProject{
+			PublicCloudId: int(data.PublicCloudId.ValueInt64()),
+			ProjectId:     int(data.PublicCloudProjectId.ValueInt64()),
+		},
+		Id: int(state.Id.ValueInt64()),
 	}
 
 	obj, err := r.client.Kaas.UpdateKaas(input)
@@ -221,7 +250,7 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	data.Id = types.StringValue(obj.Id)
+	data.Id = types.Int64Value(int64(obj.Id))
 	data.Kubeconfig = types.StringValue(obj.Kubeconfig)
 	data.Region = types.StringValue(obj.Region)
 
@@ -240,7 +269,11 @@ func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 	}
 
 	// DeleteKaas API call logic
-	err := r.client.Kaas.DeleteKaas(data.PcpId.ValueString(), data.Id.ValueString())
+	err := r.client.Kaas.DeleteKaas(
+		int(data.PublicCloudId.ValueInt64()),
+		int(data.PublicCloudProjectId.ValueInt64()),
+		int(data.Id.ValueInt64()),
+	)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error when deleting KaaS",
@@ -253,14 +286,15 @@ func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 func (r *kaasResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	idParts := strings.Split(req.ID, ",")
 
-	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
+	if len(idParts) != 3 || idParts[0] == "" || idParts[1] == "" || idParts[2] == "" {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("Expected import identifier with format: pcp_id,id. Got: %q", req.ID),
+			fmt.Sprintf("Expected import identifier with format: public_cloud_id,public_cloud_project_id,id. Got: %q", req.ID),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("pcp_id"), idParts[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), idParts[1])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_id"), idParts[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_project_id"), idParts[1])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), idParts[2])...)
 }

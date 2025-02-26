@@ -9,28 +9,34 @@ type KaasPack struct {
 }
 
 type Kaas struct {
-	PcpId string `json:"pcp_id,omitempty"`
-	Id    string `json:"id,omitempty"`
+	Id      int         `json:"kaas_id,omitempty"`
+	Project KaasProject `json:"project,omitempty"`
 
-	Region     string `json:"region,omitempty"`
-	Kubeconfig string `json:"kubeconfig,omitempty"`
+	Region            string `json:"region,omitempty"`
+	Kubeconfig        string `json:"kubeconfig,omitempty"`
+	KubernetesVersion string `json:"kubernetes_version,omitempty"`
 }
 
 func (kaas *Kaas) Key() string {
-	return fmt.Sprintf("%s-%s", kaas.PcpId, kaas.Id)
+	return fmt.Sprintf("%d-%d-%d", kaas.Project.PublicCloudId, kaas.Project.ProjectId, kaas.Id)
+}
+
+type KaasProject struct {
+	PublicCloudId int `json:"public_cloud_id,omitempty"`
+	ProjectId     int `json:"project_cloud_project_id,omitempty"`
 }
 
 type InstancePool struct {
-	PcpId  string `json:"pcp_id,omitempty"`
-	KaasId string `json:"kaas_id,omitempty"`
-	Id     string `json:"id,omitempty"`
+	KaasId int `json:"kaas_id,omitempty"`
+	Id     int `json:"id,omitempty"`
 
-	Name         string `json:"name,omitempty"`
-	FlavorName   string `json:"flavor_name,omitempty"`
-	MinInstances int32  `json:"min_instances,omitempty"`
-	MaxInstances int32  `json:"max_instances,omitempty"`
+	Name             string `json:"name,omitempty"`
+	FlavorName       string `json:"flavor_name,omitempty"`
+	AvailabilityZone string `json:"availability_zone,omitempty"`
+	MinInstances     int32  `json:"minimum_instances,omitempty"`
+	// MaxInstances     int32  `json:"maximum_instances,omitempty"`
 }
 
 func (instancePool *InstancePool) Key() string {
-	return fmt.Sprintf("%s-%s-%s", instancePool.PcpId, instancePool.KaasId, instancePool.Id)
+	return fmt.Sprintf("%d-%d", instancePool.KaasId, instancePool.Id)
 }

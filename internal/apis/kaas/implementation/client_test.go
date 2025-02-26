@@ -16,13 +16,13 @@ func Test_ClientMockServer(t *testing.T) {
 	scope := m.AddMocks(
 		mocha.Request().
 			Method(http.MethodGet).
-			URL(expect.URLPath("/1/public_clouds/test1/kaas/test2/")).
+			URL(expect.URLPath("/1/public_clouds/test0/projects/test1/kaas/test2/")).
 			Reply(reply.Created().BodyString("hello world")),
 	)
 
 	client := New(m.URL())
 
-	compiledRoute, err := GetKaas.Compile(nil, "test1", "test2")
+	compiledRoute, err := GetKaas.Compile(nil, "test0", "test1", "test2")
 	if err != nil {
 		t.Fatalf("got error when compiling route : %v", err)
 	}

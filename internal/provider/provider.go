@@ -71,6 +71,7 @@ func (p *IkProvider) Schema(ctx context.Context, req provider.SchemaRequest, res
 				MarkdownDescription: "The base endpoint for Infomaniak's API (including scheme).",
 			},
 			"token": schema.StringAttribute{
+				Required:            os.Getenv(INFOMANIAK_TOKEN) == "",
 				Optional:            os.Getenv(INFOMANIAK_TOKEN) != "",
 				Sensitive:           true,
 				Description:         "The token used for authenticating against Infomaniak's API.",
@@ -182,7 +183,12 @@ func New(version string) func() provider.Provider {
 }
 
 func ProtoV6ProviderFactories() map[string]func() (tfprotov6.ProviderServer, error) {
+	provider := New("test")().(*IkProvider)
+	provider.ik = &IkProviderData{
+		Client: apis.NewMockClient(),
+	}
+
 	return map[string]func() (tfprotov6.ProviderServer, error){
-		"infomaniak": providerserver.NewProtocol6WithError(New("test")()),
+		"infomaniak": providerserver.NewProtocol6WithError(provider),
 	}
 }

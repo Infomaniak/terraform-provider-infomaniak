@@ -33,8 +33,12 @@ func (c *Client) GetPacks() ([]*kaas.KaasPack, error) {
 	}, nil
 }
 
-func (c *Client) GetKaas(pcpId, kaasId string) (*kaas.Kaas, error) {
-	key := fmt.Sprintf("%s-%s", pcpId, kaasId)
+func (c *Client) GetVersions() ([]string, error) {
+	return []string{"1.29", "1.30", "1.31"}, nil
+}
+
+func (c *Client) GetKaas(publicCloudId int, publicCloudProjectId int, kaasId int) (*kaas.Kaas, error) {
+	key := fmt.Sprintf("%d-%d-%d", publicCloudId, publicCloudProjectId, kaasId)
 	obj, err := getFromCache[*kaas.Kaas](key)
 	if err != nil {
 		return nil, err
@@ -45,7 +49,7 @@ func (c *Client) GetKaas(pcpId, kaasId string) (*kaas.Kaas, error) {
 
 func (c *Client) CreateKaas(input *kaas.Kaas) (*kaas.Kaas, error) {
 	// Checks
-	if input.PcpId == "" {
+	if input.Project.PublicCloudId == 0 {
 		return nil, fmt.Errorf("kaas is missing public cloud project id")
 	}
 	if input.Region == "" {
@@ -53,7 +57,7 @@ func (c *Client) CreateKaas(input *kaas.Kaas) (*kaas.Kaas, error) {
 	}
 
 	var obj = kaas.Kaas{
-		PcpId:      input.PcpId,
+		Project:    input.Project,
 		Region:     input.Region,
 		Kubeconfig: genKubeconfig(),
 	}
@@ -64,10 +68,10 @@ func (c *Client) CreateKaas(input *kaas.Kaas) (*kaas.Kaas, error) {
 
 func (c *Client) UpdateKaas(input *kaas.Kaas) (*kaas.Kaas, error) {
 	// Checks
-	if input.PcpId == "" {
+	if input.Project.PublicCloudId == 0 {
 		return nil, fmt.Errorf("kaas is missing public cloud project id")
 	}
-	if input.Id == "" {
+	if input.Id == 0 {
 		return nil, fmt.Errorf("kaas is missing kaas id")
 	}
 	if input.Region != "" {
@@ -77,14 +81,14 @@ func (c *Client) UpdateKaas(input *kaas.Kaas) (*kaas.Kaas, error) {
 		return nil, fmt.Errorf("client cannot update kubeconfig")
 	}
 
-	found, err := c.GetKaas(input.PcpId, input.Id)
+	found, err := c.GetKaas(input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
 	if err != nil {
 		return nil, err
 	}
 
 	var obj = kaas.Kaas{
-		PcpId: input.PcpId,
-		Id:    input.Id,
+		Id:      input.Id,
+		Project: input.Project,
 
 		Region:     input.Region,
 		Kubeconfig: found.Kubeconfig,
@@ -93,22 +97,25 @@ func (c *Client) UpdateKaas(input *kaas.Kaas) (*kaas.Kaas, error) {
 	return &obj, updateCache(&obj)
 }
 
-func (c *Client) DeleteKaas(pcpId, kaasId string) error {
+func (c *Client) DeleteKaas(publicCloudId int, publicCloudProjectId int, kaasId int) error {
 	var obj = kaas.Kaas{
-		PcpId: pcpId,
-		Id:    kaasId,
+		Project: kaas.KaasProject{
+			PublicCloudId: publicCloudId,
+			ProjectId:     publicCloudProjectId,
+		},
+		Id: kaasId,
 	}
 
 	return removeFromCache(&obj)
 }
 
-func (c *Client) GetInstancePool(pcpId, kaasId, instancePoolId string) (*kaas.InstancePool, error) {
-	_, err := c.GetKaas(pcpId, kaasId)
+func (c *Client) GetInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) (*kaas.InstancePool, error) {
+	_, err := c.GetKaas(publicCloudId, publicCloudProjectId, kaasId)
 	if err != nil {
 		return nil, err
 	}
 
-	key := fmt.Sprintf("%s-%s-%s", pcpId, kaasId, instancePoolId)
+	key := fmt.Sprintf("%d-%d", kaasId, instancePoolId)
 	obj, err := getFromCache[*kaas.InstancePool](key)
 	if err != nil {
 		return nil, err
@@ -117,12 +124,15 @@ func (c *Client) GetInstancePool(pcpId, kaasId, instancePoolId string) (*kaas.In
 	return obj, nil
 }
 
-func (c *Client) CreateInstancePool(input *kaas.InstancePool) (*kaas.InstancePool, error) {
+func (c *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId int, input *kaas.InstancePool) (*kaas.InstancePool, error) {
 	// Checks
-	if input.PcpId == "" {
+	if publicCloudId == 0 {
+		return nil, fmt.Errorf("instance pool is missing public cloud id")
+	}
+	if publicCloudProjectId == 0 {
 		return nil, fmt.Errorf("instance pool is missing public cloud project id")
 	}
-	if input.KaasId == "" {
+	if input.KaasId == 0 {
 		return nil, fmt.Errorf("instance pool is missing kaas id")
 	}
 	if !dnsRegexp.MatchString(input.Name) {
@@ -134,41 +144,43 @@ func (c *Client) CreateInstancePool(input *kaas.InstancePool) (*kaas.InstancePoo
 	if input.MinInstances < 0 {
 		return nil, fmt.Errorf("instance pool min instances should be greater than 0")
 	}
-	if input.MaxInstances < 0 {
-		return nil, fmt.Errorf("instance pool max instances should be greater than 0")
-	}
-	if input.MinInstances > input.MaxInstances {
-		return nil, fmt.Errorf("instance pool min instance should be lesser than (or equal) max")
-	}
+	// if input.MaxInstances < 0 {
+	// 	return nil, fmt.Errorf("instance pool max instances should be greater than 0")
+	// }
+	// if input.MinInstances > input.MaxInstances {
+	// 	return nil, fmt.Errorf("instance pool min instance should be lesser than (or equal) max")
+	// }
 
-	_, err := c.GetKaas(input.PcpId, input.KaasId)
+	_, err := c.GetKaas(publicCloudId, publicCloudProjectId, input.KaasId)
 	if err != nil {
 		return nil, err
 	}
 
 	var obj = kaas.InstancePool{
-		PcpId:  input.PcpId,
+		Id:     genId(),
 		KaasId: input.KaasId,
 
 		Name:         input.Name,
 		FlavorName:   input.FlavorName,
 		MinInstances: input.MinInstances,
-		MaxInstances: input.MaxInstances,
+		// MaxInstances: input.MaxInstances,
 	}
-	obj.Id = genId()
 
 	return &obj, addToCache(&obj)
 }
 
-func (c *Client) UpdateInstancePool(input *kaas.InstancePool) (*kaas.InstancePool, error) {
+func (c *Client) UpdateInstancePool(publicCloudId int, publicCloudProjectId int, input *kaas.InstancePool) (*kaas.InstancePool, error) {
 	// Checks
-	if input.PcpId == "" {
+	if publicCloudId == 0 {
+		return nil, fmt.Errorf("instance pool is missing public cloud id")
+	}
+	if publicCloudProjectId == 0 {
 		return nil, fmt.Errorf("instance pool is missing public cloud project id")
 	}
-	if input.KaasId == "" {
+	if input.KaasId == 0 {
 		return nil, fmt.Errorf("instance pool is missing kaas id")
 	}
-	if input.Id == "" {
+	if input.Id == 0 {
 		return nil, fmt.Errorf("instance pool is instance pool id")
 	}
 	if !dnsRegexp.MatchString(input.Name) {
@@ -180,45 +192,43 @@ func (c *Client) UpdateInstancePool(input *kaas.InstancePool) (*kaas.InstancePoo
 	if input.MinInstances < 0 {
 		return nil, fmt.Errorf("instance pool min instances should be greater than 0")
 	}
-	if input.MaxInstances < 0 {
-		return nil, fmt.Errorf("instance pool max instances should be greater than 0")
-	}
-	if input.MinInstances > input.MaxInstances {
-		return nil, fmt.Errorf("instance pool min instance should be lesser than (or equal) max")
-	}
+	// if input.MaxInstances < 0 {
+	// 	return nil, fmt.Errorf("instance pool max instances should be greater than 0")
+	// }
+	// if input.MinInstances > input.MaxInstances {
+	// 	return nil, fmt.Errorf("instance pool min instance should be lesser than (or equal) max")
+	// }
 
-	_, err := c.GetKaas(input.PcpId, input.KaasId)
+	_, err := c.GetKaas(publicCloudId, publicCloudProjectId, input.KaasId)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = c.GetInstancePool(input.PcpId, input.KaasId, input.Id)
+	_, err = c.GetInstancePool(publicCloudId, publicCloudProjectId, input.KaasId, input.Id)
 	if err != nil {
 		return nil, err
 	}
 
 	var obj = kaas.InstancePool{
-		PcpId:  input.PcpId,
 		KaasId: input.KaasId,
 		Id:     input.Id,
 
 		Name:         input.Name,
 		FlavorName:   input.FlavorName,
 		MinInstances: input.MinInstances,
-		MaxInstances: input.MaxInstances,
+		// MaxInstances: input.MaxInstances,
 	}
 
 	return &obj, updateCache(&obj)
 }
 
-func (c *Client) DeleteInstancePool(pcpId, kaasId, instancePoolId string) error {
-	_, err := c.GetKaas(pcpId, kaasId)
+func (c *Client) DeleteInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) error {
+	_, err := c.GetKaas(publicCloudId, publicCloudProjectId, kaasId)
 	if err != nil {
 		return err
 	}
 
 	var obj = kaas.InstancePool{
-		PcpId:  pcpId,
 		KaasId: kaasId,
 		Id:     instancePoolId,
 	}

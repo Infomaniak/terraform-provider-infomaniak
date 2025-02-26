@@ -50,20 +50,25 @@ func (d *kaasDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"pcp_id": schema.StringAttribute{
+			"public_cloud_id": schema.Int64Attribute{
+				Required:            true,
+				Description:         "The id of the public cloud where KaaS is installed",
+				MarkdownDescription: "The id of the public cloud where KaaS is installed",
+			},
+			"public_cloud_project_id": schema.Int64Attribute{
 				Required:            true,
 				Description:         "The id of the public cloud project where KaaS is installed",
 				MarkdownDescription: "The id of the public cloud project where KaaS is installed",
 			},
-			"id": schema.StringAttribute{
+			"id": schema.Int64Attribute{
+				Required:            true,
+				Description:         "The id of this KaaS",
+				MarkdownDescription: "The id of this KaaS",
+			},
+			"pack_name": schema.StringAttribute{
 				Required:            true,
 				Description:         "The name of the pack associated to the KaaS project",
 				MarkdownDescription: "The name of the pack associated to the KaaS project",
-			},
-			"pack": schema.StringAttribute{
-				Required:            true,
-				Description:         "The id of the KaaS project for which you want to retrieve the Kubeconfig",
-				MarkdownDescription: "The id of the KaaS project for which you want to retrieve the Kubeconfig",
 			},
 			"region": schema.StringAttribute{
 				Computed:            true,
@@ -76,6 +81,11 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 				Description:         "The kubeconfig generated to access to KaaS project",
 				MarkdownDescription: "The kubeconfig generated to access to KaaS project",
 			},
+			"kubernetes_version": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The version of Kubernetes associated with the KaaS project",
+				MarkdownDescription: "The version of Kubernetes associated with the KaaS project",
+			},
 		},
 		MarkdownDescription: "The kaas data source allows the user to manage a kaas project",
 	}
@@ -87,7 +97,11 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
-	obj, err := d.client.Kaas.GetKaas(data.PcpId.ValueString(), data.Id.ValueString())
+	obj, err := d.client.Kaas.GetKaas(
+		int(data.PublicCloudId.ValueInt64()),
+		int(data.PublicCloudProjectId.ValueInt64()),
+		int(data.Id.ValueInt64()),
+	)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to find KaaS",
@@ -98,6 +112,7 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 
 	data.Kubeconfig = types.StringValue(obj.Kubeconfig)
 	data.Region = types.StringValue(obj.Region)
+	data.KubernetesVersion = types.StringValue(obj.KubernetesVersion)
 
 	// Set state
 	diags := resp.State.Set(ctx, &data)

@@ -1,12 +1,15 @@
 resource "infomaniak_kaas" "create_kluster" {
-  pcp_id = "54"
-  pack = "5"
+  public_cloud_id = "54"
+  public_cloud_id = 42
+  public_cloud_project_id = 54
+  pack_name = "test"
 
   region = "dc4"
 }
 
 resource "infomaniak_kaas_instance_pool" "create_instance_pool" {
-  pcp_id  = "54"
+  public_cloud_id = "54"
+  public_cloud_project_id  = "54"
   kaas_id = infomaniak_kaas.create_kluster.id
 
   name        = "coucou"
@@ -16,7 +19,8 @@ resource "infomaniak_kaas_instance_pool" "create_instance_pool" {
 }
 
 data "infomaniak_kaas" "get_kluster" {
-  pcp_id = infomaniak_kaas.create_kluster.pcp_id
+  public_cloud_id = infomaniak_kaas.create_kluster.public_cloud_id
+  public_cloud_project_id = infomaniak_kaas.create_kluster.public_cloud_project_id
   id = infomaniak_kaas.create_kluster.id
 }
 
