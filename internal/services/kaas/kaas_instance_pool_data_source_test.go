@@ -37,12 +37,12 @@ func TestKaasInstancePoolDatasource_Schema(t *testing.T) {
 				},
 			},
 		},
-		"data_source.kaas_instance_pool.missing_pcp_id": {
+		"data_source.kaas_instance_pool.missing_public_cloud_project_id": {
 			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("schema", "data_source_kaas_instance_pool_missing_pcp_id.tf"),
-					ExpectError: regexp.MustCompile(`The argument "pcp_id" is required, but no definition was found.`),
+					Config:      test.MustGetTestFile("schema", "data_source_kaas_instance_pool_missing_public_cloud_project_id.tf"),
+					ExpectError: regexp.MustCompile(`The argument "public_cloud_project_id" is required, but no definition was found.`),
 				},
 			},
 		},

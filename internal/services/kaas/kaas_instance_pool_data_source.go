@@ -50,15 +50,19 @@ func (d *kaasInstancePoolDataSource) Configure(_ context.Context, req datasource
 func (d *kaasInstancePoolDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"pcp_id": schema.StringAttribute{
+			"public_cloud_id": schema.Int64Attribute{
 				Required:    true,
 				Description: "The id of the public cloud project where KaaS is installed",
 			},
-			"kaas_id": schema.StringAttribute{
+			"public_cloud_project_id": schema.Int64Attribute{
+				Required:    true,
+				Description: "The id of the public cloud project where KaaS is installed",
+			},
+			"kaas_id": schema.Int64Attribute{
 				Required:    true,
 				Description: "The id of the kaas project.",
 			},
-			"id": schema.StringAttribute{
+			"id": schema.Int64Attribute{
 				Required:    true,
 				Description: "A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.",
 			},
@@ -74,10 +78,10 @@ func (d *kaasInstancePoolDataSource) Schema(ctx context.Context, _ datasource.Sc
 				Computed:    true,
 				Description: "The minimum amount of instances in the instance pool",
 			},
-			"max_instances": schema.Int32Attribute{
-				Computed:    true,
-				Description: "The maximum amount of instances in the instance pool",
-			},
+			// "max_instances": schema.Int32Attribute{
+			// 	Computed:    true,
+			// 	Description: "The maximum amount of instances in the instance pool",
+			// },
 		},
 		MarkdownDescription: "The kaas data source allows the user to manage a kaas project",
 	}
@@ -89,7 +93,12 @@ func (d *kaasInstancePoolDataSource) Read(ctx context.Context, req datasource.Re
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
-	obj, err := d.client.Kaas.GetInstancePool(data.PcpId.ValueString(), data.KaasId.ValueString(), data.Id.ValueString())
+	obj, err := d.client.Kaas.GetInstancePool(
+		int(data.PublicCloudId.ValueInt64()),
+		int(data.PublicCloudProjectId.ValueInt64()),
+		int(data.KaasId.ValueInt64()),
+		int(data.Id.ValueInt64()),
+	)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to find KaaS instance pool",
@@ -98,11 +107,11 @@ func (d *kaasInstancePoolDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 
-	data.Id = types.StringValue(obj.Id)
+	data.Id = types.Int64Value(int64(obj.Id))
 	data.Name = types.StringValue(obj.Name)
 	data.FlavorName = types.StringValue(obj.FlavorName)
 	data.MinInstances = types.Int32Value(obj.MinInstances)
-	data.MaxInstances = types.Int32Value(obj.MaxInstances)
+	// data.MaxInstances = types.Int32Value(obj.MaxInstances)
 
 	// Set state
 	diags := resp.State.Set(ctx, &data)

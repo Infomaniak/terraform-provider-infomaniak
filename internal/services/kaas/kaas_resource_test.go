@@ -39,12 +39,12 @@ func TestKaasResource_Schema(t *testing.T) {
 				},
 			},
 		},
-		"resource.kaas.missing_pcp_id": {
+		"resource.kaas.missing_public_cloud_project_id": {
 			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("schema", "resource_kaas_missing_pcp_id.tf"),
-					ExpectError: regexp.MustCompile(`The argument "pcp_id" is required, but no definition was found.`),
+					Config:      test.MustGetTestFile("schema", "resource_kaas_missing_public_cloud_project_id.tf"),
+					ExpectError: regexp.MustCompile(`The argument "public_cloud_project_id" is required, but no definition was found.`),
 				},
 			},
 		},
@@ -95,14 +95,14 @@ func TestKaasResource_Plan(t *testing.T) {
 				},
 			},
 		},
-		"resource.kaas.change_pcp_id_causes_replace": {
+		"resource.kaas.change_public_cloud_project_id_causes_replace": {
 			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config: test.MustGetTestFile("plan", "resource_kaas_test_change_pcp_id_1.tf"),
+					Config: test.MustGetTestFile("plan", "resource_kaas_test_change_public_cloud_project_id_1.tf"),
 				},
 				{
-					Config: test.MustGetTestFile("plan", "resource_kaas_test_change_pcp_id_2.tf"),
+					Config: test.MustGetTestFile("plan", "resource_kaas_test_change_public_cloud_project_id_2.tf"),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectResourceAction("infomaniak_kaas.kluster", plancheck.ResourceActionDestroyBeforeCreate),
@@ -137,25 +137,29 @@ func TestKaasResource_Plan(t *testing.T) {
 }
 
 func TestKaasResource_Import(t *testing.T) {
-	var resourcePcpId, resourceId string
+	var resourcePublicCloudId, resourcePublicCloudProjectId, resourceId int
 
 	client := mockKaas.New()
 	k, err := client.CreateKaas(&kaas.Kaas{
-		PcpId:  "451",
+		Project: kaas.KaasProject{
+			PublicCloudId: 536,
+			ProjectId:     451,
+		},
 		Region: "das45",
 	})
 	if err != nil {
 		t.Fatalf("Could not create Kaas for import test, got : %v", err)
 	}
 	defer func() {
-		err = client.DeleteKaas(k.PcpId, k.Id)
+		err = client.DeleteKaas(k.Project.PublicCloudId, k.Project.ProjectId, k.Id)
 		if err != nil {
 			t.Fatalf("Could not delete Kaas in import test, got : %v", err)
 		}
 	}()
 
 	resourceId = k.Id
-	resourcePcpId = k.PcpId
+	resourcePublicCloudId = k.Project.PublicCloudId
+	resourcePublicCloudProjectId = k.Project.ProjectId
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
@@ -164,10 +168,11 @@ func TestKaasResource_Import(t *testing.T) {
 				ResourceName:  "infomaniak_kaas.kluster",
 				Config:        test.MustGetTestFile("plan", "resource_kaas_test_no_changes.tf"),
 				ImportState:   true,
-				ImportStateId: fmt.Sprintf("%s,%s", resourcePcpId, resourceId),
+				ImportStateId: fmt.Sprintf("%d,%d,%d", resourcePublicCloudId, resourcePublicCloudProjectId, resourceId),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("infomaniak_kaas.kluster", "id", resourceId),
-					resource.TestCheckResourceAttr("infomaniak_kaas.kluster", "pcp_id", resourcePcpId),
+					resource.TestCheckResourceAttr("infomaniak_kaas.kluster", "id", fmt.Sprint(resourceId)),
+					resource.TestCheckResourceAttr("infomaniak_kaas.kluster", "public_cloud_id", fmt.Sprint(resourcePublicCloudId)),
+					resource.TestCheckResourceAttr("infomaniak_kaas.kluster", "public_cloud_project_id", fmt.Sprint(resourcePublicCloudProjectId)),
 					resource.TestCheckResourceAttr("infomaniak_kaas.kluster", "region", "das45"),
 					resource.TestCheckResourceAttr("infomaniak_kaas.kluster", "kubeconfig", k.Kubeconfig),
 				),

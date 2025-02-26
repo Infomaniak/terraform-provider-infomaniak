@@ -77,12 +77,12 @@ func TestKaasInstancePoolResource_Config(t *testing.T) {
 				},
 			},
 		},
-		"resource.kaas_instance_pool.missing_pcp_id": {
+		"resource.kaas_instance_pool.missing_public_cloud_project_id": {
 			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("schema", "resource_kaas_instance_pool_missing_pcp_id.tf"),
-					ExpectError: regexp.MustCompile(`The argument "pcp_id" is required, but no definition was found.`),
+					Config:      test.MustGetTestFile("schema", "resource_kaas_instance_pool_missing_public_cloud_project_id.tf"),
+					ExpectError: regexp.MustCompile(`The argument "public_cloud_project_id" is required, but no definition was found.`),
 				},
 			},
 		},
@@ -140,14 +140,14 @@ func TestKaasInstancePoolResource_Plan(t *testing.T) {
 				},
 			},
 		},
-		"resource.kaas_instance_pool.change_pcp_id_causes_error": {
+		"resource.kaas_instance_pool.change_public_cloud_project_id_causes_error": {
 			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config: test.MustGetTestFile("plan", "resource_kaas_instance_pool_test_change_pcp_id_1.tf"),
+					Config: test.MustGetTestFile("plan", "resource_kaas_instance_pool_test_change_public_cloud_project_id_1.tf"),
 				},
 				{
-					Config:      test.MustGetTestFile("plan", "resource_kaas_instance_pool_test_change_pcp_id_2.tf"),
+					Config:      test.MustGetTestFile("plan", "resource_kaas_instance_pool_test_change_public_cloud_project_id_2.tf"),
 					ExpectError: regexp.MustCompile(`key '(.*)' not found`),
 				},
 			},
@@ -164,7 +164,10 @@ func TestKaasInstancePoolResource_Plan(t *testing.T) {
 func TestKaasInstancePoolResource_Import(t *testing.T) {
 	client := mockKaas.New()
 	k, err := client.CreateKaas(&kaas.Kaas{
-		PcpId:  "451",
+		Project: kaas.KaasProject{
+			PublicCloudId: 48,
+			ProjectId:     451,
+		},
 		Region: "das45",
 	})
 	if err != nil {
@@ -173,32 +176,32 @@ func TestKaasInstancePoolResource_Import(t *testing.T) {
 
 	defer func() {
 		// Kaas project should be deleted after instance pool.
-		err = client.DeleteKaas(k.PcpId, k.Id)
+		err = client.DeleteKaas(k.Project.PublicCloudId, k.Project.ProjectId, k.Id)
 		if err != nil {
 			t.Fatalf("Could not delete Kaas in import test, got : %v", err)
 		}
 	}()
 
-	instancePool, err := client.CreateInstancePool(&kaas.InstancePool{
-		PcpId:        k.PcpId,
+	instancePool, err := client.CreateInstancePool(k.Project.PublicCloudId, k.Project.ProjectId, &kaas.InstancePool{
 		KaasId:       k.Id,
 		Name:         "supername",
 		FlavorName:   "superflavorname",
 		MinInstances: 1,
-		MaxInstances: 99,
+		// MaxInstances: 99,
 	})
 	if err != nil {
 		t.Fatalf("Could not create Kaas for import test, got : %v", err)
 	}
 
 	defer func() {
-		err = client.DeleteInstancePool(k.PcpId, k.Id, instancePool.Id)
+		err = client.DeleteInstancePool(k.Project.PublicCloudId, k.Project.ProjectId, k.Id, instancePool.Id)
 		if err != nil {
 			t.Fatalf("Could not delete Kaas in import test, got : %v", err)
 		}
 	}()
 
-	resourcePcpId := instancePool.PcpId
+	resourcePublicCloudId := k.Project.PublicCloudId
+	resourcePublicCloudProjectId := k.Project.ProjectId
 	resourceKaasId := instancePool.KaasId
 	resourceId := instancePool.Id
 
@@ -209,11 +212,12 @@ func TestKaasInstancePoolResource_Import(t *testing.T) {
 				ResourceName:  "infomaniak_kaas_instance_pool.instance_pool",
 				Config:        test.MustGetTestFile("plan", "resource_kaas_instance_pool_test_no_changes.tf"),
 				ImportState:   true,
-				ImportStateId: fmt.Sprintf("%s,%s,%s", resourcePcpId, resourceKaasId, resourceId),
+				ImportStateId: fmt.Sprintf("%d,%d,%d,%d", resourcePublicCloudId, resourcePublicCloudProjectId, resourceKaasId, resourceId),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "id", resourceId),
-					resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "pcp_id", resourcePcpId),
-					resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "kaas_id", resourceKaasId),
+					resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "id", fmt.Sprint(resourceId)),
+					resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "public_cloud_id", fmt.Sprint(resourcePublicCloudId)),
+					resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "public_cloud_project_id", fmt.Sprint(resourcePublicCloudProjectId)),
+					resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "kaas_id", fmt.Sprint(resourceKaasId)),
 				),
 			},
 		},

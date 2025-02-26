@@ -96,8 +96,28 @@ func (client *Client) GetPacks() ([]*kaas.KaasPack, error) {
 	return result, nil
 }
 
-func (client *Client) GetKaas(pcpId, kaasId string) (*kaas.Kaas, error) {
-	compiledRoute, err := GetKaas.Compile(nil, pcpId, kaasId)
+func (client *Client) GetVersions() ([]string, error) {
+	compiledRoute, err := GetVersions.Compile(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := client.Do(compiledRoute, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []string
+	err = UnmarshalResponse(response, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (client *Client) GetKaas(publicCloudId int, publicCloudProjectId int, kaasId int) (*kaas.Kaas, error) {
+	compiledRoute, err := GetKaas.Compile(nil, publicCloudId, publicCloudProjectId, kaasId)
 	if err != nil {
 		return nil, err
 	}
@@ -117,11 +137,15 @@ func (client *Client) GetKaas(pcpId, kaasId string) (*kaas.Kaas, error) {
 }
 
 func (client *Client) CreateKaas(input *kaas.Kaas) (*kaas.Kaas, error) {
-	if input.PcpId == "" {
+	if input.Project.PublicCloudId == 0 {
+		return nil, fmt.Errorf("kaas is missing public cloud id")
+	}
+
+	if input.Project.ProjectId == 0 {
 		return nil, fmt.Errorf("kaas is missing public cloud project id")
 	}
 
-	compiledRoute, err := CreateKaas.Compile(nil, input.PcpId)
+	compiledRoute, err := CreateKaas.Compile(nil, input.Project.PublicCloudId, input.Project.ProjectId)
 	if err != nil {
 		return nil, err
 	}
@@ -144,12 +168,12 @@ func (client *Client) UpdateKaas(input *kaas.Kaas) (*kaas.Kaas, error) {
 	return nil, nil
 }
 
-func (client *Client) DeleteKaas(pcpId, kaasId string) error {
+func (client *Client) DeleteKaas(publicCloudId int, publicCloudProjectId int, kaasId int) error {
 	return nil
 }
 
-func (client *Client) GetInstancePool(pcpId, kaasId, instancePoolId string) (*kaas.InstancePool, error) {
-	compiledRoute, err := GetInstancePool.Compile(nil, pcpId, kaasId, instancePoolId)
+func (client *Client) GetInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) (*kaas.InstancePool, error) {
+	compiledRoute, err := GetInstancePool.Compile(nil, publicCloudId, publicCloudProjectId, kaasId, instancePoolId)
 	if err != nil {
 		return nil, err
 	}
@@ -168,14 +192,14 @@ func (client *Client) GetInstancePool(pcpId, kaasId, instancePoolId string) (*ka
 	return &result, nil
 }
 
-func (client *Client) CreateInstancePool(input *kaas.InstancePool) (*kaas.InstancePool, error) {
+func (client *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId int, input *kaas.InstancePool) (*kaas.InstancePool, error) {
 	return nil, nil
 }
 
-func (client *Client) UpdateInstancePool(input *kaas.InstancePool) (*kaas.InstancePool, error) {
+func (client *Client) UpdateInstancePool(publicCloudId int, publicCloudProjectId int, input *kaas.InstancePool) (*kaas.InstancePool, error) {
 	return nil, nil
 }
 
-func (client *Client) DeleteInstancePool(pcpId, kaasId, instancePoolId string) error {
+func (client *Client) DeleteInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) error {
 	return nil
 }
