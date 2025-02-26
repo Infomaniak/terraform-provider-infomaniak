@@ -1,10 +1,11 @@
-package provider
+package kaas
 
 import (
 	"fmt"
 	"regexp"
 	"terraform-provider-infomaniak/internal/apis/kaas"
 	mockKaas "terraform-provider-infomaniak/internal/apis/kaas/mock"
+	"terraform-provider-infomaniak/internal/provider"
 	"terraform-provider-infomaniak/internal/test"
 	"testing"
 
@@ -17,10 +18,10 @@ func TestKaasInstancePoolResource_Config(t *testing.T) {
 
 	testCases := map[string]resource.TestCase{
 		"resource.kaas_instance_pool.good": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config: test.MustGetTestFile("kaas", "schema", "resource_kaas_instance_pool_good.tf"),
+					Config: test.MustGetTestFile("schema", "resource_kaas_instance_pool_good.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttrSet("infomaniak_kaas.kluster", "id"),
 						resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "name", "coucou"),
@@ -32,64 +33,64 @@ func TestKaasInstancePoolResource_Config(t *testing.T) {
 			},
 		},
 		"resource.kaas_instance_pool.missing_flavor_name": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "resource_kaas_instance_pool_missing_flavor_name.tf"),
+					Config:      test.MustGetTestFile("schema", "resource_kaas_instance_pool_missing_flavor_name.tf"),
 					ExpectError: regexp.MustCompile(`The argument "flavor_name" is required, but no definition was found.`),
 				},
 			},
 		},
 		"resource.kaas_instance_pool.missing_kaas_id": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "resource_kaas_instance_pool_missing_kaas_id.tf"),
+					Config:      test.MustGetTestFile("schema", "resource_kaas_instance_pool_missing_kaas_id.tf"),
 					ExpectError: regexp.MustCompile(`The argument "kaas_id" is required, but no definition was found.`),
 				},
 			},
 		},
 		"resource.kaas_instance_pool.missing_max_instances": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "resource_kaas_instance_pool_missing_max_instances.tf"),
+					Config:      test.MustGetTestFile("schema", "resource_kaas_instance_pool_missing_max_instances.tf"),
 					ExpectError: regexp.MustCompile(`The argument "max_instances" is required, but no definition was found.`),
 				},
 			},
 		},
 		"resource.kaas_instance_pool.missing_min_instances": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "resource_kaas_instance_pool_missing_min_instances.tf"),
+					Config:      test.MustGetTestFile("schema", "resource_kaas_instance_pool_missing_min_instances.tf"),
 					ExpectError: regexp.MustCompile(`The argument "min_instances" is required, but no definition was found.`),
 				},
 			},
 		},
 		"resource.kaas_instance_pool.missing_name": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "resource_kaas_instance_pool_missing_name.tf"),
+					Config:      test.MustGetTestFile("schema", "resource_kaas_instance_pool_missing_name.tf"),
 					ExpectError: regexp.MustCompile(`The argument "name" is required, but no definition was found.`),
 				},
 			},
 		},
 		"resource.kaas_instance_pool.missing_pcp_id": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "resource_kaas_instance_pool_missing_pcp_id.tf"),
+					Config:      test.MustGetTestFile("schema", "resource_kaas_instance_pool_missing_pcp_id.tf"),
 					ExpectError: regexp.MustCompile(`The argument "pcp_id" is required, but no definition was found.`),
 				},
 			},
 		},
 		"resource.kaas_instance_pool.cant_specify_id": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "resource_kaas_instance_pool_cant_specify_id.tf"),
+					Config:      test.MustGetTestFile("schema", "resource_kaas_instance_pool_cant_specify_id.tf"),
 					ExpectError: regexp.MustCompile(`[0-9]+:( )*id( )*=`),
 				},
 			},
@@ -108,13 +109,13 @@ func TestKaasInstancePoolResource_Plan(t *testing.T) {
 
 	testCases := map[string]resource.TestCase{
 		"resource.kaas_instance_pool.no_changes": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config: test.MustGetTestFile("kaas", "plan", "resource_kaas_instance_pool_test_no_changes.tf"),
+					Config: test.MustGetTestFile("plan", "resource_kaas_instance_pool_test_no_changes.tf"),
 				},
 				{
-					Config: test.MustGetTestFile("kaas", "plan", "resource_kaas_instance_pool_test_no_changes.tf"),
+					Config: test.MustGetTestFile("plan", "resource_kaas_instance_pool_test_no_changes.tf"),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectEmptyPlan(),
@@ -124,13 +125,13 @@ func TestKaasInstancePoolResource_Plan(t *testing.T) {
 			},
 		},
 		"resource.kaas_instance_pool.change_kaas_id_causes_replace": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config: test.MustGetTestFile("kaas", "plan", "resource_kaas_instance_pool_test_change_kaas_id_1.tf"),
+					Config: test.MustGetTestFile("plan", "resource_kaas_instance_pool_test_change_kaas_id_1.tf"),
 				},
 				{
-					Config: test.MustGetTestFile("kaas", "plan", "resource_kaas_instance_pool_test_change_kaas_id_2.tf"),
+					Config: test.MustGetTestFile("plan", "resource_kaas_instance_pool_test_change_kaas_id_2.tf"),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectResourceAction("infomaniak_kaas_instance_pool.instance_pool", plancheck.ResourceActionDestroyBeforeCreate),
@@ -140,13 +141,13 @@ func TestKaasInstancePoolResource_Plan(t *testing.T) {
 			},
 		},
 		"resource.kaas_instance_pool.change_pcp_id_causes_error": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config: test.MustGetTestFile("kaas", "plan", "resource_kaas_instance_pool_test_change_pcp_id_1.tf"),
+					Config: test.MustGetTestFile("plan", "resource_kaas_instance_pool_test_change_pcp_id_1.tf"),
 				},
 				{
-					Config:      test.MustGetTestFile("kaas", "plan", "resource_kaas_instance_pool_test_change_pcp_id_2.tf"),
+					Config:      test.MustGetTestFile("plan", "resource_kaas_instance_pool_test_change_pcp_id_2.tf"),
 					ExpectError: regexp.MustCompile(`key '(.*)' not found`),
 				},
 			},
@@ -202,11 +203,11 @@ func TestKaasInstancePoolResource_Import(t *testing.T) {
 	resourceId := instancePool.Id
 
 	resource.Test(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				ResourceName:  "infomaniak_kaas_instance_pool.instance_pool",
-				Config:        test.MustGetTestFile("kaas", "plan", "resource_kaas_instance_pool_test_no_changes.tf"),
+				Config:        test.MustGetTestFile("plan", "resource_kaas_instance_pool_test_no_changes.tf"),
 				ImportState:   true,
 				ImportStateId: fmt.Sprintf("%s,%s,%s", resourcePcpId, resourceKaasId, resourceId),
 				Check: resource.ComposeTestCheckFunc(

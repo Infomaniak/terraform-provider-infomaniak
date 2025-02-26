@@ -1,9 +1,10 @@
-package provider
+package kaas
 
 import (
 	"context"
 	"fmt"
 	"terraform-provider-infomaniak/internal/apis"
+	"terraform-provider-infomaniak/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -33,7 +34,7 @@ func (d *kaasDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 		return
 	}
 
-	data, ok := req.ProviderData.(*IkProviderData)
+	data, ok := req.ProviderData.(*provider.IkProviderData)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
