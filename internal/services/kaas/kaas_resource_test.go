@@ -1,10 +1,11 @@
-package provider
+package kaas
 
 import (
 	"fmt"
 	"regexp"
 	"terraform-provider-infomaniak/internal/apis/kaas"
 	mockKaas "terraform-provider-infomaniak/internal/apis/kaas/mock"
+	"terraform-provider-infomaniak/internal/provider"
 	"terraform-provider-infomaniak/internal/test"
 	"testing"
 
@@ -17,10 +18,10 @@ func TestKaasResource_Schema(t *testing.T) {
 
 	testCases := map[string]resource.TestCase{
 		"resource.kaas.good": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config: test.MustGetTestFile("kaas", "schema", "resource_kaas_good.tf"),
+					Config: test.MustGetTestFile("schema", "resource_kaas_good.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("infomaniak_kaas.kluster", "region", "dc5"),
 						resource.TestCheckResourceAttrSet("infomaniak_kaas.kluster", "id"),
@@ -30,37 +31,37 @@ func TestKaasResource_Schema(t *testing.T) {
 			},
 		},
 		"resource.kaas.missing_region": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "resource_kaas_missing_region.tf"),
+					Config:      test.MustGetTestFile("schema", "resource_kaas_missing_region.tf"),
 					ExpectError: regexp.MustCompile(`The argument "region" is required, but no definition was found.`),
 				},
 			},
 		},
 		"resource.kaas.missing_pcp_id": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "resource_kaas_missing_pcp_id.tf"),
+					Config:      test.MustGetTestFile("schema", "resource_kaas_missing_pcp_id.tf"),
 					ExpectError: regexp.MustCompile(`The argument "pcp_id" is required, but no definition was found.`),
 				},
 			},
 		},
 		"resource.kaas.cant_specify_id": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "resource_kaas_cant_specify_id.tf"),
+					Config:      test.MustGetTestFile("schema", "resource_kaas_cant_specify_id.tf"),
 					ExpectError: regexp.MustCompile(`[0-9]+:( )*id( )*=`),
 				},
 			},
 		},
 		"resource.kaas.cant_specify_kubeconfig": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "resource_kaas_cant_specify_kubeconfig.tf"),
+					Config:      test.MustGetTestFile("schema", "resource_kaas_cant_specify_kubeconfig.tf"),
 					ExpectError: regexp.MustCompile(`[0-9]+:( )*kubeconfig( )*=`),
 				},
 			},
@@ -79,13 +80,13 @@ func TestKaasResource_Plan(t *testing.T) {
 
 	testCases := map[string]resource.TestCase{
 		"resource.kaas.no_changes": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config: test.MustGetTestFile("kaas", "plan", "resource_kaas_test_no_changes.tf"),
+					Config: test.MustGetTestFile("plan", "resource_kaas_test_no_changes.tf"),
 				},
 				{
-					Config: test.MustGetTestFile("kaas", "plan", "resource_kaas_test_no_changes.tf"),
+					Config: test.MustGetTestFile("plan", "resource_kaas_test_no_changes.tf"),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectEmptyPlan(),
@@ -95,13 +96,13 @@ func TestKaasResource_Plan(t *testing.T) {
 			},
 		},
 		"resource.kaas.change_pcp_id_causes_replace": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config: test.MustGetTestFile("kaas", "plan", "resource_kaas_test_change_pcp_id_1.tf"),
+					Config: test.MustGetTestFile("plan", "resource_kaas_test_change_pcp_id_1.tf"),
 				},
 				{
-					Config: test.MustGetTestFile("kaas", "plan", "resource_kaas_test_change_pcp_id_2.tf"),
+					Config: test.MustGetTestFile("plan", "resource_kaas_test_change_pcp_id_2.tf"),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectResourceAction("infomaniak_kaas.kluster", plancheck.ResourceActionDestroyBeforeCreate),
@@ -111,13 +112,13 @@ func TestKaasResource_Plan(t *testing.T) {
 			},
 		},
 		"resource.kaas.change_region_causes_replace": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config: test.MustGetTestFile("kaas", "plan", "resource_kaas_test_change_region_1.tf"),
+					Config: test.MustGetTestFile("plan", "resource_kaas_test_change_region_1.tf"),
 				},
 				{
-					Config: test.MustGetTestFile("kaas", "plan", "resource_kaas_test_change_region_2.tf"),
+					Config: test.MustGetTestFile("plan", "resource_kaas_test_change_region_2.tf"),
 					ConfigPlanChecks: resource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
 							plancheck.ExpectResourceAction("infomaniak_kaas.kluster", plancheck.ResourceActionDestroyBeforeCreate),
@@ -157,11 +158,11 @@ func TestKaasResource_Import(t *testing.T) {
 	resourcePcpId = k.PcpId
 
 	resource.Test(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				ResourceName:  "infomaniak_kaas.kluster",
-				Config:        test.MustGetTestFile("kaas", "plan", "resource_kaas_test_no_changes.tf"),
+				Config:        test.MustGetTestFile("plan", "resource_kaas_test_no_changes.tf"),
 				ImportState:   true,
 				ImportStateId: fmt.Sprintf("%s,%s", resourcePcpId, resourceId),
 				Check: resource.ComposeTestCheckFunc(

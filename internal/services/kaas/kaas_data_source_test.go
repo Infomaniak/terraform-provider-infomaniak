@@ -1,7 +1,8 @@
-package provider
+package kaas
 
 import (
 	"regexp"
+	"terraform-provider-infomaniak/internal/provider"
 	"terraform-provider-infomaniak/internal/test"
 	"testing"
 
@@ -13,10 +14,10 @@ func TestKaasDatasource_Schema(t *testing.T) {
 
 	testCases := map[string]resource.TestCase{
 		"data_source.kaas.good": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config: test.MustGetTestFile("kaas", "schema", "data_source_kaas_good.tf"),
+					Config: test.MustGetTestFile("schema", "data_source_kaas_good.tf"),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("data.infomaniak_kaas.kluster", "region", "dc5"),
 						resource.TestCheckResourceAttrSet("data.infomaniak_kaas.kluster", "kubeconfig"),
@@ -25,37 +26,37 @@ func TestKaasDatasource_Schema(t *testing.T) {
 			},
 		},
 		"data_source.kaas.missing_id": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "data_source_kaas_missing_id.tf"),
+					Config:      test.MustGetTestFile("schema", "data_source_kaas_missing_id.tf"),
 					ExpectError: regexp.MustCompile(`The argument "id" is required, but no definition was found.`),
 				},
 			},
 		},
 		"data_source.kaas.missing_pcp_id": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "data_source_kaas_missing_pcp_id.tf"),
+					Config:      test.MustGetTestFile("schema", "data_source_kaas_missing_pcp_id.tf"),
 					ExpectError: regexp.MustCompile(`The argument "pcp_id" is required, but no definition was found.`),
 				},
 			},
 		},
 		"data_source.kaas.cant_specify_kubeconfig": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "data_source_kaas_cant_specify_kubeconfig.tf"),
+					Config:      test.MustGetTestFile("schema", "data_source_kaas_cant_specify_kubeconfig.tf"),
 					ExpectError: regexp.MustCompile(`[0-9]+:( )*kubeconfig( )*=`),
 				},
 			},
 		},
 		"data_source.kaas.cant_specify_region": {
-			ProtoV6ProviderFactories: protoV6ProviderFactories(),
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
 				{
-					Config:      test.MustGetTestFile("kaas", "schema", "data_source_kaas_cant_specify_region.tf"),
+					Config:      test.MustGetTestFile("schema", "data_source_kaas_cant_specify_region.tf"),
 					ExpectError: regexp.MustCompile(`[0-9]+:( )*region( )*=`),
 				},
 			},

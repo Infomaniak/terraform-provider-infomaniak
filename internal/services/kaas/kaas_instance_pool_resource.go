@@ -1,4 +1,4 @@
-package provider
+package kaas
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/kaas"
+	"terraform-provider-infomaniak/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -51,7 +52,7 @@ func (r *kaasInstancePoolResource) Configure(_ context.Context, req resource.Con
 		return
 	}
 
-	data, ok := req.ProviderData.(*IkProviderData)
+	data, ok := req.ProviderData.(*provider.IkProviderData)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
