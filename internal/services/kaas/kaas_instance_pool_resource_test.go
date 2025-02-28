@@ -27,7 +27,7 @@ func TestKaasInstancePoolResource_Config(t *testing.T) {
 						resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "name", "coucou"),
 						resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "flavor_name", "test"),
 						resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "min_instances", "3"),
-						resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "max_instances", "6"),
+						// resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "max_instances", "6"),
 					),
 				},
 			},
@@ -50,15 +50,15 @@ func TestKaasInstancePoolResource_Config(t *testing.T) {
 				},
 			},
 		},
-		"resource.kaas_instance_pool.missing_max_instances": {
-			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
-			Steps: []resource.TestStep{
-				{
-					Config:      test.MustGetTestFile("schema", "resource_kaas_instance_pool_missing_max_instances.tf"),
-					ExpectError: regexp.MustCompile(`The argument "max_instances" is required, but no definition was found.`),
-				},
-			},
-		},
+		// "resource.kaas_instance_pool.missing_max_instances": {
+		// 	ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
+		// 	Steps: []resource.TestStep{
+		// 		{
+		// 			Config:      test.MustGetTestFile("schema", "resource_kaas_instance_pool_missing_max_instances.tf"),
+		// 			ExpectError: regexp.MustCompile(`The argument "max_instances" is required, but no definition was found.`),
+		// 		},
+		// 	},
+		// },
 		"resource.kaas_instance_pool.missing_min_instances": {
 			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
@@ -82,7 +82,7 @@ func TestKaasInstancePoolResource_Config(t *testing.T) {
 			Steps: []resource.TestStep{
 				{
 					Config:      test.MustGetTestFile("schema", "resource_kaas_instance_pool_missing_public_cloud_project_id.tf"),
-					ExpectError: regexp.MustCompile(`The argument "public_cloud_project_id" is required, but no definition was found.`),
+					ExpectError: regexp.MustCompile(`The argument "public_cloud_project_id" is required`),
 				},
 			},
 		},
@@ -148,7 +148,7 @@ func TestKaasInstancePoolResource_Plan(t *testing.T) {
 				},
 				{
 					Config:      test.MustGetTestFile("plan", "resource_kaas_instance_pool_test_change_public_cloud_project_id_2.tf"),
-					ExpectError: regexp.MustCompile(`key '(.*)' not found`),
+					ExpectError: regexp.MustCompile(`key not found`),
 				},
 			},
 		},

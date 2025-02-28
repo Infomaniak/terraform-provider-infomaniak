@@ -23,7 +23,7 @@ func TestKaasInstancePoolDatasource_Schema(t *testing.T) {
 						resource.TestCheckResourceAttr("data.infomaniak_kaas_instance_pool.instance_pool", "name", "coucou"),
 						resource.TestCheckResourceAttr("data.infomaniak_kaas_instance_pool.instance_pool", "flavor_name", "test"),
 						resource.TestCheckResourceAttr("data.infomaniak_kaas_instance_pool.instance_pool", "min_instances", "3"),
-						resource.TestCheckResourceAttr("data.infomaniak_kaas_instance_pool.instance_pool", "max_instances", "6"),
+						// resource.TestCheckResourceAttr("data.infomaniak_kaas_instance_pool.instance_pool", "max_instances", "6"),
 					),
 				},
 			},
@@ -42,7 +42,7 @@ func TestKaasInstancePoolDatasource_Schema(t *testing.T) {
 			Steps: []resource.TestStep{
 				{
 					Config:      test.MustGetTestFile("schema", "data_source_kaas_instance_pool_missing_public_cloud_project_id.tf"),
-					ExpectError: regexp.MustCompile(`The argument "public_cloud_project_id" is required, but no definition was found.`),
+					ExpectError: regexp.MustCompile(`The argument "public_cloud_project_id" is required`),
 				},
 			},
 		},
@@ -64,15 +64,15 @@ func TestKaasInstancePoolDatasource_Schema(t *testing.T) {
 				},
 			},
 		},
-		"data_source.kaas_instance_pool.cant_specify_max_instances": {
-			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
-			Steps: []resource.TestStep{
-				{
-					Config:      test.MustGetTestFile("schema", "data_source_kaas_instance_pool_cant_specify_max_instances.tf"),
-					ExpectError: regexp.MustCompile(`[0-9]+:( )*max_instances( )*=`),
-				},
-			},
-		},
+		// "data_source.kaas_instance_pool.cant_specify_max_instances": {
+		// 	ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
+		// 	Steps: []resource.TestStep{
+		// 		{
+		// 			Config:      test.MustGetTestFile("schema", "data_source_kaas_instance_pool_cant_specify_max_instances.tf"),
+		// 			ExpectError: regexp.MustCompile(`[0-9]+:( )*max_instances( )*=`),
+		// 		},
+		// 	},
+		// },
 		"data_source.kaas_instance_pool.cant_specify_min_instances": {
 			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{

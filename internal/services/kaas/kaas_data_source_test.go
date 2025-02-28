@@ -39,7 +39,7 @@ func TestKaasDatasource_Schema(t *testing.T) {
 			Steps: []resource.TestStep{
 				{
 					Config:      test.MustGetTestFile("schema", "data_source_kaas_missing_public_cloud_project_id.tf"),
-					ExpectError: regexp.MustCompile(`The argument "public_cloud_project_id" is required, but no definition was found.`),
+					ExpectError: regexp.MustCompile(`The argument "public_cloud_project_id" is required`),
 				},
 			},
 		},

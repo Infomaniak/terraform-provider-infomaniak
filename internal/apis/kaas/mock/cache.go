@@ -37,6 +37,10 @@ func getFromCache[K KaasObject](key string) (K, error) {
 		return nil, err
 	}
 
+	if result == nil {
+		return nil, ErrKeyNotFound
+	}
+
 	return result, nil
 }
 

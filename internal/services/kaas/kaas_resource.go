@@ -2,7 +2,9 @@ package kaas
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/kaas"
@@ -67,6 +69,9 @@ func (r *kaasResource) Configure(ctx context.Context, req resource.ConfigureRequ
 	}
 
 	r.client = apis.NewClient(data.Data.Host.ValueString(), data.Data.Token.ValueString())
+	if data.Version.ValueString() == "test" {
+		r.client = apis.NewMockClient()
+	}
 }
 
 func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -195,13 +200,12 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 			return
 		}
 
+		kaasObject = found
 		if found.Status == "Active" {
 			break
 		}
 
 		time.Sleep(5 * time.Second)
-
-		kaasObject = found
 	}
 
 	// Wait for kubeconfig to be available
@@ -377,9 +381,26 @@ func (r *kaasResource) ImportState(ctx context.Context, req resource.ImportState
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_id"), idParts[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_project_id"), idParts[1])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), idParts[2])...)
+	var errorList error
+
+	publicCloudId, err := strconv.ParseInt(idParts[0], 10, 64)
+	errorList = errors.Join(errorList, err)
+	publicCloudProjectId, err := strconv.ParseInt(idParts[1], 10, 64)
+	errorList = errors.Join(errorList, err)
+	kaasId, err := strconv.ParseInt(idParts[2], 10, 64)
+	errorList = errors.Join(errorList, err)
+
+	if errorList != nil {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: public_cloud_id,public_cloud_project_id,id. Got: %q", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_id"), publicCloudId)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_project_id"), publicCloudProjectId)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), kaasId)...)
 }
 
 func (r *kaasResource) getPackId(data KaasModel, diagnostic *diag.Diagnostics) (*kaas.KaasPack, error) {
@@ -410,7 +431,7 @@ func (r *kaasResource) getPackId(data KaasModel, diagnostic *diag.Diagnostics) (
 			"Unknown KaaS Pack",
 			fmt.Sprintf("pack_name must be one of : %v", packNames),
 		)
-		return nil, err
+		return nil, fmt.Errorf("pack name has not been found")
 	}
 
 	return chosenPack, nil

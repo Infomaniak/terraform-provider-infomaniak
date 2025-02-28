@@ -2,7 +2,9 @@ package kaas
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/kaas"
@@ -67,6 +69,9 @@ func (r *kaasInstancePoolResource) Configure(_ context.Context, req resource.Con
 	}
 
 	r.client = apis.NewClient(data.Data.Host.ValueString(), data.Data.Token.ValueString())
+	if data.Version.ValueString() == "test" {
+		r.client = apis.NewMockClient()
+	}
 }
 
 func (r *kaasInstancePoolResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -203,13 +208,12 @@ func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.Crea
 			return
 		}
 
+		instancePoolObject = found
 		if found.Status == "Active" {
 			break
 		}
 
 		time.Sleep(5 * time.Second)
-
-		instancePoolObject = found
 	}
 
 	data.Id = types.Int64Value(int64(instancePoolObject.Id))
@@ -355,8 +359,27 @@ func (r *kaasInstancePoolResource) ImportState(ctx context.Context, req resource
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_id"), idParts[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_project_id"), idParts[1])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("kaas_id"), idParts[2])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), idParts[3])...)
+	var errorList error
+
+	publicCloudId, err := strconv.ParseInt(idParts[0], 10, 64)
+	errorList = errors.Join(errorList, err)
+	publicCloudProjectId, err := strconv.ParseInt(idParts[1], 10, 64)
+	errorList = errors.Join(errorList, err)
+	kaasId, err := strconv.ParseInt(idParts[2], 10, 64)
+	errorList = errors.Join(errorList, err)
+	instancePoolId, err := strconv.ParseInt(idParts[3], 10, 64)
+	errorList = errors.Join(errorList, err)
+
+	if errorList != nil {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: public_cloud_id,public_cloud_project_id,kaas_id,id. Got: %q", req.ID),
+		)
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_id"), publicCloudId)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_project_id"), publicCloudProjectId)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("kaas_id"), kaasId)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), instancePoolId)...)
 }
