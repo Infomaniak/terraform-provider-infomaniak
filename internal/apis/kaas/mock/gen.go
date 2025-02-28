@@ -2,30 +2,18 @@ package mock
 
 import (
 	"bytes"
-	"crypto/rand"
+	cryptorand "crypto/rand"
 	"encoding/base64"
+	"math/rand/v2"
 )
 
-func genId() string {
-	var b = make([]byte, 16)
-	_, err := rand.Read(b)
-	if err != nil {
-		panic(err)
-	}
-
-	var out bytes.Buffer
-	enc := base64.NewEncoder(base64.StdEncoding, &out)
-	_, err = enc.Write(b)
-	if err != nil {
-		panic(err)
-	}
-
-	return out.String()
+func genId() int {
+	return rand.Int()
 }
 
 func genKubeconfig() string {
 	var b = make([]byte, 1024)
-	_, err := rand.Read(b)
+	_, err := cryptorand.Read(b)
 	if err != nil {
 		panic(err)
 	}

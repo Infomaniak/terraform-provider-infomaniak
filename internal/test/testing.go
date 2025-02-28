@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func MustGetTestFile(group, subgroup, file string) string {
-	body, err := os.ReadFile(path.Join("tests", group, subgroup, file))
+func MustGetTestFile(subgroup, file string) string {
+	body, err := os.ReadFile(path.Join("tests", subgroup, file))
 	if err != nil {
 		panic(err)
 	}

@@ -14,8 +14,9 @@ The Kaas Data Source allows the user to read information about a Kaas project.
 
 ```hcl
 data "infomaniak_kaas" "kluster" {
-    pcp_id = "xxxxx"
-    id     = "yyyyy"
+  public_cloud_id = xxxxx
+  public_cloud_project_id = yyyyy
+  id     = zzzzz
 }
 ```
 
@@ -23,8 +24,9 @@ data "infomaniak_kaas" "kluster" {
 
 ### Required
 
-- `id` (String) The id of the KaaS project.
-- `pcp_id` (String) The id of the Public Cloud project where KaaS is installed.
+- `id` (Integer) The id of the KaaS project.
+- `public_cloud_project_id` (Integer) The id of the Public Cloud Project where KaaS is installed.
+- `public_cloud_id` (Integer) The id of the Public Cloud where KaaS is installed.
 
 ### Read-Only
 

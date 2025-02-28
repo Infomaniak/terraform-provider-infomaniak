@@ -6,16 +6,24 @@ package provider
 import (
 	"context"
 	"os"
-	"terraform-provider-infomaniak/internal/apis"
+	"terraform-provider-infomaniak/internal/provider/registry"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+)
+
+// Environment variables used by the provider
+const (
+	INFOMANIAK_TOKEN = "INFOMANIAK_TOKEN"
+	INFOMANIAK_HOST  = "INFOMANIAK_HOST"
 )
 
 // Ensure IkProvider satisfies various kaas interfaces.
@@ -36,11 +44,10 @@ type IkProvider struct {
 	ik *IkProviderData
 }
 
-// IkProviderData defines
+// IkProviderData defines the data associated with the provider
 type IkProviderData struct {
-	*apis.Client
-
-	data *IkProviderModel
+	Version types.String `tfsdk:"version"`
+	Data    *IkProviderModel
 }
 
 type IkProviderModel struct {
@@ -62,7 +69,8 @@ func (p *IkProvider) Schema(ctx context.Context, req provider.SchemaRequest, res
 				MarkdownDescription: "The base endpoint for Infomaniak's API (including scheme).",
 			},
 			"token": schema.StringAttribute{
-				Optional:            true,
+				Required:            os.Getenv(INFOMANIAK_TOKEN) == "",
+				Optional:            os.Getenv(INFOMANIAK_TOKEN) != "",
 				Sensitive:           true,
 				Description:         "The token used for authenticating against Infomaniak's API.",
 				MarkdownDescription: "The token used for authenticating against Infomaniak's API.",
@@ -113,8 +121,8 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
 		return
 	}
 
-	host := os.Getenv("INFOMANIAK_HOST")
-	token := os.Getenv("INFOMANIAK_TOKEN")
+	host := os.Getenv(INFOMANIAK_HOST)
+	token := os.Getenv(INFOMANIAK_TOKEN)
 
 	if !data.Host.IsNull() {
 		host = data.Host.ValueString()
@@ -126,6 +134,7 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
 
 	if host == "" {
 		host = DefaultHost
+		data.Host = types.StringValue(host)
 	}
 
 	if token == "" {
@@ -143,8 +152,8 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
 	}
 
 	p.ik = &IkProviderData{
-		Client: apis.NewMockClient(),
-		data:   &data,
+		Version: types.StringValue(p.version),
+		Data:    &data,
 	}
 
 	resp.DataSourceData = p.ik
@@ -152,17 +161,11 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
 }
 
 func (p *IkProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{
-		NewKaasResource,
-		NewKaasInstancePoolResource,
-	}
+	return registry.GetResources()
 }
 
 func (p *IkProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{
-		NewKaasDataSource,
-		NewKaasInstancePoolDataSource,
-	}
+	return registry.GetDataSources()
 }
 
 func (p *IkProvider) Functions(ctx context.Context) []func() function.Function {
@@ -174,5 +177,11 @@ func New(version string) func() provider.Provider {
 		return &IkProvider{
 			version: version,
 		}
+	}
+}
+
+func ProtoV6ProviderFactories() map[string]func() (tfprotov6.ProviderServer, error) {
+	return map[string]func() (tfprotov6.ProviderServer, error){
+		"infomaniak": providerserver.NewProtocol6WithError(New("test")()),
 	}
 }

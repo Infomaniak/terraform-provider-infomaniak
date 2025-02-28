@@ -17,13 +17,15 @@ Setting `min_instances` = `max_instances` will disable autoscaling.
 
 ```hcl
 resource "infomaniak_kaas" "kluster" {
-  pcp_id = "xxxxx"
+  public_cloud_id = xxxxx
+  public_cloud_project_id = yyyyy
 
   region = "yyyyy"
 }
 
 resource "infomaniak_kaas_instance_pool" "instance_pool" {
-  pcp_id  = infomaniak_kaas.kluster.pcp_id
+  public_cloud_id  = infomaniak_kaas.kluster.public_cloud_id
+  public_cloud_project_id  = infomaniak_kaas.kluster.public_cloud_project_id
   kaas_id = infomaniak_kaas.kluster.id
 
   name        = "instance-pool-1"
@@ -37,13 +39,14 @@ resource "infomaniak_kaas_instance_pool" "instance_pool" {
 
 ### Required
 
-- `pcp_id` (String) The id of the public cloud project where KaaS is installed.
-- `kaas_id` (String) The id of the kaas project.
+- `public_cloud_id` (Integer) The id of the Public Cloud where KaaS is installed.
+- `public_cloud_project_id` (Integer) The id of the Public Cloud Project where KaaS is installed.
+- `kaas_id` (Integer) The id of the KaaS project.
 - `name` (String) The name of the instance pool.
 - `flavor_name` (String) The flavor name.
-- `max_instances` (Number) The maximum amount of instances in the pool.
+<!-- - `max_instances` (Number) The maximum amount of instances in the pool. -->
 - `min_instances` (Number) The minimum amount of instances in the pool.
 
 ### Read-Only
 
-- `id` (String) A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.
+- `id` (Integer) A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.
