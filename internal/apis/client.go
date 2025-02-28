@@ -19,8 +19,8 @@ func NewMockClient() *Client {
 }
 
 // NewClient defines the client for Infomaniak's API
-func NewClient(baseUri string) *Client {
+func NewClient(baseUri, token string) *Client {
 	return &Client{
-		Kaas: implem_kaas.New(baseUri),
+		Kaas: implem_kaas.New(baseUri, token),
 	}
 }

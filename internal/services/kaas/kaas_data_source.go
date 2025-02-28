@@ -43,7 +43,7 @@ func (d *kaasDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 		return
 	}
 
-	d.client = data.Client
+	d.client = apis.NewClient(data.Data.Host.ValueString(), data.Data.Token.ValueString())
 }
 
 // Schema defines the schema for the data source.
@@ -65,8 +65,13 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 				Description:         "The id of this KaaS",
 				MarkdownDescription: "The id of this KaaS",
 			},
+			"name": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The name of the KaaS project",
+				MarkdownDescription: "The name of the KaaS project",
+			},
 			"pack_name": schema.StringAttribute{
-				Required:            true,
+				Computed:            true,
 				Description:         "The name of the pack associated to the KaaS project",
 				MarkdownDescription: "The name of the pack associated to the KaaS project",
 			},
@@ -110,7 +115,20 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	data.Kubeconfig = types.StringValue(obj.Kubeconfig)
+	kubeconfig, err := d.client.Kaas.GetKubeconfig(
+		int(data.PublicCloudId.ValueInt64()),
+		int(data.PublicCloudProjectId.ValueInt64()),
+		int(data.Id.ValueInt64()),
+	)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to get kubeconfig from KaaS",
+			err.Error(),
+		)
+		return
+	}
+
+	data.Kubeconfig = types.StringValue(kubeconfig)
 	data.Region = types.StringValue(obj.Region)
 	data.KubernetesVersion = types.StringValue(obj.KubernetesVersion)
 

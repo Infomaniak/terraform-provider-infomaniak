@@ -43,7 +43,7 @@ func (d *kaasInstancePoolDataSource) Configure(_ context.Context, req datasource
 		return
 	}
 
-	d.client = data.Client
+	d.client = apis.NewClient(data.Data.Host.ValueString(), data.Data.Token.ValueString())
 }
 
 // Schema defines the schema for the data source.
@@ -69,6 +69,11 @@ func (d *kaasInstancePoolDataSource) Schema(ctx context.Context, _ datasource.Sc
 			"name": schema.StringAttribute{
 				Computed:    true,
 				Description: "The name of this instance pool",
+			},
+			"availability_zone": schema.StringAttribute{
+				Computed:            true,
+				Description:         "The availability zone for the instances in the pool",
+				MarkdownDescription: "The availability zone for the instances in the pool",
 			},
 			"flavor_name": schema.StringAttribute{
 				Computed:    true,

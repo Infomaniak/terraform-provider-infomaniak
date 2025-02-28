@@ -163,9 +163,10 @@ func TestKaasInstancePoolResource_Plan(t *testing.T) {
 
 func TestKaasInstancePoolResource_Import(t *testing.T) {
 	client := mockKaas.New()
-	k, err := client.CreateKaas(&kaas.Kaas{
+
+	kaasId, err := client.CreateKaas(&kaas.Kaas{
 		Project: kaas.KaasProject{
-			PublicCloudId: 48,
+			PublicCloudId: 536,
 			ProjectId:     451,
 		},
 		Region: "das45",
@@ -174,34 +175,44 @@ func TestKaasInstancePoolResource_Import(t *testing.T) {
 		t.Fatalf("Could not create Kaas for import test, got : %v", err)
 	}
 
+	kaasObject, err := client.GetKaas(536, 451, kaasId)
+	if err != nil {
+		t.Fatalf("Could not get Kaas for import test, got : %v", err)
+	}
+
 	defer func() {
 		// Kaas project should be deleted after instance pool.
-		err = client.DeleteKaas(k.Project.PublicCloudId, k.Project.ProjectId, k.Id)
+		_, err = client.DeleteKaas(kaasObject.Project.PublicCloudId, kaasObject.Project.ProjectId, kaasObject.Id)
 		if err != nil {
 			t.Fatalf("Could not delete Kaas in import test, got : %v", err)
 		}
 	}()
 
-	instancePool, err := client.CreateInstancePool(k.Project.PublicCloudId, k.Project.ProjectId, &kaas.InstancePool{
-		KaasId:       k.Id,
+	instancePoolId, err := client.CreateInstancePool(kaasObject.Project.PublicCloudId, kaasObject.Project.ProjectId, &kaas.InstancePool{
+		KaasId:       kaasObject.Id,
 		Name:         "supername",
 		FlavorName:   "superflavorname",
 		MinInstances: 1,
 		// MaxInstances: 99,
 	})
 	if err != nil {
-		t.Fatalf("Could not create Kaas for import test, got : %v", err)
+		t.Fatalf("Could not create instance pool for import test, got : %v", err)
+	}
+
+	instancePool, err := client.GetInstancePool(kaasObject.Project.PublicCloudId, kaasObject.Project.ProjectId, kaasObject.Id, instancePoolId)
+	if err != nil {
+		t.Fatalf("Could not get instance pool for import test, got : %v", err)
 	}
 
 	defer func() {
-		err = client.DeleteInstancePool(k.Project.PublicCloudId, k.Project.ProjectId, k.Id, instancePool.Id)
+		_, err = client.DeleteInstancePool(kaasObject.Project.PublicCloudId, kaasObject.Project.ProjectId, kaasObject.Id, instancePool.Id)
 		if err != nil {
 			t.Fatalf("Could not delete Kaas in import test, got : %v", err)
 		}
 	}()
 
-	resourcePublicCloudId := k.Project.PublicCloudId
-	resourcePublicCloudProjectId := k.Project.ProjectId
+	resourcePublicCloudId := kaasObject.Project.PublicCloudId
+	resourcePublicCloudProjectId := kaasObject.Project.ProjectId
 	resourceKaasId := instancePool.KaasId
 	resourceId := instancePool.Id
 

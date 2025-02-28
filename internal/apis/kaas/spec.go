@@ -5,12 +5,14 @@ type Api interface {
 	GetVersions() ([]string, error)
 
 	GetKaas(publicCloudId int, publicCloudProjectId int, kaasId int) (*Kaas, error)
-	CreateKaas(input *Kaas) (*Kaas, error)
-	UpdateKaas(input *Kaas) (*Kaas, error)
-	DeleteKaas(publicCloudId int, publicCloudProjectId int, kaasId int) error
+	CreateKaas(input *Kaas) (int, error)
+	UpdateKaas(input *Kaas) (bool, error)
+	DeleteKaas(publicCloudId int, publicCloudProjectId int, kaasId int) (bool, error)
+
+	GetKubeconfig(publicCloudId int, publicCloudProjectId int, kaasId int) (string, error)
 
 	GetInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) (*InstancePool, error)
-	CreateInstancePool(publicCloudId int, publicCloudProjectId int, input *InstancePool) (*InstancePool, error)
-	UpdateInstancePool(publicCloudId int, publicCloudProjectId int, input *InstancePool) (*InstancePool, error)
-	DeleteInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) error
+	CreateInstancePool(publicCloudId int, publicCloudProjectId int, input *InstancePool) (int, error)
+	UpdateInstancePool(publicCloudId int, publicCloudProjectId int, input *InstancePool) (bool, error)
+	DeleteInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) (bool, error)
 }

@@ -8,6 +8,7 @@ import (
 	"flag"
 	"log"
 	"terraform-provider-infomaniak/internal/provider"
+	"terraform-provider-infomaniak/internal/services/kaas"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )
@@ -34,6 +35,9 @@ func main() {
 		Address: "registry.terraform.io/hashicorp/infomaniak",
 		Debug:   debug,
 	}
+
+	// Register resources
+	kaas.Register()
 
 	err := providerserver.Serve(context.Background(), provider.New(version), opts)
 
