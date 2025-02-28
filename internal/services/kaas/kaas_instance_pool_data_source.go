@@ -44,6 +44,9 @@ func (d *kaasInstancePoolDataSource) Configure(_ context.Context, req datasource
 	}
 
 	d.client = apis.NewClient(data.Data.Host.ValueString(), data.Data.Token.ValueString())
+	if data.Version.ValueString() == "test" {
+		d.client = apis.NewMockClient()
+	}
 }
 
 // Schema defines the schema for the data source.

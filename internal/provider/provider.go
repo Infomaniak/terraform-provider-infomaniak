@@ -46,7 +46,8 @@ type IkProvider struct {
 
 // IkProviderData defines the data associated with the provider
 type IkProviderData struct {
-	Data *IkProviderModel
+	Version types.String `tfsdk:"version"`
+	Data    *IkProviderModel
 }
 
 type IkProviderModel struct {
@@ -151,7 +152,8 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
 	}
 
 	p.ik = &IkProviderData{
-		Data: &data,
+		Version: types.StringValue(p.version),
+		Data:    &data,
 	}
 
 	resp.DataSourceData = p.ik
