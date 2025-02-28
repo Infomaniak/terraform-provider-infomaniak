@@ -44,6 +44,8 @@ func (c *Client) GetKaas(publicCloudId int, publicCloudProjectId int, kaasId int
 		return nil, err
 	}
 
+	obj.Status = "Active"
+
 	return obj, nil
 }
 
@@ -61,8 +63,11 @@ func (c *Client) CreateKaas(input *kaas.Kaas) (int, error) {
 	}
 
 	var obj = kaas.Kaas{
-		Project: input.Project,
-		Region:  input.Region,
+		Project:           input.Project,
+		Region:            input.Region,
+		PackId:            input.PackId,
+		KubernetesVersion: input.KubernetesVersion,
+		Name:              input.Name,
 	}
 	obj.Id = genId()
 
@@ -85,7 +90,10 @@ func (c *Client) UpdateKaas(input *kaas.Kaas) (bool, error) {
 		Id:      input.Id,
 		Project: input.Project,
 
-		Region: input.Region,
+		Name:              input.Name,
+		Region:            input.Region,
+		PackId:            input.PackId,
+		KubernetesVersion: input.KubernetesVersion,
 	}
 
 	return true, updateCache(&obj)
@@ -114,6 +122,8 @@ func (c *Client) GetInstancePool(publicCloudId int, publicCloudProjectId int, ka
 	if err != nil {
 		return nil, err
 	}
+
+	obj.Status = "Active"
 
 	return obj, nil
 }
@@ -154,9 +164,10 @@ func (c *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId int,
 		Id:     genId(),
 		KaasId: input.KaasId,
 
-		Name:         input.Name,
-		FlavorName:   input.FlavorName,
-		MinInstances: input.MinInstances,
+		Name:             input.Name,
+		FlavorName:       input.FlavorName,
+		AvailabilityZone: input.AvailabilityZone,
+		MinInstances:     input.MinInstances,
 		// MaxInstances: input.MaxInstances,
 	}
 
@@ -207,9 +218,10 @@ func (c *Client) UpdateInstancePool(publicCloudId int, publicCloudProjectId int,
 		KaasId: input.KaasId,
 		Id:     input.Id,
 
-		Name:         input.Name,
-		FlavorName:   input.FlavorName,
-		MinInstances: input.MinInstances,
+		Name:             input.Name,
+		FlavorName:       input.FlavorName,
+		AvailabilityZone: input.AvailabilityZone,
+		MinInstances:     input.MinInstances,
 		// MaxInstances: input.MaxInstances,
 	}
 

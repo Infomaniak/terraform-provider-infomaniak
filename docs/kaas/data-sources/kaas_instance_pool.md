@@ -32,6 +32,8 @@ data "infomaniak_kaas_instance_pool" "instance_pool" {
 ### Read-Only
 
 - `name` (String) The name of the Instance Pool.
-- `flavor_name` (String) The flavor name
-<!-- - `max_instances` (Number) The maximum amount of instances in the pool. -->
-- `min_instances` (Number) The minimum amount of instances in the pool.
+<!-- - `max_instances` (Integer) The maximum amount of instances in the pool. -->
+- `min_instances` (Integer) The minimum amount of instances in the pool.
+- `name` (String) The name of the KaaS shown on the manager.
+- `availability_zone` (String) The availability zone where the instances will be populated.
+- `flavor_name` (String) The flavor for the instances.

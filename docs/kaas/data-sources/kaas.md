@@ -32,3 +32,6 @@ data "infomaniak_kaas" "kluster" {
 
 - `kubeconfig` (String, Sensitive) The Kubeconfig to access the Kluster.
 - `region` (String) Region where the instance live.
+- `pack_name` (String) The name of the pack corresponding the KaaS project.
+- `kubernetes_version` (String) The version of Kubernetes to use.
+- `name` (String) The name of the KaaS shown on the manager.
