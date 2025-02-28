@@ -6,7 +6,6 @@ package provider
 import (
 	"context"
 	"os"
-	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/provider/registry"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -47,8 +46,6 @@ type IkProvider struct {
 
 // IkProviderData defines the data associated with the provider
 type IkProviderData struct {
-	*apis.Client
-
 	Data *IkProviderModel
 }
 
@@ -154,8 +151,7 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
 	}
 
 	p.ik = &IkProviderData{
-		Client: apis.NewClient(host),
-		Data:   &data,
+		Data: &data,
 	}
 
 	resp.DataSourceData = p.ik
@@ -183,12 +179,7 @@ func New(version string) func() provider.Provider {
 }
 
 func ProtoV6ProviderFactories() map[string]func() (tfprotov6.ProviderServer, error) {
-	provider := New("test")().(*IkProvider)
-	provider.ik = &IkProviderData{
-		Client: apis.NewMockClient(),
-	}
-
 	return map[string]func() (tfprotov6.ProviderServer, error){
-		"infomaniak": providerserver.NewProtocol6WithError(provider),
+		"infomaniak": providerserver.NewProtocol6WithError(New("test")()),
 	}
 }

@@ -140,7 +140,7 @@ func TestKaasResource_Import(t *testing.T) {
 	var resourcePublicCloudId, resourcePublicCloudProjectId, resourceId int
 
 	client := mockKaas.New()
-	k, err := client.CreateKaas(&kaas.Kaas{
+	kaasId, err := client.CreateKaas(&kaas.Kaas{
 		Project: kaas.KaasProject{
 			PublicCloudId: 536,
 			ProjectId:     451,
@@ -150,16 +150,21 @@ func TestKaasResource_Import(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Could not create Kaas for import test, got : %v", err)
 	}
+
+	kaasObject, err := client.GetKaas(536, 451, kaasId)
+	if err != nil {
+		t.Fatalf("Could not get Kaas for import test, got : %v", err)
+	}
 	defer func() {
-		err = client.DeleteKaas(k.Project.PublicCloudId, k.Project.ProjectId, k.Id)
+		_, err = client.DeleteKaas(kaasObject.Project.PublicCloudId, kaasObject.Project.ProjectId, kaasObject.Id)
 		if err != nil {
 			t.Fatalf("Could not delete Kaas in import test, got : %v", err)
 		}
 	}()
 
-	resourceId = k.Id
-	resourcePublicCloudId = k.Project.PublicCloudId
-	resourcePublicCloudProjectId = k.Project.ProjectId
+	resourceId = kaasObject.Id
+	resourcePublicCloudId = kaasObject.Project.PublicCloudId
+	resourcePublicCloudProjectId = kaasObject.Project.ProjectId
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
@@ -174,7 +179,6 @@ func TestKaasResource_Import(t *testing.T) {
 					resource.TestCheckResourceAttr("infomaniak_kaas.kluster", "public_cloud_id", fmt.Sprint(resourcePublicCloudId)),
 					resource.TestCheckResourceAttr("infomaniak_kaas.kluster", "public_cloud_project_id", fmt.Sprint(resourcePublicCloudProjectId)),
 					resource.TestCheckResourceAttr("infomaniak_kaas.kluster", "region", "das45"),
-					resource.TestCheckResourceAttr("infomaniak_kaas.kluster", "kubeconfig", k.Kubeconfig),
 				),
 			},
 		},

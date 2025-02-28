@@ -6,12 +6,11 @@ toolchain go1.23.4
 
 require (
 	github.com/hashicorp/terraform-plugin-framework v1.14.1
-	github.com/hashicorp/terraform-plugin-framework-validators v0.17.0
 	github.com/hashicorp/terraform-plugin-go v0.26.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-testing v1.11.0
 	github.com/stretchr/testify v1.8.3
-	github.com/vitorsalgado/mocha v1.1.0
+	resty.dev/v3 v3.0.0-beta.1
 )
 
 require (

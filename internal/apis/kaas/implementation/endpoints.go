@@ -1,21 +1,13 @@
 package implementation
 
-import (
-	"net/http"
-	"terraform-provider-infomaniak/internal/apis/endpoints"
-)
-
 var (
-	GetPacks    = endpoints.NewEndpoint(http.MethodGet, "/1/public_clouds/kaas/packs")
-	GetVersions = endpoints.NewEndpoint(http.MethodGet, "/1/public_clouds/kaas/versions")
+	EndpointPacks    = "/1/public_clouds/kaas/packs"
+	EndpointVersions = "/1/public_clouds/kaas/versions"
 
-	CreateKaas = endpoints.NewEndpoint(http.MethodPost, "/1/public_clouds/{public_cloud_id}/projects/{project_id}/kaas/")
-	GetKaas    = endpoints.NewEndpoint(http.MethodGet, "/1/public_clouds/{public_cloud_id}/projects/{project_id}/kaas/{kaas_id}/")
-	UpdateKaas = endpoints.NewEndpoint(http.MethodPatch, "/1/public_clouds/{public_cloud_id}/projects/{project_id}/kaas/{kaas_id}/")
-	DeleteKaas = endpoints.NewEndpoint(http.MethodDelete, "/1/public_clouds/{public_cloud_id}/projects/{project_id}/kaas/{kaas_id}/")
+	EndpointKaases         = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/kaas"
+	EndpointKaas           = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/kaas/{kaas_id}"
+	EndpointKaasKubeconfig = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/kaas/{kaas_id}/kube_config"
 
-	CreateInstancePool = endpoints.NewEndpoint(http.MethodPost, "/1/public_clouds/{public_cloud_id}/projects/{project_id}/kaas/{kaas_id}/")
-	GetInstancePool    = endpoints.NewEndpoint(http.MethodGet, "/1/public_clouds/{public_cloud_id}/projects/{project_id}/kaas/{kaas_id}/instance_pools/{kaas_instance_pool_id}/")
-	UpdateInstancePool = endpoints.NewEndpoint(http.MethodPatch, "/1/public_clouds/{public_cloud_id}/projects/{project_id}/kaas/{kaas_id}/instance_pools/{kaas_instance_pool_id}/")
-	DeleteInstancePool = endpoints.NewEndpoint(http.MethodDelete, "/1/public_clouds/{public_cloud_id}/projects/{project_id}/kaas/{kaas_id}/instance_pools/{kaas_instance_pool_id}/")
+	EndpointInstancePools = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/kaas/{kaas_id}/instance_pools"
+	EndpointInstancePool  = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/kaas/{kaas_id}/instance_pools/{kaas_instance_pool_id}"
 )

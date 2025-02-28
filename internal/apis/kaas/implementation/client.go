@@ -1,14 +1,11 @@
 package implementation
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
-	"terraform-provider-infomaniak/internal/apis/endpoints"
+	"terraform-provider-infomaniak/internal/apis/helpers"
 	"terraform-provider-infomaniak/internal/apis/kaas"
+
+	"resty.dev/v3"
 )
 
 // Ensure that our client implements Api
@@ -17,189 +14,246 @@ var (
 )
 
 type Client struct {
-	baseUri    string
-	httpClient *http.Client
+	resty *resty.Client
 }
 
-func New(baseUri string) *Client {
+func New(baseUri, token string) *Client {
 	return &Client{
-		baseUri:    baseUri,
-		httpClient: http.DefaultClient,
+		resty: resty.New().
+			SetBaseURL(baseUri).
+			SetAuthToken(token),
 	}
-}
-
-type ApiResponse[K any] struct {
-	Result string `json:"result"`
-	Data   K
-}
-
-// UnmarshalResponse unmarshal a http response into a struct,
-// The body must not be closed for this to work properly
-func UnmarshalResponse[K any](response *http.Response, result *K) error {
-	if result == nil {
-		return fmt.Errorf("result musn't be nil")
-	}
-
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		return err
-	}
-
-	var parsedResponse ApiResponse[K]
-
-	err = json.Unmarshal(body, &parsedResponse)
-	*result = parsedResponse.Data
-	return err
-}
-
-func (client *Client) Do(route *endpoints.CompiledEndpoint, data any) (*http.Response, error) {
-	uri, err := url.JoinPath(client.baseUri, route.URL)
-	if err != nil {
-		return nil, err
-	}
-
-	var body io.Reader = nil
-	if data != nil {
-		rawData, err := json.Marshal(data)
-		if err != nil {
-			return nil, err
-		}
-
-		body = bytes.NewReader(rawData)
-	}
-
-	req, err := http.NewRequest(route.Endpoint.Method, uri, body)
-	if err != nil {
-		return nil, err
-	}
-
-	return client.httpClient.Do(req)
 }
 
 func (client *Client) GetPacks() ([]*kaas.KaasPack, error) {
-	compiledRoute, err := GetPacks.Compile(nil)
+	var result helpers.NormalizedApiResponse[[]*kaas.KaasPack]
+
+	resp, err := client.resty.R().
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointPacks)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := client.Do(compiledRoute, nil)
-	if err != nil {
-		return nil, err
+	if resp.IsError() {
+		return nil, result.Error
 	}
 
-	var result []*kaas.KaasPack
-	err = UnmarshalResponse(response, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	return result.Data, nil
 }
 
 func (client *Client) GetVersions() ([]string, error) {
-	compiledRoute, err := GetVersions.Compile(nil)
+	var result helpers.NormalizedApiResponse[[]string]
+
+	resp, err := client.resty.R().
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointVersions)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := client.Do(compiledRoute, nil)
-	if err != nil {
-		return nil, err
+	if resp.IsError() {
+		return nil, result.Error
 	}
 
-	var result []string
-	err = UnmarshalResponse(response, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	return result.Data, nil
 }
 
 func (client *Client) GetKaas(publicCloudId int, publicCloudProjectId int, kaasId int) (*kaas.Kaas, error) {
-	compiledRoute, err := GetKaas.Compile(nil, publicCloudId, publicCloudProjectId, kaasId)
+	var result helpers.NormalizedApiResponse[*kaas.Kaas]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
+		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
+		SetQueryParam("with", "all").
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointKaas)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := client.Do(compiledRoute, nil)
-	if err != nil {
-		return nil, err
+	if resp.IsError() {
+		return nil, result.Error
 	}
 
-	var result kaas.Kaas
-	err = UnmarshalResponse(response, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return &result, nil
+	return result.Data, nil
 }
 
-func (client *Client) CreateKaas(input *kaas.Kaas) (*kaas.Kaas, error) {
-	if input.Project.PublicCloudId == 0 {
-		return nil, fmt.Errorf("kaas is missing public cloud id")
-	}
+func (client *Client) GetKubeconfig(publicCloudId int, publicCloudProjectId int, kaasId int) (string, error) {
+	var result helpers.NormalizedApiResponse[string]
 
-	if input.Project.ProjectId == 0 {
-		return nil, fmt.Errorf("kaas is missing public cloud project id")
-	}
-
-	compiledRoute, err := CreateKaas.Compile(nil, input.Project.PublicCloudId, input.Project.ProjectId)
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
+		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointKaasKubeconfig)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	response, err := client.Do(compiledRoute, nil)
-	if err != nil {
-		return nil, err
+	if resp.IsError() {
+		return "", result.Error
 	}
 
-	var result kaas.InstancePool
-	err = UnmarshalResponse(response, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return nil, nil
+	return result.Data, nil
 }
 
-func (client *Client) UpdateKaas(input *kaas.Kaas) (*kaas.Kaas, error) {
-	return nil, nil
+func (client *Client) CreateKaas(input *kaas.Kaas) (int, error) {
+	var result helpers.NormalizedApiResponse[int]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(input.Project.PublicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(input.Project.ProjectId)).
+		SetBody(input).
+		SetResult(&result).
+		SetError(&result).
+		Post(EndpointKaases)
+	if err != nil {
+		return 0, err
+	}
+
+	if resp.IsError() {
+		return 0, result.Error
+	}
+
+	return result.Data, nil
 }
 
-func (client *Client) DeleteKaas(publicCloudId int, publicCloudProjectId int, kaasId int) error {
-	return nil
+func (client *Client) UpdateKaas(input *kaas.Kaas) (bool, error) {
+	var result helpers.NormalizedApiResponse[bool]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(input.Project.PublicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(input.Project.ProjectId)).
+		SetPathParam("kaas_id", fmt.Sprint(input.Id)).
+		SetBody(input).
+		SetResult(&result).
+		SetError(&result).
+		Patch(EndpointKaas)
+	if err != nil {
+		return false, err
+	}
+
+	if resp.IsError() {
+		return false, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) DeleteKaas(publicCloudId int, publicCloudProjectId int, kaasId int) (bool, error) {
+	var result helpers.NormalizedApiResponse[bool]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
+		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
+		SetResult(&result).
+		SetError(&result).
+		Delete(EndpointKaas)
+	if err != nil {
+		return false, err
+	}
+
+	if resp.IsError() {
+		return false, result.Error
+	}
+
+	return result.Data, nil
 }
 
 func (client *Client) GetInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) (*kaas.InstancePool, error) {
-	compiledRoute, err := GetInstancePool.Compile(nil, publicCloudId, publicCloudProjectId, kaasId, instancePoolId)
+	var result helpers.NormalizedApiResponse[*kaas.InstancePool]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
+		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
+		SetPathParam("kaas_instance_pool_id", fmt.Sprint(instancePoolId)).
+		SetQueryParam("with", "all").
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointInstancePool)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := client.Do(compiledRoute, nil)
-	if err != nil {
-		return nil, err
+	if resp.IsError() {
+		return nil, result.Error
 	}
 
-	var result kaas.InstancePool
-	err = UnmarshalResponse(response, &result)
+	return result.Data, nil
+}
+
+func (client *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId int, input *kaas.InstancePool) (int, error) {
+	var result helpers.NormalizedApiResponse[int]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
+		SetPathParam("kaas_id", fmt.Sprint(input.KaasId)).
+		SetBody(input).
+		SetResult(&result).
+		SetError(&result).
+		Post(EndpointInstancePools)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	return &result, nil
+	if resp.IsError() {
+		return 0, result.Error
+	}
+
+	return result.Data, nil
 }
 
-func (client *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId int, input *kaas.InstancePool) (*kaas.InstancePool, error) {
-	return nil, nil
+func (client *Client) UpdateInstancePool(publicCloudId int, publicCloudProjectId int, input *kaas.InstancePool) (bool, error) {
+	var result helpers.NormalizedApiResponse[bool]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
+		SetPathParam("kaas_id", fmt.Sprint(input.KaasId)).
+		SetPathParam("kaas_instance_pool_id", fmt.Sprint(input.Id)).
+		SetBody(input).
+		SetResult(&result).
+		SetError(&result).
+		Patch(EndpointInstancePool)
+	if err != nil {
+		return false, err
+	}
+
+	if resp.IsError() {
+		return false, result.Error
+	}
+
+	return result.Data, nil
 }
 
-func (client *Client) UpdateInstancePool(publicCloudId int, publicCloudProjectId int, input *kaas.InstancePool) (*kaas.InstancePool, error) {
-	return nil, nil
-}
+func (client *Client) DeleteInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) (bool, error) {
+	var result helpers.NormalizedApiResponse[bool]
 
-func (client *Client) DeleteInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) error {
-	return nil
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
+		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
+		SetPathParam("kaas_instance_pool_id", fmt.Sprint(instancePoolId)).
+		SetResult(&result).
+		SetError(&result).
+		Delete(EndpointInstancePool)
+	if err != nil {
+		return false, err
+	}
+
+	if resp.IsError() {
+		return false, result.Error
+	}
+
+	return result.Data, nil
 }

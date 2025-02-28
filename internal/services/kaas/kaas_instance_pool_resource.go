@@ -7,10 +7,13 @@ import (
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/kaas"
 	"terraform-provider-infomaniak/internal/provider"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -35,10 +38,11 @@ type KaasInstancePoolModel struct {
 	KaasId               types.Int64 `tfsdk:"kaas_id"`
 	Id                   types.Int64 `tfsdk:"id"`
 
-	Name         types.String `tfsdk:"name"`
-	FlavorName   types.String `tfsdk:"flavor_name"`
-	MinInstances types.Int32  `tfsdk:"min_instances"`
-	MaxInstances types.Int32  `tfsdk:"max_instances"`
+	Name             types.String `tfsdk:"name"`
+	AvailabilityZone types.String `tfsdk:"availability_zone"`
+	FlavorName       types.String `tfsdk:"flavor_name"`
+	MinInstances     types.Int32  `tfsdk:"min_instances"`
+	// MaxInstances types.Int32  `tfsdk:"max_instances"`
 }
 
 func (r *kaasInstancePoolResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -62,48 +66,56 @@ func (r *kaasInstancePoolResource) Configure(_ context.Context, req resource.Con
 		return
 	}
 
-	r.client = data.Client
+	r.client = apis.NewClient(data.Data.Host.ValueString(), data.Data.Token.ValueString())
 }
 
 func (r *kaasInstancePoolResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"public_cloud_id": schema.StringAttribute{
+			"public_cloud_id": schema.Int64Attribute{
 				Required:            true,
 				Description:         "The id of the public cloud project where KaaS is installed",
 				MarkdownDescription: "The id of the public cloud project where KaaS is installed",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
 				},
 			},
-			"public_cloud_project_id": schema.StringAttribute{
+			"public_cloud_project_id": schema.Int64Attribute{
 				Required:            true,
 				Description:         "The id of the public cloud project where KaaS is installed",
 				MarkdownDescription: "The id of the public cloud project where KaaS is installed",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
 				},
 			},
-			"kaas_id": schema.StringAttribute{
+			"kaas_id": schema.Int64Attribute{
 				Required:            true,
 				Description:         "The id of the kaas project.",
 				MarkdownDescription: "The id of the kaas project.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
 				},
 			},
-			"id": schema.StringAttribute{
+			"id": schema.Int64Attribute{
 				Computed:            true,
 				Description:         "A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.",
 				MarkdownDescription: "A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
 				Description:         "The name of the instance pool",
 				MarkdownDescription: "The name of the instance pool",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"availability_zone": schema.StringAttribute{
+				Required:            true,
+				Description:         "The availability zone for the instances in the pool",
+				MarkdownDescription: "The availability zone for the instances in the pool",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -120,6 +132,9 @@ func (r *kaasInstancePoolResource) Schema(ctx context.Context, req resource.Sche
 				Required:            true,
 				Description:         "The minimum instances in this instance pool (should be equal to max_instance until the AutoScaling feature is released)",
 				MarkdownDescription: "The minimum instances in this instance pool (should be equal to max_instance until the AutoScaling feature is released)",
+				PlanModifiers: []planmodifier.Int32{
+					int32planmodifier.UseStateForUnknown(),
+				},
 			},
 			// "max_instances": schema.Int32Attribute{
 			// 	Required:            true,
@@ -142,15 +157,16 @@ func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.Crea
 	}
 
 	input := &kaas.InstancePool{
-		KaasId:       int(data.KaasId.ValueInt64()),
-		Name:         data.Name.ValueString(),
-		FlavorName:   data.FlavorName.ValueString(),
-		MinInstances: data.MinInstances.ValueInt32(),
+		KaasId:           int(data.KaasId.ValueInt64()),
+		Name:             data.Name.ValueString(),
+		AvailabilityZone: data.AvailabilityZone.ValueString(),
+		FlavorName:       data.FlavorName.ValueString(),
+		MinInstances:     data.MinInstances.ValueInt32(),
 		// MaxInstances: data.MaxInstances.ValueInt32(),
 	}
 
 	// CreateKaas API call logic
-	obj, err := r.client.Kaas.CreateInstancePool(
+	instancePoolId, err := r.client.Kaas.CreateInstancePool(
 		int(data.PublicCloudId.ValueInt64()),
 		int(data.PublicCloudProjectId.ValueInt64()),
 		input,
@@ -163,10 +179,44 @@ func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.Crea
 		return
 	}
 
-	data.Id = types.Int64Value(int64(obj.Id))
-	data.Name = types.StringValue(obj.Name)
-	data.FlavorName = types.StringValue(obj.FlavorName)
-	data.MinInstances = types.Int32Value(obj.MinInstances)
+	data.Id = types.Int64Value(int64(instancePoolId))
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
+	var instancePoolObject *kaas.InstancePool
+
+	for {
+		found, err := r.client.Kaas.GetInstancePool(
+			int(data.PublicCloudId.ValueInt64()),
+			int(data.PublicCloudProjectId.ValueInt64()),
+			int(data.KaasId.ValueInt64()),
+			instancePoolId,
+		)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error when getting KaaS Instance Pool",
+				err.Error(),
+			)
+			return
+		}
+
+		if ctx.Err() != nil {
+			return
+		}
+
+		if found.Status == "Active" {
+			break
+		}
+
+		time.Sleep(5 * time.Second)
+
+		instancePoolObject = found
+	}
+
+	data.Id = types.Int64Value(int64(instancePoolObject.Id))
+	data.Name = types.StringValue(instancePoolObject.Name)
+	data.AvailabilityZone = types.StringValue(instancePoolObject.AvailabilityZone)
+	data.FlavorName = types.StringValue(instancePoolObject.FlavorName)
+	data.MinInstances = types.Int32Value(instancePoolObject.MinInstances)
 	// data.MaxInstances = types.Int32Value(obj.MaxInstances)
 
 	// Save data into Terraform state
@@ -192,7 +242,7 @@ func (r *kaasInstancePoolResource) Read(ctx context.Context, req resource.ReadRe
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error when reading KaaS",
+			"Error when reading KaaS Instance Pool",
 			err.Error(),
 		)
 		return
@@ -231,23 +281,37 @@ func (r *kaasInstancePoolResource) Update(ctx context.Context, req resource.Upda
 		// MaxInstances: data.MaxInstances.ValueInt32(),
 	}
 
-	obj, err := r.client.Kaas.UpdateInstancePool(
+	_, err := r.client.Kaas.UpdateInstancePool(
 		int(data.PublicCloudId.ValueInt64()),
 		int(data.PublicCloudProjectId.ValueInt64()),
 		input,
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error when updating KaaS",
+			"Error when updating KaaS Instance Pool",
 			err.Error(),
 		)
 		return
 	}
 
-	data.Id = types.Int64Value(int64(obj.Id))
-	data.Name = types.StringValue(obj.Name)
-	data.FlavorName = types.StringValue(obj.FlavorName)
-	data.MinInstances = types.Int32Value(obj.MinInstances)
+	instancePoolObject, err := r.client.Kaas.GetInstancePool(
+		int(data.PublicCloudId.ValueInt64()),
+		int(data.PublicCloudProjectId.ValueInt64()),
+		int(data.KaasId.ValueInt64()),
+		int(state.Id.ValueInt64()),
+	)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when getting KaaS Instance Pool",
+			err.Error(),
+		)
+		return
+	}
+
+	data.Id = types.Int64Value(int64(instancePoolObject.Id))
+	data.Name = types.StringValue(instancePoolObject.Name)
+	data.FlavorName = types.StringValue(instancePoolObject.FlavorName)
+	data.MinInstances = types.Int32Value(instancePoolObject.MinInstances)
 	// data.MaxInstances = types.Int32Value(obj.MaxInstances)
 
 	// Save updated data into Terraform state
@@ -265,7 +329,7 @@ func (r *kaasInstancePoolResource) Delete(ctx context.Context, req resource.Dele
 	}
 
 	// DeleteKaas API call logic
-	err := r.client.Kaas.DeleteInstancePool(
+	_, err := r.client.Kaas.DeleteInstancePool(
 		int(data.PublicCloudId.ValueInt64()),
 		int(data.PublicCloudProjectId.ValueInt64()),
 		int(data.KaasId.ValueInt64()),

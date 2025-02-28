@@ -28,6 +28,7 @@ func NewEndpoint(method string, route string) *Endpoint {
 type CompiledEndpoint struct {
 	Endpoint *Endpoint
 	URL      string
+	Values   QueryValues
 }
 
 // QueryValues holds key value pairs of query values
@@ -62,13 +63,9 @@ func (e *Endpoint) Compile(values QueryValues, params ...any) (*CompiledEndpoint
 		path = path[:matchStart] + paramValue + path[matchEnd:]
 	}
 
-	query := values.Encode()
-	if query != "" {
-		query = "?" + query
-	}
-
 	return &CompiledEndpoint{
 		Endpoint: e,
-		URL:      path + query,
+		URL:      path,
+		Values:   values,
 	}, nil
 }

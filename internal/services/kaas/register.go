@@ -2,7 +2,7 @@ package kaas
 
 import "terraform-provider-infomaniak/internal/provider/registry"
 
-func init() {
+func Register() {
 	registry.RegisterResource(NewKaasResource)
 	registry.RegisterResource(NewKaasInstancePoolResource)
 
