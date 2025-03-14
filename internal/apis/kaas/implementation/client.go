@@ -68,7 +68,7 @@ func (client *Client) GetKaas(publicCloudId int, publicCloudProjectId int, kaasI
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
-		SetQueryParam("with", "all").
+		SetQueryParam("with", "packs,projects,instances,tags").
 		SetResult(&result).
 		SetError(&result).
 		Get(EndpointKaas)
@@ -176,7 +176,6 @@ func (client *Client) GetInstancePool(publicCloudId int, publicCloudProjectId in
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
 		SetPathParam("kaas_instance_pool_id", fmt.Sprint(instancePoolId)).
-		SetQueryParam("with", "all").
 		SetResult(&result).
 		SetError(&result).
 		Get(EndpointInstancePool)

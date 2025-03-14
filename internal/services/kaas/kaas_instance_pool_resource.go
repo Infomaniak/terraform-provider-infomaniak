@@ -79,8 +79,8 @@ func (r *kaasInstancePoolResource) Schema(ctx context.Context, req resource.Sche
 		Attributes: map[string]schema.Attribute{
 			"public_cloud_id": schema.Int64Attribute{
 				Required:            true,
-				Description:         "The id of the public cloud project where KaaS is installed",
-				MarkdownDescription: "The id of the public cloud project where KaaS is installed",
+				Description:         "The id of the public cloud where KaaS is installed",
+				MarkdownDescription: "The id of the public cloud where KaaS is installed",
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
