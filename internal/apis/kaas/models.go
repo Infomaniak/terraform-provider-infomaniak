@@ -13,6 +13,7 @@ type Kaas struct {
 	Id      int         `json:"kaas_id,omitempty"`
 	Project KaasProject `json:"project,omitempty"`
 	PackId  int         `json:"kaas_pack_id,omitempty"`
+	Pack    *KaasPack   `json:"pack,omitempty"`
 
 	Region            string `json:"region,omitempty"`
 	KubernetesVersion string `json:"kubernetes_version,omitempty"`

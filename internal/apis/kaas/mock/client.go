@@ -65,7 +65,7 @@ func (c *Client) CreateKaas(input *kaas.Kaas) (int, error) {
 	var obj = kaas.Kaas{
 		Project:           input.Project,
 		Region:            input.Region,
-		PackId:            input.PackId,
+		Pack:              input.Pack,
 		KubernetesVersion: input.KubernetesVersion,
 		Name:              input.Name,
 	}
@@ -92,7 +92,7 @@ func (c *Client) UpdateKaas(input *kaas.Kaas) (bool, error) {
 
 		Name:              input.Name,
 		Region:            input.Region,
-		PackId:            input.PackId,
+		Pack:              input.Pack,
 		KubernetesVersion: input.KubernetesVersion,
 	}
 
