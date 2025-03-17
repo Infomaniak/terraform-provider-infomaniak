@@ -202,9 +202,9 @@ func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.Crea
 
 	data.Id = types.Int64Value(int64(instancePoolObject.Id))
 	data.Name = types.StringValue(instancePoolObject.Name)
-	data.AvailabilityZone = types.StringValue(instancePoolObject.AvailabilityZone)
 	data.FlavorName = types.StringValue(instancePoolObject.FlavorName)
 	data.MinInstances = types.Int32Value(instancePoolObject.MinInstances)
+	data.AvailabilityZone = types.StringValue(instancePoolObject.AvailabilityZone)
 	// data.MaxInstances = types.Int32Value(obj.MaxInstances)
 
 	// Save data into Terraform state
@@ -265,6 +265,7 @@ func (r *kaasInstancePoolResource) Read(ctx context.Context, req resource.ReadRe
 	data.Name = types.StringValue(obj.Name)
 	data.FlavorName = types.StringValue(obj.FlavorName)
 	data.MinInstances = types.Int32Value(obj.MinInstances)
+	data.AvailabilityZone = types.StringValue(obj.AvailabilityZone)
 	// data.MaxInstances = types.Int32Value(obj.MaxInstances)
 
 	// Save updated data into Terraform state
