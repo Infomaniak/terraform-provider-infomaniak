@@ -200,12 +200,7 @@ func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.Crea
 		return
 	}
 
-	data.Id = types.Int64Value(int64(instancePoolObject.Id))
-	data.Name = types.StringValue(instancePoolObject.Name)
-	data.FlavorName = types.StringValue(instancePoolObject.FlavorName)
-	data.MinInstances = types.Int32Value(instancePoolObject.MinInstances)
-	data.AvailabilityZone = types.StringValue(instancePoolObject.AvailabilityZone)
-	// data.MaxInstances = types.Int32Value(obj.MaxInstances)
+	data.fill(instancePoolObject)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -261,12 +256,7 @@ func (r *kaasInstancePoolResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
-	data.Id = types.Int64Value(int64(obj.Id))
-	data.Name = types.StringValue(obj.Name)
-	data.FlavorName = types.StringValue(obj.FlavorName)
-	data.MinInstances = types.Int32Value(obj.MinInstances)
-	data.AvailabilityZone = types.StringValue(obj.AvailabilityZone)
-	// data.MaxInstances = types.Int32Value(obj.MaxInstances)
+	data.fill(obj)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -325,12 +315,7 @@ func (r *kaasInstancePoolResource) Update(ctx context.Context, req resource.Upda
 		return
 	}
 
-	data.Id = types.Int64Value(int64(instancePoolObject.Id))
-	data.Name = types.StringValue(instancePoolObject.Name)
-	data.FlavorName = types.StringValue(instancePoolObject.FlavorName)
-	data.MinInstances = types.Int32Value(instancePoolObject.MinInstances)
-	data.AvailabilityZone = types.StringValue(instancePoolObject.AvailabilityZone)
-	// data.MaxInstances = types.Int32Value(obj.MaxInstances)
+	data.fill(instancePoolObject)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -396,4 +381,13 @@ func (r *kaasInstancePoolResource) ImportState(ctx context.Context, req resource
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_project_id"), publicCloudProjectId)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("kaas_id"), kaasId)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), instancePoolId)...)
+}
+
+func (model *KaasInstancePoolModel) fill(instancePool *kaas.InstancePool) {
+	model.Id = types.Int64Value(int64(instancePool.Id))
+	model.Name = types.StringValue(instancePool.Name)
+	model.FlavorName = types.StringValue(instancePool.FlavorName)
+	model.MinInstances = types.Int32Value(instancePool.MinInstances)
+	model.AvailabilityZone = types.StringValue(instancePool.AvailabilityZone)
+	// data.MaxInstances = types.Int32Value(obj.MaxInstances)
 }
