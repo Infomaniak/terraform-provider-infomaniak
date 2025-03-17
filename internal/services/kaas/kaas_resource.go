@@ -210,6 +210,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 	data.Region = types.StringValue(kaasObject.Region)
 	data.KubernetesVersion = types.StringValue(kaasObject.KubernetesVersion)
 	data.Name = types.StringValue(kaasObject.Name)
+	data.PackName = types.StringValue(kaasObject.Pack.Name)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -349,6 +350,7 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	data.PackName = types.StringValue(chosenPackState.Name)
 	data.KubernetesVersion = types.StringValue(kaasObject.KubernetesVersion)
 	data.Name = types.StringValue(kaasObject.Name)
+	state.PackName = types.StringValue(kaasObject.Pack.Name)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
