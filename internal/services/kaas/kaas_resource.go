@@ -171,8 +171,6 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 		PackId:            chosenPack.Id,
 	}
 
-	var kaasObject *kaas.Kaas
-
 	// CreateKaas API call logic
 	kaasId, err := r.client.Kaas.CreateKaas(input)
 	if err != nil {
@@ -186,26 +184,17 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 	data.Id = types.Int64Value(int64(kaasId))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
-	for {
-		found, err := r.client.Kaas.GetKaas(input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error when getting KaaS",
-				err.Error(),
-			)
-			return
-		}
+	kaasObject, err := r.waitUntilActive(ctx, input, kaasId)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when waiting for KaaS to be Active",
+			err.Error(),
+		)
+		return
+	}
 
-		if ctx.Err() != nil {
-			return
-		}
-
-		kaasObject = found
-		if found.Status == "Active" {
-			break
-		}
-
-		time.Sleep(5 * time.Second)
+	if kaasObject == nil {
+		return
 	}
 
 	// Wait for kubeconfig to be available
@@ -224,6 +213,25 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *kaasResource) waitUntilActive(ctx context.Context, kaas *kaas.Kaas, id int) (*kaas.Kaas, error) {
+	for {
+		found, err := r.client.Kaas.GetKaas(kaas.Project.PublicCloudId, kaas.Project.ProjectId, id)
+		if err != nil {
+			return nil, err
+		}
+
+		if ctx.Err() != nil {
+			return nil, nil
+		}
+
+		if found.Status == "Active" {
+			return found, nil
+		}
+
+		time.Sleep(5 * time.Second)
+	}
 }
 
 func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -308,16 +316,16 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	kaasObject, err := r.client.Kaas.GetKaas(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(state.Id.ValueInt64()),
-	)
+	kaasObject, err := r.waitUntilActive(ctx, input, input.Id)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error when getting KaaS",
 			err.Error(),
 		)
+		return
+	}
+
+	if kaasObject == nil {
 		return
 	}
 
