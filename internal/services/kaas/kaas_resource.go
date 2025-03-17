@@ -272,6 +272,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	state.Region = types.StringValue(kaasObject.Region)
 	state.KubernetesVersion = types.StringValue(kaasObject.KubernetesVersion)
 	state.Name = types.StringValue(kaasObject.Name)
+	state.PackName = types.StringValue(kaasObject.Pack.Name)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
