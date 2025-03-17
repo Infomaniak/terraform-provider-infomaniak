@@ -187,33 +187,17 @@ func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.Crea
 	data.Id = types.Int64Value(int64(instancePoolId))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
-	var instancePoolObject *kaas.InstancePool
-
-	for {
-		found, err := r.client.Kaas.GetInstancePool(
-			int(data.PublicCloudId.ValueInt64()),
-			int(data.PublicCloudProjectId.ValueInt64()),
-			int(data.KaasId.ValueInt64()),
-			instancePoolId,
+	instancePoolObject, err := r.waitUntilActive(ctx, data, instancePoolId)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when waiting for KaaS Instance Pool to be Active",
+			err.Error(),
 		)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error when getting KaaS Instance Pool",
-				err.Error(),
-			)
-			return
-		}
+		return
+	}
 
-		if ctx.Err() != nil {
-			return
-		}
-
-		instancePoolObject = found
-		if found.Status == "Active" {
-			break
-		}
-
-		time.Sleep(5 * time.Second)
+	if instancePoolObject == nil {
+		return
 	}
 
 	data.Id = types.Int64Value(int64(instancePoolObject.Id))
@@ -225,6 +209,31 @@ func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.Crea
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data KaasInstancePoolModel, id int) (*kaas.InstancePool, error) {
+	for {
+		found, err := r.client.Kaas.GetInstancePool(
+			int(data.PublicCloudId.ValueInt64()),
+			int(data.PublicCloudProjectId.ValueInt64()),
+			int(data.KaasId.ValueInt64()),
+			id,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if ctx.Err() != nil {
+			return nil, nil
+		}
+
+		// TODO: Should compare actual amount with data.MinInstances.ValueInt32()
+		if found.Status == "Active" {
+			return found, nil
+		}
+
+		time.Sleep(5 * time.Second)
+	}
 }
 
 func (r *kaasInstancePoolResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -298,17 +307,20 @@ func (r *kaasInstancePoolResource) Update(ctx context.Context, req resource.Upda
 		return
 	}
 
-	instancePoolObject, err := r.client.Kaas.GetInstancePool(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(data.KaasId.ValueInt64()),
-		int(state.Id.ValueInt64()),
-	)
+	// TODO: Fix this and wait for an amount of instance instead of waiting for a status
+	// See : https://github.com/Infomaniak/terraform-provider-infomaniak/issues/7
+	time.Sleep(5 * time.Second)
+
+	instancePoolObject, err := r.waitUntilActive(ctx, data, int(state.Id.ValueInt64()))
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error when getting KaaS Instance Pool",
+			"Error when waiting for KaaS Instance Pool to be Active",
 			err.Error(),
 		)
+		return
+	}
+
+	if instancePoolObject == nil {
 		return
 	}
 
