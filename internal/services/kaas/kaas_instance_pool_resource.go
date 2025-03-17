@@ -328,6 +328,7 @@ func (r *kaasInstancePoolResource) Update(ctx context.Context, req resource.Upda
 	data.Name = types.StringValue(instancePoolObject.Name)
 	data.FlavorName = types.StringValue(instancePoolObject.FlavorName)
 	data.MinInstances = types.Int32Value(instancePoolObject.MinInstances)
+	data.AvailabilityZone = types.StringValue(instancePoolObject.AvailabilityZone)
 	// data.MaxInstances = types.Int32Value(obj.MaxInstances)
 
 	// Save updated data into Terraform state
