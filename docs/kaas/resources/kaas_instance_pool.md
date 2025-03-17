@@ -20,7 +20,10 @@ resource "infomaniak_kaas" "kluster" {
   public_cloud_id = xxxxx
   public_cloud_project_id = yyyyy
 
-  region = "yyyyy"
+  name = "kaastor"
+  pack_name = "shared"
+  kubernetes_version = "1.31"
+  region = "zzzzz"
 }
 
 resource "infomaniak_kaas_instance_pool" "instance_pool" {
