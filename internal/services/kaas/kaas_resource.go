@@ -206,11 +206,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 		)
 	}
 
-	data.Kubeconfig = types.StringValue(kubeconfig)
-	data.Region = types.StringValue(kaasObject.Region)
-	data.KubernetesVersion = types.StringValue(kaasObject.KubernetesVersion)
-	data.Name = types.StringValue(kaasObject.Name)
-	data.PackName = types.StringValue(kaasObject.Pack.Name)
+	data.fill(kaasObject, kubeconfig)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -268,12 +264,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		)
 	}
 
-	state.Id = types.Int64Value(int64(kaasObject.Id))
-	state.Kubeconfig = types.StringValue(kubeconfig)
-	state.Region = types.StringValue(kaasObject.Region)
-	state.KubernetesVersion = types.StringValue(kaasObject.KubernetesVersion)
-	state.Name = types.StringValue(kaasObject.Name)
-	state.PackName = types.StringValue(kaasObject.Pack.Name)
+	state.fill(kaasObject, kubeconfig)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -344,13 +335,7 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		)
 	}
 
-	data.Id = types.Int64Value(int64(kaasObject.Id))
-	data.Kubeconfig = types.StringValue(kubeconfig)
-	data.Region = types.StringValue(kaasObject.Region)
-	data.PackName = types.StringValue(chosenPackState.Name)
-	data.KubernetesVersion = types.StringValue(kaasObject.KubernetesVersion)
-	data.Name = types.StringValue(kaasObject.Name)
-	state.PackName = types.StringValue(kaasObject.Pack.Name)
+	data.fill(kaasObject, kubeconfig)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -446,4 +431,13 @@ func (r *kaasResource) getPackId(data KaasModel, diagnostic *diag.Diagnostics) (
 	}
 
 	return chosenPack, nil
+}
+
+func (model *KaasModel) fill(kaas *kaas.Kaas, kubeconfig string) {
+	model.Id = types.Int64Value(int64(kaas.Id))
+	model.Kubeconfig = types.StringValue(kubeconfig)
+	model.Region = types.StringValue(kaas.Region)
+	model.KubernetesVersion = types.StringValue(kaas.KubernetesVersion)
+	model.Name = types.StringValue(kaas.Name)
+	model.PackName = types.StringValue(kaas.Pack.Name)
 }
