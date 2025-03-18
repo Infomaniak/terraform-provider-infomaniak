@@ -1,6 +1,6 @@
 ---
 page_title: "infomaniak_kaas_instance_pool"
-subcategory: ""
+subcategory: "KaaS"
 description: |-
   The Kaas Instance Pool Data Source allows the user to read information about a Kaas project
 ---

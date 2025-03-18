@@ -15,13 +15,13 @@ Use the navigation on the left to read about the available resources.
 
 ## Configuration
 
-To configure the project you will need an API token, instructions on how to generate one may be found [https://www.infomaniak.com/en/support/faq/2582/generate-and-manage-infomaniak-api-tokens](here).
+To configure the project you will need an API token, instructions on how to generate one may be found [here](https://www.infomaniak.com/en/support/faq/2582/generate-and-manage-infomaniak-api-tokens).
 
 ```hcl
 terraform {
   required_providers {
     infomaniak = {
-      source = "infomaniak/infomaniak"
+      source = "Infomaniak/infomaniak"
     }
   }
 }

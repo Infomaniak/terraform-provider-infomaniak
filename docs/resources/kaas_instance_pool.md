@@ -1,6 +1,6 @@
 ---
 page_title: "infomaniak_kaas_instance_pool"
-subcategory: ""
+subcategory: "KaaS"
 description: |-
   The Kaas Instance Pools resource is used to manage Instance Pools inside a Kaas project
 ---

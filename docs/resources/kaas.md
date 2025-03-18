@@ -1,6 +1,6 @@
 ---
 page_title: "infomaniak_kaas"
-subcategory: ""
+subcategory: "KaaS"
 description: |-
   The Kaas resource allows the user to manage a Kaas project
 ---
