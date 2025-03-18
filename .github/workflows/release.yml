@@ -31,6 +31,7 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
+          fingerprint: ${{ secrets.FINGERPRINT }}
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@90a3faa9d0182683851fbfa97ca1a2cb983bfca3 # v6.2.1
         with:
