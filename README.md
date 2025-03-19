@@ -30,7 +30,7 @@ You need to replace $GOPATH/bin with the actual location of the binary on your s
 provider_installation {
 
   dev_overrides {
-      "registry.terraform.io/hashicorp/infomaniak" = "$GOPATH/bin"
+      "registry.terraform.io/infomaniak/infomaniak" = "$GOPATH/bin"
   }
 
   # For all other providers, install them directly from their origin provider
