@@ -134,8 +134,10 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
 
 	if host == "" {
 		host = DefaultHost
-		data.Host = types.StringValue(host)
 	}
+
+	data.Host = types.StringValue(host)
+	data.Token = types.StringValue(token)
 
 	if token == "" {
 		resp.Diagnostics.AddAttributeError(
