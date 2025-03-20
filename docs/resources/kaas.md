@@ -9,6 +9,18 @@ description: |-
 
 The Kaas resource allows the user to manage a Kaas project.
 
+To get your `public_cloud_id`:
+```sh
+account_id=$(curl -s -H "Authorization: Bearer $INFOMANIAK_TOKEN" https://api.infomaniak.com/2/profile | jq '.data.preferences.account.current_account_id')
+curl -s -H "Authorization: Bearer $INFOMANIAK_TOKEN" https://api.infomaniak.com/1/public_clouds?account_id=$account_id | jq '.data[] | {"name": .customer_name, "cloud_id": .id}'
+```
+
+To get your `public_cloud_project_id`:
+```sh
+public_cloud_id=1234  # use the ID retrieved from the step above
+curl -s -H "Authorization: Bearer $INFOMANIAK_TOKEN" https://api.infomaniak.com/1/public_clouds/$public_cloud_id/projects | jq '.data[] | {"name": .name, "project_id": .public_cloud_project_id}'
+```
+
 ## Example
 
 ```hcl

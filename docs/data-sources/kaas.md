@@ -9,7 +9,6 @@ description: |-
 
 The Kaas Data Source allows the user to read information about a Kaas project.
 
-
 ## Example
 
 ```hcl
