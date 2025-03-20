@@ -124,18 +124,20 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
 	host := os.Getenv(INFOMANIAK_HOST)
 	token := os.Getenv(INFOMANIAK_TOKEN)
 
-	if !data.Host.IsNull() {
-		host = data.Host.ValueString()
+	if host == "" {
+		if !data.Host.IsNull() {
+			host = data.Host.ValueString()
+		} else {
+			host = DefaultHost
+		}
 	}
 
-	if !data.Token.IsNull() {
+	if token == "" && !data.Token.IsNull() {
 		token = data.Token.ValueString()
 	}
 
-	if host == "" {
-		host = DefaultHost
-		data.Host = types.StringValue(host)
-	}
+	data.Host = types.StringValue(host)
+	data.Token = types.StringValue(token)
 
 	if token == "" {
 		resp.Diagnostics.AddAttributeError(
