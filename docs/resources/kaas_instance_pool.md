@@ -11,30 +11,28 @@ The Kaas InstancePool resource is used to manage Instance Pools inside a Kaas pr
 
 Typically, it will come after the creation of a Kaas project.
 
-Setting `min_instances` = `max_instances` will disable autoscaling.
-
 ## Example
 
 ```hcl
 resource "infomaniak_kaas" "kluster" {
-  public_cloud_id = xxxxx
+  public_cloud_id         = xxxxx
   public_cloud_project_id = yyyyy
 
-  name = "kaastor"
-  pack_name = "shared"
+  name               = "kaastor"
+  pack_name          = "shared"
   kubernetes_version = "1.31"
-  region = "zzzzz"
+  region             = "dc-3"
 }
 
 resource "infomaniak_kaas_instance_pool" "instance_pool" {
-  public_cloud_id  = infomaniak_kaas.kluster.public_cloud_id
-  public_cloud_project_id  = infomaniak_kaas.kluster.public_cloud_project_id
-  kaas_id = infomaniak_kaas.kluster.id
+  public_cloud_id         = infomaniak_kaas.kluster.public_cloud_id
+  public_cloud_project_id = infomaniak_kaas.kluster.public_cloud_project_id
+  kaas_id                 = infomaniak_kaas.kluster.id
 
-  name        = "instance-pool-1"
-  flavor_name = "a1_ram2_disk20_perf1"
-  min_instances   = 4
-  max_instances   = 6
+  name              = "instance-pool-1"
+  flavor_name       = "a1-ram2-disk20-perf1"
+  min_instances     = 4
+  availability_zone = "az-1"
 }
 ```
 
@@ -48,7 +46,6 @@ resource "infomaniak_kaas_instance_pool" "instance_pool" {
 - `name` (String) The name of the KaaS shown on the manager.
 - `availability_zone` (String) The availability zone where the instances will be populated.
 - `flavor_name` (String) The flavor for the instances.
-<!-- - `max_instances` (Integer) The maximum amount of instances in the pool. -->
 - `min_instances` (Integer) The minimum amount of instances in the pool.
 
 ### Read-Only

@@ -1,28 +1,35 @@
+terraform {
+  required_version = ">= 1.5"
+
+  required_providers {
+    infomaniak = {
+      source  = "Infomaniak/infomaniak"
+      version = "~> 1.0"
+    }
+  }
+}
+
+provider "infomaniak" {
+  token = var.infomaniak.token
+}
+
 resource "infomaniak_kaas" "create_kluster" {
-  public_cloud_id         = 42
-  public_cloud_project_id = 54
-  pack_name               = "test"
+  public_cloud_id         = var.infomaniak.cloud_id
+  public_cloud_project_id = var.infomaniak.project_id
 
-  region = "dc4"
+  name               = var.cluster_name
+  pack_name          = var.cluster_type
+  kubernetes_version = var.cluster_ver
+  region             = var.cluster_region
 }
 
-resource "infomaniak_kaas_instance_pool" "create_instance_pool" {
-  public_cloud_id         = 54
-  public_cloud_project_id = 54
-  kaas_id                 = infomaniak_kaas.create_kluster.id
-
-  name          = "coucou"
-  flavor_name   = "test"
-  min_instances = 4
-}
-
-data "infomaniak_kaas" "get_kluster" {
+resource "infomaniak_kaas_instance_pool" "create_instance_pool_1" {
   public_cloud_id         = infomaniak_kaas.create_kluster.public_cloud_id
   public_cloud_project_id = infomaniak_kaas.create_kluster.public_cloud_project_id
-  id                      = infomaniak_kaas.create_kluster.id
-}
+  kaas_id                 = infomaniak_kaas.create_kluster.id
 
-output "kubeconfig" {
-  sensitive = true
-  value     = infomaniak_kaas.create_kluster.kubeconfig
+  name              = "${infomaniak_kaas.create_kluster.name}-pool-1"
+  flavor_name       = var.pool_type
+  min_instances     = var.pool_min
+  availability_zone = var.pool_az
 }
