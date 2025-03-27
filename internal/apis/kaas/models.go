@@ -37,8 +37,11 @@ type InstancePool struct {
 	FlavorName       string `json:"flavor,omitempty"`
 	AvailabilityZone string `json:"availability_zone,omitempty"`
 	MinInstances     int32  `json:"minimum_instances,omitempty"`
-	// MaxInstances     int32  `json:"maximum_instances,omitempty"`
-	Status string `json:"status,omitempty"`
+	MaxInstances     int32  `json:"maximum_instances,omitempty"`
+	Status           string `json:"status,omitempty"`
+
+	TargetInstances    int32 `json:"target_instances,omitempty"`
+	AvailableInstances int32 `json:"available_instances,omitempty"`
 }
 
 func (instancePool *InstancePool) Key() string {
