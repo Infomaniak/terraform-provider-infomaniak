@@ -187,6 +187,11 @@ func (client *Client) GetInstancePool(publicCloudId int, publicCloudProjectId in
 		return nil, result.Error
 	}
 
+	// Default Max = Min
+	if result.Data.MaxInstances == 0 {
+		result.Data.MaxInstances = result.Data.MinInstances
+	}
+
 	return result.Data, nil
 }
 

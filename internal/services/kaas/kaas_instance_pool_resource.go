@@ -222,8 +222,12 @@ func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data Kaa
 			return nil, nil
 		}
 
-		// TODO: Should compare actual amount with data.MinInstances.ValueInt32()
-		if found.Status == "Active" {
+		// We need the instance pool to be active, have the same state as us, be scaled properly and be in bound of the autoscaling
+		isActive := found.Status == "Active"
+		isEquivalent := found.MinInstances == data.MinInstances.ValueInt32()
+		isScaledProperly := found.AvailableInstances == found.TargetInstances
+		isInBound := found.MinInstances <= found.TargetInstances && found.TargetInstances <= found.MaxInstances
+		if isActive && isEquivalent && isScaledProperly && isInBound {
 			return found, nil
 		}
 
@@ -297,10 +301,6 @@ func (r *kaasInstancePoolResource) Update(ctx context.Context, req resource.Upda
 		)
 		return
 	}
-
-	// TODO: Fix this and wait for an amount of instance instead of waiting for a status
-	// See : https://github.com/Infomaniak/terraform-provider-infomaniak/issues/7
-	time.Sleep(5 * time.Second)
 
 	instancePoolObject, err := r.waitUntilActive(ctx, data, int(state.Id.ValueInt64()))
 	if err != nil {
