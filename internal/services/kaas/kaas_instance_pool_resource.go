@@ -8,7 +8,6 @@ import (
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/kaas"
-	"terraform-provider-infomaniak/internal/provider"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
@@ -62,7 +61,7 @@ func (r *kaasInstancePoolResource) Configure(_ context.Context, req resource.Con
 		return
 	}
 
-	client, err := provider.GetApiClient(req.ProviderData)
+	client, err := apis.GetApiClient(req.ProviderData)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
