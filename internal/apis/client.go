@@ -1,13 +1,20 @@
 package apis
 
 import (
+	"fmt"
+	"terraform-provider-infomaniak/internal/apis/domain"
 	"terraform-provider-infomaniak/internal/apis/kaas"
+	"terraform-provider-infomaniak/internal/provider"
+
 	implem_kaas "terraform-provider-infomaniak/internal/apis/kaas/implementation"
 	mock_kaas "terraform-provider-infomaniak/internal/apis/kaas/mock"
+
+	implem_domain "terraform-provider-infomaniak/internal/apis/domain/implementation"
 )
 
 type Client struct {
-	Kaas kaas.Api
+	Kaas   kaas.Api
+	Domain domain.Api
 }
 
 // NewMockClient defines the mock client for Infomaniak's API,
@@ -21,6 +28,22 @@ func NewMockClient() *Client {
 // NewClient defines the client for Infomaniak's API
 func NewClient(baseUri, token, version string) *Client {
 	return &Client{
-		Kaas: implem_kaas.New(baseUri, token, version),
+		Kaas:   implem_kaas.New(baseUri, token, version),
+		Domain: implem_domain.New(baseUri, token, version),
 	}
+}
+
+// GetApiClient is a utility function to get an API client from a resource / datasource
+func GetApiClient(providerData any) (*Client, error) {
+	data, ok := providerData.(*provider.IkProviderData)
+	if !ok {
+		return nil, fmt.Errorf("expected *provider.IkProviderData, got: %T", providerData)
+	}
+
+	client := NewClient(data.Data.Host.ValueString(), data.Data.Token.ValueString(), data.Version.ValueString())
+	if data.Version.ValueString() == "test" {
+		client = NewMockClient()
+	}
+
+	return client, nil
 }

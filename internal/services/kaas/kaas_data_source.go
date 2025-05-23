@@ -32,7 +32,7 @@ func (d *kaasDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 		return
 	}
 
-	client, err := GetApiClient(req.ProviderData)
+	client, err := apis.GetApiClient(req.ProviderData)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
