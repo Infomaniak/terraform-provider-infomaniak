@@ -17,11 +17,12 @@ type Client struct {
 	resty *resty.Client
 }
 
-func New(baseUri, token string) *Client {
+func New(baseUri, token, version string) *Client {
 	return &Client{
 		resty: resty.New().
 			SetBaseURL(baseUri).
-			SetAuthToken(token),
+			SetAuthToken(token).
+			SetHeader("User-Agent", helpers.GetUserAgent(version)),
 	}
 }
 

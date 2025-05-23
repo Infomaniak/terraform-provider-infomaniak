@@ -145,6 +145,7 @@ func TestKaasResource_Import(t *testing.T) {
 			PublicCloudId: 536,
 			ProjectId:     451,
 		},
+		PackId: 1,
 		Region: "das45",
 	})
 	if err != nil {
