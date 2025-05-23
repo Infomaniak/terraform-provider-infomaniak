@@ -58,7 +58,7 @@ func (r *kaasInstancePoolResource) Configure(_ context.Context, req resource.Con
 		return
 	}
 
-	client, err := GetApiClient(req.ProviderData)
+	client, err := apis.GetApiClient(req.ProviderData)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
