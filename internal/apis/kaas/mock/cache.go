@@ -137,6 +137,7 @@ func saveCache() {
 	if err != nil {
 		return
 	}
+	//nolint:errcheck
 	os.WriteFile(mockedApiStatePath, data, 0666)
 }
 

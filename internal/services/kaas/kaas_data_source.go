@@ -2,9 +2,7 @@ package kaas
 
 import (
 	"context"
-	"fmt"
 	"terraform-provider-infomaniak/internal/apis"
-	"terraform-provider-infomaniak/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -34,19 +32,16 @@ func (d *kaasDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 		return
 	}
 
-	data, ok := req.ProviderData.(*provider.IkProviderData)
-	if !ok {
+	client, err := GetApiClient(req.ProviderData)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *apis.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			err.Error(),
 		)
 		return
 	}
 
-	d.client = apis.NewClient(data.Data.Host.ValueString(), data.Data.Token.ValueString())
-	if data.Version.ValueString() == "test" {
-		d.client = apis.NewMockClient()
-	}
+	d.client = client
 }
 
 // Schema defines the schema for the data source.
