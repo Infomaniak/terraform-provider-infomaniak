@@ -9,7 +9,6 @@ import (
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
-	"terraform-provider-infomaniak/internal/provider"
 	"terraform-provider-infomaniak/internal/services/scopes"
 	"time"
 
@@ -67,7 +66,7 @@ func (r *dbaasResource) Configure(ctx context.Context, req resource.ConfigureReq
 		return
 	}
 
-	client, err := provider.GetApiClient(req.ProviderData)
+	client, err := apis.GetApiClient(req.ProviderData)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
