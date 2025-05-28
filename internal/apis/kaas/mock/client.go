@@ -8,8 +8,9 @@ import (
 
 // Ensure that our client implements Api
 var (
-	_         kaas.Api = (*Client)(nil)
-	dnsRegexp          = regexp.MustCompile("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+	_               kaas.Api = (*Client)(nil)
+	dnsRegexp                = regexp.MustCompile("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+	kubeLabelRegexp          = regexp.MustCompile(`^[a-zA-Z0-9\-./]+:\s*[a-zA-Z0-9\-_.]{1,63}$`)
 )
 
 type Client struct{}
@@ -154,6 +155,13 @@ func (c *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId int,
 	// if input.MinInstances > input.MaxInstances {
 	// 	return nil, fmt.Errorf("instance pool min instance should be lesser than (or equal) max")
 	// }
+	if len(input.Labels) > 0 {
+		for _, label := range input.Labels {
+			if !kubeLabelRegexp.MatchString(label) {
+				return 0, fmt.Errorf("instance pool label should be a kubernetes label")
+			}
+		}
+	}
 
 	_, err := c.GetKaas(publicCloudId, publicCloudProjectId, input.KaasId)
 	if err != nil {
@@ -169,6 +177,7 @@ func (c *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId int,
 		AvailabilityZone: input.AvailabilityZone,
 		MinInstances:     input.MinInstances,
 		// MaxInstances: input.MaxInstances,
+		Labels: input.Labels,
 	}
 
 	return obj.Id, addToCache(&obj)
