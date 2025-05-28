@@ -2,6 +2,7 @@ package mock
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 	"terraform-provider-infomaniak/internal/apis/kaas"
 )
@@ -33,6 +34,17 @@ func (c *Client) GetPacks() ([]*kaas.KaasPack, error) {
 	}, nil
 }
 
+func (c *Client) MustGetPackFromId(id int) *kaas.KaasPack {
+	packs, _ := c.GetPacks()
+	for _, pack := range packs {
+		if pack.Id == id {
+			return pack
+		}
+	}
+	log.Fatalf("pack with id %d not found", id)
+	return nil
+}
+
 func (c *Client) GetVersions() ([]string, error) {
 	return []string{"1.29", "1.30", "1.31"}, nil
 }
@@ -61,12 +73,16 @@ func (c *Client) CreateKaas(input *kaas.Kaas) (int, error) {
 	if input.Region == "" {
 		return 0, fmt.Errorf("kaas is missing region")
 	}
+	if input.PackId == 0 {
+		return 0, fmt.Errorf("kaas is missing pack id")
+	}
 
 	var obj = kaas.Kaas{
 		Project:           input.Project,
 		Region:            input.Region,
-		Pack:              input.Pack,
 		KubernetesVersion: input.KubernetesVersion,
+		PackId:            input.PackId,
+		Pack:              c.MustGetPackFromId(input.PackId),
 		Name:              input.Name,
 	}
 	obj.Id = genId()
@@ -82,6 +98,9 @@ func (c *Client) UpdateKaas(input *kaas.Kaas) (bool, error) {
 	if input.Id == 0 {
 		return false, fmt.Errorf("kaas is missing kaas id")
 	}
+	if input.PackId == 0 {
+		return false, fmt.Errorf("kaas is missing pack id")
+	}
 	if input.Region != "" {
 		return false, fmt.Errorf("client cannot update region")
 	}
@@ -92,7 +111,8 @@ func (c *Client) UpdateKaas(input *kaas.Kaas) (bool, error) {
 
 		Name:              input.Name,
 		Region:            input.Region,
-		Pack:              input.Pack,
+		PackId:            input.PackId,
+		Pack:              c.MustGetPackFromId(input.PackId),
 		KubernetesVersion: input.KubernetesVersion,
 	}
 
@@ -164,11 +184,13 @@ func (c *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId int,
 		Id:     genId(),
 		KaasId: input.KaasId,
 
-		Name:             input.Name,
-		FlavorName:       input.FlavorName,
-		AvailabilityZone: input.AvailabilityZone,
-		MinInstances:     input.MinInstances,
-		// MaxInstances: input.MaxInstances,
+		Name:               input.Name,
+		FlavorName:         input.FlavorName,
+		AvailabilityZone:   input.AvailabilityZone,
+		MinInstances:       input.MinInstances,
+		MaxInstances:       input.MinInstances,
+		TargetInstances:    input.MinInstances,
+		AvailableInstances: input.MinInstances,
 	}
 
 	return obj.Id, addToCache(&obj)
@@ -218,11 +240,13 @@ func (c *Client) UpdateInstancePool(publicCloudId int, publicCloudProjectId int,
 		KaasId: input.KaasId,
 		Id:     input.Id,
 
-		Name:             input.Name,
-		FlavorName:       input.FlavorName,
-		AvailabilityZone: input.AvailabilityZone,
-		MinInstances:     input.MinInstances,
-		// MaxInstances: input.MaxInstances,
+		Name:               input.Name,
+		FlavorName:         input.FlavorName,
+		AvailabilityZone:   input.AvailabilityZone,
+		MinInstances:       input.MinInstances,
+		MaxInstances:       input.MinInstances,
+		TargetInstances:    input.MinInstances,
+		AvailableInstances: input.MinInstances,
 	}
 
 	return true, updateCache(&obj)

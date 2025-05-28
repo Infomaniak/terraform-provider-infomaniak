@@ -8,7 +8,6 @@ import (
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/kaas"
-	"terraform-provider-infomaniak/internal/provider"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -59,19 +58,16 @@ func (r *kaasResource) Configure(ctx context.Context, req resource.ConfigureRequ
 		return
 	}
 
-	data, ok := req.ProviderData.(*provider.IkProviderData)
-	if !ok {
+	client, err := GetApiClient(req.ProviderData)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *apis.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			err.Error(),
 		)
 		return
 	}
 
-	r.client = apis.NewClient(data.Data.Host.ValueString(), data.Data.Token.ValueString())
-	if data.Version.ValueString() == "test" {
-		r.client = apis.NewMockClient()
-	}
+	r.client = client
 }
 
 func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {

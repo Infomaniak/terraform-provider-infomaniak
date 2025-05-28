@@ -31,7 +31,7 @@ func NewSuccessResponse[K any](data K) helpers.NormalizedApiResponse[K] {
 
 var _ = Describe("KaaS API Client", func() {
 	Context("General Testing", func() {
-		client := New(BaseURI, Token)
+		client := New(BaseURI, Token, "test")
 
 		It("should authenticate properly", func() {
 			httpmock.ActivateNonDefault(client.resty.Client())
