@@ -195,6 +195,7 @@ func TestKaasInstancePoolResource_Import(t *testing.T) {
 		FlavorName:   "superflavorname",
 		MinInstances: 1,
 		// MaxInstances: 99,
+		Labels: []string{"node-role.kubernetes.io/worker: high"},
 	})
 	if err != nil {
 		t.Fatalf("Could not create instance pool for import test, got : %v", err)
