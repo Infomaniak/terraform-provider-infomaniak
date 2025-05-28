@@ -32,4 +32,6 @@ resource "infomaniak_kaas_instance_pool" "create_instance_pool_1" {
   flavor_name       = var.pool_type
   min_instances     = var.pool_min
   availability_zone = var.pool_az
+
+  labels            = var.pool_labels
 }
