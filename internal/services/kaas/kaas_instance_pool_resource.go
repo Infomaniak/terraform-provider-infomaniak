@@ -305,6 +305,7 @@ func (r *kaasInstancePoolResource) Update(ctx context.Context, req resource.Upda
 		FlavorName:   data.FlavorName.ValueString(),
 		MinInstances: data.MinInstances.ValueInt32(),
 		// MaxInstances: data.MaxInstances.ValueInt32(),
+		Labels: r.getLabelsValues(data),
 	}
 
 	_, err := r.client.Kaas.UpdateInstancePool(

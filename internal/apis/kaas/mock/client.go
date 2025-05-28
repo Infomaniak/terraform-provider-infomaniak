@@ -201,7 +201,6 @@ func (c *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId int,
 		TargetInstances:    input.MinInstances,
 		AvailableInstances: input.MinInstances,
 		Labels:             input.Labels,
-		Labels: input.Labels,
 	}
 
 	return obj.Id, addToCache(&obj)
