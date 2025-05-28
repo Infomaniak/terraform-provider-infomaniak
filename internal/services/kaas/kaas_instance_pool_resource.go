@@ -44,7 +44,7 @@ type KaasInstancePoolModel struct {
 	FlavorName       types.String `tfsdk:"flavor_name"`
 	MinInstances     types.Int32  `tfsdk:"min_instances"`
 	// MaxInstances types.Int32  `tfsdk:"max_instances"`
-	Labels types.List `tfsdk:"labels"`
+	Labels types.Map `tfsdk:"labels"`
 }
 
 func (r *kaasInstancePoolResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -143,7 +143,7 @@ func (r *kaasInstancePoolResource) Schema(ctx context.Context, req resource.Sche
 			// 	Description:         "The maximum instances in this instance pool (should be equal to min_instance until the AutoScaling feature is released)",
 			// 	MarkdownDescription: "The maximum instances in this instance pool (should be equal to min_instance until the AutoScaling feature is released)",
 			// },
-			"labels": schema.ListAttribute{
+			"labels": schema.MapAttribute{
 				ElementType:         types.StringType,
 				Optional:            true,
 				Description:         "Kubernetes labels to apply to the instances. The label must have a prefix of node-role.kubernetes.io or belong to the domains node-restriction.kubernetes.io or custom.kaas.infomaniak.cloud.",
@@ -210,14 +210,13 @@ func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.Crea
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *kaasInstancePoolResource) getLabelsValues(data KaasInstancePoolModel) []string {
-	var labels []string
+func (r *kaasInstancePoolResource) getLabelsValues(data KaasInstancePoolModel) map[string]string {
+	labels := make(map[string]string)
 
 	if !data.Labels.IsNull() && !data.Labels.IsUnknown() {
-		for _, v := range data.Labels.Elements() {
-			strVal, ok := v.(types.String)
-			if ok {
-				labels = append(labels, strVal.ValueString())
+		for key, val := range data.Labels.Elements() {
+			if strVal, ok := val.(types.String); ok && !strVal.IsNull() && !strVal.IsUnknown() {
+				labels[key] = strVal.ValueString()
 			}
 		}
 	}

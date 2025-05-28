@@ -176,8 +176,9 @@ func (c *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId int,
 	// 	return nil, fmt.Errorf("instance pool min instance should be lesser than (or equal) max")
 	// }
 	if len(input.Labels) > 0 {
-		for _, label := range input.Labels {
-			if !kubeLabelRegexp.MatchString(label) {
+		for key, label := range input.Labels {
+			keyLabel := key + ": " + label
+			if !kubeLabelRegexp.MatchString(keyLabel) {
 				return 0, fmt.Errorf("instance pool label should be a kubernetes label")
 			}
 		}
@@ -199,7 +200,7 @@ func (c *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId int,
 		MaxInstances:       input.MinInstances,
 		TargetInstances:    input.MinInstances,
 		AvailableInstances: input.MinInstances,
-		Labels: input.Labels,
+		Labels:             input.Labels,
 	}
 
 	return obj.Id, addToCache(&obj)
