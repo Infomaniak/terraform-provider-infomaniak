@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"strconv"
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
@@ -144,8 +145,12 @@ func (r *kaasInstancePoolResource) Schema(ctx context.Context, req resource.Sche
 			// 	MarkdownDescription: "The maximum instances in this instance pool (should be equal to min_instance until the AutoScaling feature is released)",
 			// },
 			"labels": schema.MapAttribute{
-				ElementType:         types.StringType,
-				Optional:            true,
+				ElementType: types.StringType,
+				Optional:    true,
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifier.UseStateForUnknown(),
+					mapplanmodifier.RequiresReplace(),
+				},
 				Description:         "Kubernetes labels to apply to the instances. The label must have a prefix of node-role.kubernetes.io or belong to the domains node-restriction.kubernetes.io or custom.kaas.infomaniak.cloud.",
 				MarkdownDescription: "Kubernetes labels to apply to the instances. The label must have a prefix of node-role.kubernetes.io or belong to the domains node-restriction.kubernetes.io or custom.kaas.infomaniak.cloud.",
 			},
