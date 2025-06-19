@@ -51,3 +51,10 @@ variable "pool_az" {
   default     = "az-2"
 }
 
+variable "pool_labels" {
+  description = "Pool instance custom labels"
+  type = map(string)
+  default = {
+    "node-role.kubernetes.io/worker" = "high"
+  }
+}
