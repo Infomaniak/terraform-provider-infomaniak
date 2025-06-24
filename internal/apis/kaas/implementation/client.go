@@ -295,7 +295,6 @@ func (client *Client) PatchOidc(input *kaas.Oidc, publicCloudId int, projectId i
 		SetBody(input).
 		SetResult(&result).
 		SetError(&result).
-		SetDebug(true).
 		Patch(EndpointOidc)
 
 	if err != nil {
