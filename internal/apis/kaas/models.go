@@ -8,6 +8,11 @@ type KaasPack struct {
 	Description string `json:"description,omitempty"`
 }
 
+type Oidc struct {
+	Params map[string]string `json:"oidc_params,omitempty"`
+	Certificate string `json:"oidc_ca,omitempty"`
+}
+
 type Kaas struct {
 	Name    string      `json:"name,omitempty"`
 	Id      int         `json:"kaas_id,omitempty"`

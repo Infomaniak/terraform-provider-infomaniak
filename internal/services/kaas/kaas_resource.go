@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -45,6 +46,8 @@ type KaasModel struct {
 	Region            types.String `tfsdk:"region"`
 	Kubeconfig        types.String `tfsdk:"kubeconfig"`
 	KubernetesVersion types.String `tfsdk:"kubernetes_version"`
+	OidcParams        types.Map    `tfsdk:"oidc_params"`
+	OidcCaCertificate types.String `tfsdk:"oidc_ca"`
 }
 
 func (r *kaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -137,6 +140,24 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Description:         "The kubeconfig generated to access to KaaS project",
 				MarkdownDescription: "The kubeconfig generated to access to KaaS project",
 			},
+			"oidc_params": schema.MapAttribute{
+				ElementType: types.StringType,
+				Optional:    true,
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifier.UseStateForUnknown(),
+				},
+				Description:         "Kubernetes Oidc params",
+				MarkdownDescription: "Kubernetes Oidc params",
+			},
+			"oidc_ca": schema.StringAttribute{
+				Optional:            true,
+				Sensitive:           true,
+				Description:         "Oidc ca certificate",
+				MarkdownDescription: "Oidc CA certificate",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 		},
 		MarkdownDescription: "The kaas resource allows the user to manage a kaas project",
 	}
@@ -205,10 +226,38 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 		data.Kubeconfig = types.StringValue(kubeconfig)
 	}
 
+	if !data.OidcCaCertificate.IsNull() {
+		oidcInput := &kaas.Oidc{
+			Certificate: data.OidcCaCertificate.ValueString(),
+			Params:      r.getOidcParamsValues(data),
+		}
+		created, err := r.client.Kaas.CreateOidc(oidcInput, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
+		if !created || err != nil {
+			resp.Diagnostics.AddError(
+				"Error when creating Oidc",
+				err.Error(),
+			)
+			return
+		}
+	}
+
 	data.fill(kaasObject)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *kaasResource) getOidcParamsValues(data KaasModel) map[string]string {
+	params := make(map[string]string)
+	if !data.OidcParams.IsNull() && !data.OidcParams.IsUnknown() {
+		for key, val := range data.OidcParams.Elements() {
+			if strVal, ok := val.(types.String); ok && !strVal.IsNull() && !strVal.IsUnknown() {
+				params[key] = strVal.ValueString()
+			}
+		}
+	}
+
+	return params
 }
 
 func (r *kaasResource) waitUntilActive(ctx context.Context, kaas *kaas.Kaas, id int) (*kaas.Kaas, error) {
@@ -264,6 +313,17 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	} else {
 		state.Kubeconfig = types.StringValue(kubeconfig)
 	}
+
+	oidc, err := r.client.Kaas.GetOidc(kaasObject.Project.PublicCloudId, kaasObject.Project.ProjectId, kaasObject.Id)
+	if err != nil {
+		resp.Diagnostics.AddWarning(
+			"Could not get Oidc",
+			err.Error(),
+		)
+	}
+	state.OidcCaCertificate = types.StringValue(oidc.Certificate)
+	mapValue, _ := types.MapValueFrom(ctx, types.StringType, oidc.Params)
+	state.OidcParams = mapValue
 
 	state.fill(kaasObject)
 
@@ -321,6 +381,21 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	if kaasObject == nil {
 		return
+	}
+
+	if !data.OidcCaCertificate.IsNull() {
+		oidcInput := &kaas.Oidc{
+			Certificate: data.OidcCaCertificate.ValueString(),
+			Params:      r.getOidcParamsValues(data),
+		}
+		patched, err := r.client.Kaas.PatchOidc(oidcInput, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
+		if !patched || err != nil {
+			resp.Diagnostics.AddError(
+				"Error when patching Oidc",
+				err.Error(),
+			)
+			return
+		}
 	}
 
 	// Wait for kubeconfig to be available
