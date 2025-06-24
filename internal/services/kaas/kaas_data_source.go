@@ -90,6 +90,18 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 				Description:         "The version of Kubernetes associated with the KaaS project",
 				MarkdownDescription: "The version of Kubernetes associated with the KaaS project",
 			},
+			"oidc_params": schema.MapAttribute{
+				ElementType:         types.StringType,
+				Computed:            true,
+				Description:         "Kubernetes Oidc params",
+				MarkdownDescription: "Kubernetes Oidc params",
+			},
+			"oidc_ca": schema.StringAttribute{
+				Computed:            true,
+				Sensitive:           true,
+				Description:         "Oidc ca certificate",
+				MarkdownDescription: "Oidc CA certificate",
+			},
 		},
 		MarkdownDescription: "The kaas data source allows the user to manage a kaas project",
 	}
@@ -127,9 +139,25 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
+	oidc, err := d.client.Kaas.GetOidc(
+		int(data.PublicCloudId.ValueInt64()),
+		int(data.PublicCloudProjectId.ValueInt64()),
+		int(data.Id.ValueInt64()),
+	)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to get Oidc from KaaS",
+			err.Error(),
+		)
+		return
+	}
+
 	data.Kubeconfig = types.StringValue(kubeconfig)
 	data.Region = types.StringValue(obj.Region)
 	data.KubernetesVersion = types.StringValue(obj.KubernetesVersion)
+	data.OidcCaCertificate = types.StringValue(oidc.Certificate)
+	mapValue, _ := types.MapValueFrom(ctx, types.StringType, oidc.Params)
+	data.OidcParams = mapValue
 
 	// Set state
 	diags := resp.State.Set(ctx, &data)

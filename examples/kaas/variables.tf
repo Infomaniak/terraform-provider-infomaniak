@@ -58,3 +58,20 @@ variable "pool_labels" {
     "node-role.kubernetes.io/worker" = "high"
   }
 }
+
+variable "oidc_params" {
+  description = "oidc kubernetes params"
+  type = map(string)
+  default = {
+    "oidc-issuer-url" = "https://your-oidc-url.ch",
+    "oidc-client-id" = "kube-login",
+    "oidc-username-claim" = "email",
+    "oidc-username-prefix" = "oidc:",
+  }
+}
+
+variable "oidc_ca" {
+  description = "oidc CA certificate local file path"
+  type        = string
+  default     = "./oidc_ca.crt"
+}

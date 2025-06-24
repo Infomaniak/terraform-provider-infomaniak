@@ -275,3 +275,13 @@ func (c *Client) DeleteInstancePool(publicCloudId int, publicCloudProjectId int,
 
 	return true, removeFromCache(&obj)
 }
+
+func (c *Client) GetOidc(publicCloudId int, projectId int, kaasId int) (*kaas.Oidc, error) {
+	return nil, nil
+}
+func (c *Client) CreateOidc(input *kaas.Oidc, publicCloudId int, projectId int, kaasId int) (bool, error) {
+	return true, nil
+}
+func (c *Client) PatchOidc(input *kaas.Oidc, publicCloudId int, projectId int, kaasId int) (bool, error) {
+	return true, nil
+}

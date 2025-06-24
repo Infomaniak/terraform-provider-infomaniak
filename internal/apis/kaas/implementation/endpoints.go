@@ -10,4 +10,6 @@ var (
 
 	EndpointInstancePools = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/kaas/{kaas_id}/instance_pools"
 	EndpointInstancePool  = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/kaas/{kaas_id}/instance_pools/{kaas_instance_pool_id}"
+
+	EndpointOidc = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/kaas/{kaas_id}/oidc"
 )

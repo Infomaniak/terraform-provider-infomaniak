@@ -262,3 +262,70 @@ func (client *Client) DeleteInstancePool(publicCloudId int, publicCloudProjectId
 
 	return result.Data, nil
 }
+
+func (client *Client) CreateOidc(input *kaas.Oidc, publicCloudId int, projectId int, kaasId int) (bool, error) {
+	var result helpers.NormalizedApiResponse[bool]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
+		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
+		SetBody(input).
+		SetResult(&result).
+		SetError(&result).
+		Post(EndpointOidc)
+	if err != nil {
+		return false, err
+	}
+
+	if resp.IsError() {
+		return false, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) PatchOidc(input *kaas.Oidc, publicCloudId int, projectId int, kaasId int) (bool, error) {
+	var result helpers.NormalizedApiResponse[bool]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
+		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
+		SetBody(input).
+		SetResult(&result).
+		SetError(&result).
+		SetDebug(true).
+		Patch(EndpointOidc)
+
+	if err != nil {
+		return false, err
+	}
+
+	if resp.IsError() {
+		return false, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) GetOidc(publicCloudId int, projectId int, kaasId int) (*kaas.Oidc, error) {
+
+	var result helpers.NormalizedApiResponse[*kaas.Oidc]
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
+		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointOidc)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	return result.Data, nil
+}
