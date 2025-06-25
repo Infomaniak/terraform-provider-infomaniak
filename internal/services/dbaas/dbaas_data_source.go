@@ -3,6 +3,7 @@ package dbaas
 import (
 	"context"
 	"terraform-provider-infomaniak/internal/apis"
+	"terraform-provider-infomaniak/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -32,7 +33,7 @@ func (d *dbaasDataSource) Configure(_ context.Context, req datasource.ConfigureR
 		return
 	}
 
-	client, err := GetApiClient(req.ProviderData)
+	client, err := provider.GetApiClient(req.ProviderData)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
@@ -50,42 +51,34 @@ func (d *dbaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest
 		Attributes: map[string]schema.Attribute{
 			"public_cloud_id": schema.Int64Attribute{
 				Required:            true,
-				Description:         "The id of the public cloud where DBaaS is installed",
 				MarkdownDescription: "The id of the public cloud where DBaaS is installed",
 			},
 			"public_cloud_project_id": schema.Int64Attribute{
 				Required:            true,
-				Description:         "The id of the public cloud project where DBaaS is installed",
 				MarkdownDescription: "The id of the public cloud project where DBaaS is installed",
 			},
 			"id": schema.Int64Attribute{
 				Required:            true,
-				Description:         "The id of this DBaaS",
 				MarkdownDescription: "The id of this DBaaS",
 			},
 			"name": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The name of the DBaaS project",
 				MarkdownDescription: "The name of the DBaaS project",
 			},
 			"pack_name": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The name of the pack associated to the DBaaS project",
 				MarkdownDescription: "The name of the pack associated to the DBaaS project",
 			},
 			"region": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The region where the DBaaS project resides in.",
 				MarkdownDescription: "The region where the DBaaS project resides in.",
 			},
 			"type": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The type of the database associated with the DBaaS project",
 				MarkdownDescription: "The type of the database associated with the DBaaS project",
 			},
 			"version": schema.StringAttribute{
 				Computed:            true,
-				Description:         "The version of the database associated with the DBaaS project",
 				MarkdownDescription: "The version of the database associated with the DBaaS project",
 			},
 		},

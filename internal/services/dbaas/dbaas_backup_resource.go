@@ -4,16 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
+	"terraform-provider-infomaniak/internal/provider"
+	"terraform-provider-infomaniak/internal/services/scopes"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -52,7 +54,7 @@ func (r *dbaasBackupResource) Configure(ctx context.Context, req resource.Config
 		return
 	}
 
-	client, err := GetApiClient(req.ProviderData)
+	client, err := provider.GetApiClient(req.ProviderData)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -67,27 +69,6 @@ func (r *dbaasBackupResource) Configure(ctx context.Context, req resource.Config
 func (r *dbaasBackupResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"public_cloud_id": schema.Int64Attribute{
-				Required:            true,
-				MarkdownDescription: "The id of the public cloud where DBaaS is installed",
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.RequiresReplace(),
-				},
-			},
-			"public_cloud_project_id": schema.Int64Attribute{
-				Required:            true,
-				MarkdownDescription: "The id of the public cloud project where DBaaS is installed",
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.RequiresReplace(),
-				},
-			},
-			"dbaas_id": schema.Int64Attribute{
-				Required:            true,
-				MarkdownDescription: "The id of the dbaas",
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.RequiresReplace(),
-				},
-			},
 			"id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.",
@@ -98,6 +79,8 @@ func (r *dbaasBackupResource) Schema(ctx context.Context, req resource.SchemaReq
 		},
 		MarkdownDescription: "The dbaas backup resource allows the user to manage a backup for a certain dbaas",
 	}
+
+	maps.Copy(resp.Schema.Attributes, scopes.DBaaS.Build())
 }
 
 func (r *dbaasBackupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
+	"terraform-provider-infomaniak/internal/provider"
+	"terraform-provider-infomaniak/internal/services/scopes"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -63,7 +66,7 @@ func (r *dbaasResource) Configure(ctx context.Context, req resource.ConfigureReq
 		return
 	}
 
-	client, err := GetApiClient(req.ProviderData)
+	client, err := provider.GetApiClient(req.ProviderData)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -78,20 +81,6 @@ func (r *dbaasResource) Configure(ctx context.Context, req resource.ConfigureReq
 func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"public_cloud_id": schema.Int64Attribute{
-				Required:            true,
-				MarkdownDescription: "The id of the public cloud where DBaaS is installed",
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.RequiresReplace(),
-				},
-			},
-			"public_cloud_project_id": schema.Int64Attribute{
-				Required:            true,
-				MarkdownDescription: "The id of the public cloud project where DBaaS is installed",
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.RequiresReplace(),
-				},
-			},
 			"pack_name": schema.StringAttribute{
 				Required:            true,
 				MarkdownDescription: "The name of the pack associated to the DBaaS project",
@@ -155,6 +144,8 @@ func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 		},
 		MarkdownDescription: "The dbaas resource allows the user to manage a dbaas project",
 	}
+
+	maps.Copy(resp.Schema.Attributes, scopes.PublicCloud.Build())
 }
 
 func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

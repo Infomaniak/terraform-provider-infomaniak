@@ -1,13 +1,12 @@
-package kaas
+package provider
 
 import (
 	"fmt"
 	"terraform-provider-infomaniak/internal/apis"
-	"terraform-provider-infomaniak/internal/provider"
 )
 
 func GetApiClient(providerData any) (*apis.Client, error) {
-	data, ok := providerData.(*provider.IkProviderData)
+	data, ok := providerData.(*IkProviderData)
 	if !ok {
 		return nil, fmt.Errorf("expected *provider.IkProviderData, got: %T", providerData)
 	}
