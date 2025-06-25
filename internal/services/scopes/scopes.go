@@ -19,7 +19,7 @@ func New(attributes map[string]schema.Attribute) Scope {
 func (s *Scope) Subscope(attributes map[string]schema.Attribute) Scope {
 	var out = make(map[string]schema.Attribute)
 	maps.Copy(out, s.Attributes)
-	maps.Copy(attributes, s.Attributes)
+	maps.Copy(out, attributes)
 
 	return Scope{
 		Attributes: out,
