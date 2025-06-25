@@ -29,10 +29,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		// TODO: Update this string with the published name of your kaas.
-		// Also update the tfplugindocs generate command to either remove the
-		// -kaas-name flag or set its value to the updated kaas name.
-		Address: "registry.terraform.io/hashicorp/infomaniak",
+		Address: "registry.terraform.io/Infomaniak/infomaniak",
 		Debug:   debug,
 	}
 
