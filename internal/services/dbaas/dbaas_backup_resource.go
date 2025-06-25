@@ -2,11 +2,7 @@ package dbaas
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"maps"
-	"strconv"
-	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
 	"terraform-provider-infomaniak/internal/provider"
@@ -196,38 +192,19 @@ func (r *dbaasBackupResource) Delete(ctx context.Context, req resource.DeleteReq
 }
 
 func (r *dbaasBackupResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	idParts := strings.Split(req.ID, ",")
-
-	if len(idParts) != 4 || idParts[0] == "" || idParts[1] == "" || idParts[2] == "" || idParts[3] == "" {
+	imports, err := parseBackupRestoreImport(req)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("Expected import identifier with format: public_cloud_id,public_cloud_project_id,dbaas_id,id. Got: %q", req.ID),
+			err.Error(),
 		)
 		return
 	}
 
-	var errorList error
-
-	publicCloudId, err := strconv.ParseInt(idParts[0], 10, 64)
-	errorList = errors.Join(errorList, err)
-	publicCloudProjectId, err := strconv.ParseInt(idParts[1], 10, 64)
-	errorList = errors.Join(errorList, err)
-	dbaasId, err := strconv.ParseInt(idParts[2], 10, 64)
-	errorList = errors.Join(errorList, err)
-	backupId := idParts[3]
-
-	if errorList != nil {
-		resp.Diagnostics.AddError(
-			"Unexpected Import Identifier",
-			fmt.Sprintf("Expected import identifier with format: public_cloud_id,public_cloud_project_id,dbaas_id,id. Got: %q", req.ID),
-		)
-		return
-	}
-
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_id"), publicCloudId)...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_project_id"), publicCloudProjectId)...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("dbaas_id"), dbaasId)...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), backupId)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_id"), imports.PublicCloudId)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_project_id"), imports.PublicCloudProjectId)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("dbaas_id"), imports.DbaasId)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), imports.Id)...)
 }
 
 func (r *dbaasBackupResource) waitUntilActive(ctx context.Context, publicCloudId int, publicCloudProjectId int, dbaasId int, id string) (*dbaas.DBaaSBackup, error) {

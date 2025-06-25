@@ -1,41 +1,46 @@
 package dbaas
 
 import (
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 )
 
-var publicCloudAttributes = map[string]schema.Attribute{
-	"public_cloud_id": schema.Int64Attribute{
-		Required:            true,
-		MarkdownDescription: "The id of the public cloud where DBaaS is installed",
-		PlanModifiers: []planmodifier.Int64{
-			int64planmodifier.RequiresReplace(),
-		},
-	},
-	"public_cloud_project_id": schema.Int64Attribute{
-		Required:            true,
-		MarkdownDescription: "The id of the public cloud project where DBaaS is installed",
-		PlanModifiers: []planmodifier.Int64{
-			int64planmodifier.RequiresReplace(),
-		},
-	},
+type ImportIds struct {
+	PublicCloudId        int
+	PublicCloudProjectId int
+	DbaasId              int
+	Id                   string
 }
 
-var publicCloudAttributes = map[string]schema.Attribute{
-	"public_cloud_id": schema.Int64Attribute{
-		Required:            true,
-		MarkdownDescription: "The id of the public cloud where DBaaS is installed",
-		PlanModifiers: []planmodifier.Int64{
-			int64planmodifier.RequiresReplace(),
-		},
-	},
-	"public_cloud_project_id": schema.Int64Attribute{
-		Required:            true,
-		MarkdownDescription: "The id of the public cloud project where DBaaS is installed",
-		PlanModifiers: []planmodifier.Int64{
-			int64planmodifier.RequiresReplace(),
-		},
-	},
+func parseBackupRestoreImport(req resource.ImportStateRequest) (*ImportIds, error) {
+	idParts := strings.Split(req.ID, ",")
+
+	if len(idParts) != 4 || idParts[0] == "" || idParts[1] == "" || idParts[2] == "" || idParts[3] == "" {
+		return nil, fmt.Errorf("expected import identifier with format: public_cloud_id,public_cloud_project_id,dbaas_id,id. got: %q", req.ID)
+	}
+
+	var errorList error
+
+	publicCloudId, err := strconv.ParseInt(idParts[0], 10, 64)
+	errorList = errors.Join(errorList, err)
+	publicCloudProjectId, err := strconv.ParseInt(idParts[1], 10, 64)
+	errorList = errors.Join(errorList, err)
+	dbaasId, err := strconv.ParseInt(idParts[2], 10, 64)
+	errorList = errors.Join(errorList, err)
+	id := idParts[3]
+
+	if errorList != nil {
+		return nil, fmt.Errorf("expected import identifier with format: public_cloud_id,public_cloud_project_id,dbaas_id,id. got: %q", req.ID)
+	}
+
+	return &ImportIds{
+		PublicCloudId:        int(publicCloudId),
+		PublicCloudProjectId: int(publicCloudProjectId),
+		DbaasId:              int(dbaasId),
+		Id:                   id,
+	}, nil
 }
