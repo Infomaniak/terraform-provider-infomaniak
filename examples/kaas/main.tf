@@ -19,7 +19,7 @@ resource "infomaniak_kaas" "create_kluster" {
 
   name               = var.cluster_name
   pack_name          = var.cluster_type
-  kubernetes_version = var.cluster_ver
+  kubernetes_version = var.cluster_version
   region             = var.cluster_region
 }
 
