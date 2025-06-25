@@ -21,6 +21,8 @@ resource "infomaniak_kaas" "create_kluster" {
   pack_name          = var.cluster_type
   kubernetes_version = var.cluster_version
   region             = var.cluster_region
+
+  oidc_ca = file(var.oidc_ca_filename)
 }
 
 resource "infomaniak_kaas_instance_pool" "create_instance_pool_1" {

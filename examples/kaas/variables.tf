@@ -59,18 +59,18 @@ variable "pool_labels" {
   }
 }
 
-variable "oidc_params" {
-  description = "oidc kubernetes params"
+variable "apiserver_params" {
+  description = "Apiserver kubernetes params"
   type = map(string)
   default = {
-    "oidc-issuer-url" = "https://your-oidc-url.ch",
-    "oidc-client-id" = "kube-login",
-    "oidc-username-claim" = "email",
-    "oidc-username-prefix" = "oidc:",
+    "--oidc-issuer-url" = "https://your-oidc-url.ch",
+    "--oidc-client-id" = "kube-login",
+    "--oidc-username-claim" = "email",
+    "--oidc-username-prefix" = "oidc:",
   }
 }
 
-variable "oidc_ca" {
+variable "oidc_ca_filename" {
   description = "oidc CA certificate local file path"
   type        = string
   default     = "./oidc_ca.crt"

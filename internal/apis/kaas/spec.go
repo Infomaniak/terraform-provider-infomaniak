@@ -16,7 +16,7 @@ type Api interface {
 	UpdateInstancePool(publicCloudId int, publicCloudProjectId int, input *InstancePool) (bool, error)
 	DeleteInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) (bool, error)
 
-	GetOidc(publicCloudId int, projectId int, kaasId int) (*Oidc, error)
-	CreateOidc(input *Oidc, publicCloudId int, projectId int, kaasId int) (bool, error)
-	PatchOidc(input *Oidc, publicCloudId int, projectId int, kaasId int) (bool, error)
+	GetApiserverParams(publicCloudId int, projectId int, kaasId int) (*Apiserver, error)
+	CreateApiserverParams(input *Apiserver, publicCloudId int, projectId int, kaasId int) (bool, error)
+	PatchApiserverParams(input *Apiserver, publicCloudId int, projectId int, kaasId int) (bool, error)
 }

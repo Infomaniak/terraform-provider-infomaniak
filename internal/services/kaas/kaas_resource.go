@@ -46,7 +46,7 @@ type KaasModel struct {
 	Region            types.String `tfsdk:"region"`
 	Kubeconfig        types.String `tfsdk:"kubeconfig"`
 	KubernetesVersion types.String `tfsdk:"kubernetes_version"`
-	OidcParams        types.Map    `tfsdk:"oidc_params"`
+	ApiserverParams   types.Map    `tfsdk:"apiserver_params"`
 	OidcCaCertificate types.String `tfsdk:"oidc_ca"`
 }
 
@@ -140,14 +140,14 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Description:         "The kubeconfig generated to access to KaaS project",
 				MarkdownDescription: "The kubeconfig generated to access to KaaS project",
 			},
-			"oidc_params": schema.MapAttribute{
+			"apiserver_params": schema.MapAttribute{
 				ElementType: types.StringType,
 				Optional:    true,
 				PlanModifiers: []planmodifier.Map{
 					mapplanmodifier.UseStateForUnknown(),
 				},
-				Description:         "Kubernetes Oidc params",
-				MarkdownDescription: "Kubernetes Oidc params",
+				Description:         "Kubernetes Apiserver params",
+				MarkdownDescription: "Kubernetes Apiserver params",
 			},
 			"oidc_ca": schema.StringAttribute{
 				Optional:            true,
@@ -227,11 +227,11 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	if !data.OidcCaCertificate.IsNull() {
-		oidcInput := &kaas.Oidc{
-			Certificate: data.OidcCaCertificate.ValueString(),
-			Params:      r.getOidcParamsValues(data),
+		oidcInput := &kaas.Apiserver{
+			OidcCa: data.OidcCaCertificate.ValueString(),
+			Params: r.getOidcParamsValues(data),
 		}
-		created, err := r.client.Kaas.CreateOidc(oidcInput, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
+		created, err := r.client.Kaas.CreateApiserverParams(oidcInput, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
 		if !created || err != nil {
 			resp.Diagnostics.AddError(
 				"Error when creating Oidc",
@@ -249,8 +249,8 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 func (r *kaasResource) getOidcParamsValues(data KaasModel) map[string]string {
 	params := make(map[string]string)
-	if !data.OidcParams.IsNull() && !data.OidcParams.IsUnknown() {
-		for key, val := range data.OidcParams.Elements() {
+	if !data.ApiserverParams.IsNull() && !data.ApiserverParams.IsUnknown() {
+		for key, val := range data.ApiserverParams.Elements() {
 			if strVal, ok := val.(types.String); ok && !strVal.IsNull() && !strVal.IsUnknown() {
 				params[key] = strVal.ValueString()
 			}
@@ -314,16 +314,18 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		state.Kubeconfig = types.StringValue(kubeconfig)
 	}
 
-	oidc, err := r.client.Kaas.GetOidc(kaasObject.Project.PublicCloudId, kaasObject.Project.ProjectId, kaasObject.Id)
+	oidc, err := r.client.Kaas.GetApiserverParams(kaasObject.Project.PublicCloudId, kaasObject.Project.ProjectId, kaasObject.Id)
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Could not get Oidc",
 			err.Error(),
 		)
 	}
-	state.OidcCaCertificate = types.StringValue(oidc.Certificate)
-	mapValue, _ := types.MapValueFrom(ctx, types.StringType, oidc.Params)
-	state.OidcParams = mapValue
+	if oidc != nil {
+		state.OidcCaCertificate = types.StringValue(oidc.OidcCa)
+		mapValue, _ := types.MapValueFrom(ctx, types.StringType, oidc.Params)
+		state.ApiserverParams = mapValue
+	}
 
 	state.fill(kaasObject)
 
@@ -384,11 +386,11 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	if !data.OidcCaCertificate.IsNull() {
-		oidcInput := &kaas.Oidc{
-			Certificate: data.OidcCaCertificate.ValueString(),
-			Params:      r.getOidcParamsValues(data),
+		oidcInput := &kaas.Apiserver{
+			OidcCa: data.OidcCaCertificate.ValueString(),
+			Params: r.getOidcParamsValues(data),
 		}
-		patched, err := r.client.Kaas.PatchOidc(oidcInput, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
+		patched, err := r.client.Kaas.PatchApiserverParams(oidcInput, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
 		if !patched || err != nil {
 			resp.Diagnostics.AddError(
 				"Error when patching Oidc",
