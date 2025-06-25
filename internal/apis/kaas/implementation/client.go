@@ -263,7 +263,7 @@ func (client *Client) DeleteInstancePool(publicCloudId int, publicCloudProjectId
 	return result.Data, nil
 }
 
-func (client *Client) CreateOidc(input *kaas.Oidc, publicCloudId int, projectId int, kaasId int) (bool, error) {
+func (client *Client) CreateApiserverParams(input *kaas.Apiserver, publicCloudId int, projectId int, kaasId int) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().
@@ -273,7 +273,7 @@ func (client *Client) CreateOidc(input *kaas.Oidc, publicCloudId int, projectId 
 		SetBody(input).
 		SetResult(&result).
 		SetError(&result).
-		Post(EndpointOidc)
+		Post(EndpointApiserverParams)
 	if err != nil {
 		return false, err
 	}
@@ -285,7 +285,7 @@ func (client *Client) CreateOidc(input *kaas.Oidc, publicCloudId int, projectId 
 	return result.Data, nil
 }
 
-func (client *Client) PatchOidc(input *kaas.Oidc, publicCloudId int, projectId int, kaasId int) (bool, error) {
+func (client *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int, projectId int, kaasId int) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().
@@ -295,7 +295,7 @@ func (client *Client) PatchOidc(input *kaas.Oidc, publicCloudId int, projectId i
 		SetBody(input).
 		SetResult(&result).
 		SetError(&result).
-		Patch(EndpointOidc)
+		Patch(EndpointApiserverParams)
 
 	if err != nil {
 		return false, err
@@ -308,16 +308,16 @@ func (client *Client) PatchOidc(input *kaas.Oidc, publicCloudId int, projectId i
 	return result.Data, nil
 }
 
-func (client *Client) GetOidc(publicCloudId int, projectId int, kaasId int) (*kaas.Oidc, error) {
+func (client *Client) GetApiserverParams(publicCloudId int, projectId int, kaasId int) (*kaas.Apiserver, error) {
 
-	var result helpers.NormalizedApiResponse[*kaas.Oidc]
+	var result helpers.NormalizedApiResponse[*kaas.Apiserver]
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
 		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
 		SetResult(&result).
 		SetError(&result).
-		Get(EndpointOidc)
+		Get(EndpointApiserverParams)
 	if err != nil {
 		return nil, err
 	}

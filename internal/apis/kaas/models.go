@@ -8,9 +8,9 @@ type KaasPack struct {
 	Description string `json:"description,omitempty"`
 }
 
-type Oidc struct {
-	Params map[string]string `json:"oidc_params,omitempty"`
-	Certificate string `json:"oidc_ca,omitempty"`
+type Apiserver struct {
+	Params map[string]string `json:"apiserver_params,omitempty"`
+	OidcCa string            `json:"oidc_ca,omitempty"`
 }
 
 type Kaas struct {

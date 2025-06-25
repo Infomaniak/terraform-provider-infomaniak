@@ -90,11 +90,11 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 				Description:         "The version of Kubernetes associated with the KaaS project",
 				MarkdownDescription: "The version of Kubernetes associated with the KaaS project",
 			},
-			"oidc_params": schema.MapAttribute{
+			"apiserver_params": schema.MapAttribute{
 				ElementType:         types.StringType,
 				Computed:            true,
-				Description:         "Kubernetes Oidc params",
-				MarkdownDescription: "Kubernetes Oidc params",
+				Description:         "Kubernetes Apiserver params",
+				MarkdownDescription: "Kubernetes Apiserver params",
 			},
 			"oidc_ca": schema.StringAttribute{
 				Computed:            true,
@@ -139,7 +139,7 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	oidc, err := d.client.Kaas.GetOidc(
+	oidc, err := d.client.Kaas.GetApiserverParams(
 		int(data.PublicCloudId.ValueInt64()),
 		int(data.PublicCloudProjectId.ValueInt64()),
 		int(data.Id.ValueInt64()),
@@ -155,9 +155,11 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	data.Kubeconfig = types.StringValue(kubeconfig)
 	data.Region = types.StringValue(obj.Region)
 	data.KubernetesVersion = types.StringValue(obj.KubernetesVersion)
-	data.OidcCaCertificate = types.StringValue(oidc.Certificate)
-	mapValue, _ := types.MapValueFrom(ctx, types.StringType, oidc.Params)
-	data.OidcParams = mapValue
+	if oidc != nil {		
+		data.OidcCaCertificate = types.StringValue(oidc.OidcCa)
+		mapValue, _ := types.MapValueFrom(ctx, types.StringType, oidc.Params)
+		data.ApiserverParams = mapValue
+	}
 
 	// Set state
 	diags := resp.State.Set(ctx, &data)
