@@ -265,7 +265,6 @@ func (client *Client) DeleteInstancePool(publicCloudId int, publicCloudProjectId
 
 func (client *Client) CreateApiserverParams(input *kaas.Apiserver, publicCloudId int, projectId int, kaasId int) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
-
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
 		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
@@ -273,7 +272,7 @@ func (client *Client) CreateApiserverParams(input *kaas.Apiserver, publicCloudId
 		SetBody(input).
 		SetResult(&result).
 		SetError(&result).
-		Post(EndpointApiserverParams)
+		Post(EndpointApiserver)
 	if err != nil {
 		return false, err
 	}
@@ -287,7 +286,6 @@ func (client *Client) CreateApiserverParams(input *kaas.Apiserver, publicCloudId
 
 func (client *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int, projectId int, kaasId int) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
-
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
 		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
@@ -295,7 +293,7 @@ func (client *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId 
 		SetBody(input).
 		SetResult(&result).
 		SetError(&result).
-		Patch(EndpointApiserverParams)
+		Patch(EndpointApiserver)
 
 	if err != nil {
 		return false, err
@@ -317,7 +315,7 @@ func (client *Client) GetApiserverParams(publicCloudId int, projectId int, kaasI
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
 		SetResult(&result).
 		SetError(&result).
-		Get(EndpointApiserverParams)
+		Get(EndpointApiserver)
 	if err != nil {
 		return nil, err
 	}

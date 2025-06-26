@@ -90,17 +90,56 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 				Description:         "The version of Kubernetes associated with the KaaS project",
 				MarkdownDescription: "The version of Kubernetes associated with the KaaS project",
 			},
-			"apiserver_params": schema.MapAttribute{
-				ElementType:         types.StringType,
-				Computed:            true,
-				Description:         "Kubernetes Apiserver params",
-				MarkdownDescription: "Kubernetes Apiserver params",
-			},
-			"oidc_ca": schema.StringAttribute{
-				Computed:            true,
-				Sensitive:           true,
-				Description:         "Oidc ca certificate",
-				MarkdownDescription: "Oidc CA certificate",
+			"apiserver": schema.SingleNestedAttribute{
+				Description:         "Kubernetes Apiserver editable params",
+				MarkdownDescription: "Kubernetes Apiserver editable params",
+				Attributes: map[string]schema.Attribute{
+					"params": schema.MapAttribute{
+						ElementType: types.StringType,
+						Optional: true,
+						Description: "Map of Kubernetes Apiserver params in case the terraform provider does not already abstracts them",
+						MarkdownDescription: "Map of Kubernetes Apiserver params in case the terraform provider does not already abstracts them",
+					},
+					"oidc": schema.SingleNestedAttribute{
+						Description:         "OIDC specific Apiserver params",
+						MarkdownDescription: "OIDC specific Apiserver params",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"ca": schema.StringAttribute{
+								Optional:            true,
+								Sensitive:           true,
+								Description:         "OIDC Ca Certificate",
+								MarkdownDescription: "OIDC Ca Certificate",
+							},
+							"issuer_url": schema.StringAttribute{
+								Optional:            true,
+								Description:         "OIDC issuer URL",
+								MarkdownDescription: "OIDC issuer URL",
+							},
+							"client_id": schema.StringAttribute{
+								Optional:            true,
+								Description:         "OIDC client identifier",
+								MarkdownDescription: "OIDC client identifier",
+							},
+							"username_claim": schema.StringAttribute{
+								Optional:            true,
+								Description:         "OIDC username claim",
+								MarkdownDescription: "OIDC username claim",
+							},
+							"username_prefix": schema.StringAttribute{
+								Optional:            true,
+								Description:         "OIDC username prefix",
+								MarkdownDescription: "OIDC username prefix",
+							},
+							"signing_algs": schema.StringAttribute{
+								Optional:            true,
+								Description:         "OIDC signing algorithm. Kubernetes will default it to RS256",
+								MarkdownDescription: "OIDC signing algorithm. Kubernetes will default it to RS256",
+							},
+						},
+					},
+				},
+				Optional: true,
 			},
 		},
 		MarkdownDescription: "The kaas data source allows the user to manage a kaas project",
@@ -139,7 +178,7 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	oidc, err := d.client.Kaas.GetApiserverParams(
+	apiserverParams, err := d.client.Kaas.GetApiserverParams(
 		int(data.PublicCloudId.ValueInt64()),
 		int(data.PublicCloudProjectId.ValueInt64()),
 		int(data.Id.ValueInt64()),
@@ -155,10 +194,13 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	data.Kubeconfig = types.StringValue(kubeconfig)
 	data.Region = types.StringValue(obj.Region)
 	data.KubernetesVersion = types.StringValue(obj.KubernetesVersion)
-	if oidc != nil {		
-		data.OidcCaCertificate = types.StringValue(oidc.OidcCa)
-		mapValue, _ := types.MapValueFrom(ctx, types.StringType, oidc.Params)
-		data.ApiserverParams = mapValue
+	if apiserverParams != nil {
+		data.Apiserver.Oidc.Ca = types.StringValue(apiserverParams.OidcCa)
+		data.Apiserver.Oidc.ClientId = types.StringValue(apiserverParams.Params.ClientId)
+		data.Apiserver.Oidc.IssuerUrl = types.StringValue(apiserverParams.Params.IssuerUrl)
+		data.Apiserver.Oidc.UsernameClaim = types.StringValue(apiserverParams.Params.UsernameClaim)
+		data.Apiserver.Oidc.UsernamePrefix = types.StringValue(apiserverParams.Params.UsernamePrefix)
+		data.Apiserver.Oidc.SigningAlgs = types.StringValue(apiserverParams.Params.SigningAlgs)
 	}
 
 	// Set state

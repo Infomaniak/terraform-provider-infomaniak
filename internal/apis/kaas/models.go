@@ -1,6 +1,10 @@
 package kaas
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"maps"
+)
 
 type KaasPack struct {
 	Id          int    `json:"kaas_pack_id,omitempty"`
@@ -9,8 +13,39 @@ type KaasPack struct {
 }
 
 type Apiserver struct {
-	Params map[string]string `json:"apiserver_params,omitempty"`
-	OidcCa string            `json:"oidc_ca,omitempty"`
+	Params                     ApiServerParams   `json:"apiserver_params,omitempty"`
+	NonSpecificApiServerParams map[string]string `json:"-"`
+
+	OidcCa string `json:"oidc_ca,omitempty"`
+}
+
+var _ json.Marshaler = (*Apiserver)(nil)
+
+// We can delete this once json v2 is out, so we can flatten everything without having to do this
+func (a *Apiserver) MarshalJSON() ([]byte, error) {
+	res := make(map[string]string)
+	paramBytes, err := json.Marshal(a.Params)
+	if err != nil {
+		paramBytes = []byte{}
+	}
+	var paramsMap map[string]string
+	if err := json.Unmarshal(paramBytes, &paramsMap); err != nil {
+		paramsMap = map[string]string{}
+	}
+	maps.Copy(res, paramsMap)
+	maps.Copy(res, a.NonSpecificApiServerParams)
+	return json.Marshal(map[string]any{
+		"apiserver_params": res,
+		"oidc_ca":          a.OidcCa,
+	})
+}
+
+type ApiServerParams struct {
+	IssuerUrl      string `json:"--oidc-issuer-url,omitempty"`
+	ClientId       string `json:"--oidc-client-id,omitempty"`
+	UsernameClaim  string `json:"--oidc-username-claim,omitempty"`
+	UsernamePrefix string `json:"--oidc-username-prefix,omitempty"`
+	SigningAlgs    string `json:"--oidc-signing-algs,omitempty"`
 }
 
 type Kaas struct {
