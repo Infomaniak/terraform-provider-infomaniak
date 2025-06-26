@@ -14,5 +14,5 @@ type Api interface {
 	DeleteBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string) (bool, error)
 
 	CreateRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string) (*DBaaSRestore, error)
-	GetRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string, restoreId string) (*DBaaSRestore, error)
+	GetRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, restoreId string) (*DBaaSRestore, error)
 }

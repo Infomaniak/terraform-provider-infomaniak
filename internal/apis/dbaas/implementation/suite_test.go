@@ -10,5 +10,5 @@ import (
 func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecs(t, "KaaS Client Implementation Suite")
+	RunSpecs(t, "DBaaS Client Implementation Suite")
 }

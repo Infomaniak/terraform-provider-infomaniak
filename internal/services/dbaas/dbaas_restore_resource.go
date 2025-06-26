@@ -155,7 +155,6 @@ func (r *dbaasRestoreResource) Read(ctx context.Context, req resource.ReadReques
 		int(state.PublicCloudId.ValueInt64()),
 		int(state.PublicCloudProjectId.ValueInt64()),
 		int(state.DBaasId.ValueInt64()),
-		state.BackupId.ValueString(),
 		state.Id.ValueString(),
 	)
 	if err != nil {
@@ -173,7 +172,10 @@ func (r *dbaasRestoreResource) Read(ctx context.Context, req resource.ReadReques
 }
 
 func (r *dbaasRestoreResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	// NOP
+	resp.Diagnostics.AddError(
+		"Cannot update",
+		"This resource cannot be updated.",
+	)
 }
 
 func (r *dbaasRestoreResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -203,7 +205,7 @@ func (r *dbaasRestoreResource) waitUntilActive(ctx context.Context, publicCloudI
 		case <-ctx.Done():
 			return nil, nil
 		case <-t.C:
-			found, err := r.client.DBaas.GetRestore(publicCloudId, publicCloudProjectId, dbaasId, backupId, id)
+			found, err := r.client.DBaas.GetRestore(publicCloudId, publicCloudProjectId, dbaasId, id)
 			if err != nil {
 				return nil, err
 			}

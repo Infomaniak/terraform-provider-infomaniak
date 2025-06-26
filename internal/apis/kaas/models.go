@@ -11,7 +11,7 @@ type KaasPack struct {
 type Kaas struct {
 	Name    string      `json:"name,omitempty"`
 	Id      int         `json:"kaas_id,omitempty"`
-	Project KaasProject `json:"project,omitempty"`
+	Project KaasProject `json:"project,omitzero"`
 	PackId  int         `json:"kaas_pack_id,omitempty"`
 	Pack    *KaasPack   `json:"pack,omitempty"`
 

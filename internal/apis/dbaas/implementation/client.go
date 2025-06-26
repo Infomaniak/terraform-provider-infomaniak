@@ -44,7 +44,7 @@ func (client *Client) FindPack(dbType string, name string) (*dbaas.DBaaSPack, er
 	}
 
 	data := result.Data
-	if len(data) == 0 || len(data) > 1 || data[0].Name != name {
+	if len(data) != 1 || data[0].Name != name {
 		return nil, fmt.Errorf("pack not found")
 	}
 
@@ -245,7 +245,7 @@ func (client *Client) CreateRestore(publicCloudId int, publicCloudProjectId int,
 	return result.Data, nil
 }
 
-func (client *Client) GetRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string, restoreId string) (*dbaas.DBaaSRestore, error) {
+func (client *Client) GetRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, restoreId string) (*dbaas.DBaaSRestore, error) {
 	var result helpers.NormalizedApiResponse[*dbaas.DBaaSRestore]
 
 	resp, err := client.resty.R().
@@ -253,7 +253,6 @@ func (client *Client) GetRestore(publicCloudId int, publicCloudProjectId int, db
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
 		SetPathParam("restore_id", fmt.Sprint(restoreId)).
-		SetQueryParam("backup_id", backupId).
 		SetResult(&result).
 		SetError(&result).
 		Get(EndpointDatabaseRestore)
