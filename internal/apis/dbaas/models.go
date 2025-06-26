@@ -9,7 +9,7 @@ type DBaaSPack struct {
 
 type DBaaS struct {
 	Id      int          `json:"id,omitempty"`
-	Project DBaaSProject `json:"project,omitempty"`
+	Project DBaaSProject `json:"project,omitzero"`
 	PackId  int          `json:"pack_id,omitempty"`
 	Pack    *DBaaSPack   `json:"pack,omitempty"`
 

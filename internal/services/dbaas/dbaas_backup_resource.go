@@ -162,7 +162,10 @@ func (r *dbaasBackupResource) Read(ctx context.Context, req resource.ReadRequest
 }
 
 func (r *dbaasBackupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	// NOP
+	resp.Diagnostics.AddError(
+		"Cannot update",
+		"This resource cannot be updated.",
+	)
 }
 
 func (r *dbaasBackupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

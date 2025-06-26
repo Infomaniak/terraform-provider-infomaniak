@@ -5,14 +5,14 @@ description: |-
   The DBaas Backup resource allows the user to manage a Backup of a database.
 ---
 
-# infomaniak_dbaas
+# infomaniak_dbaas_backup
 
 The DBaas Backup resource allows the user to manage a Backup of a database.
 
 ## Example
 
 ```hcl
-resource "infomaniak_dbaas" "db-0" {
+resource "infomaniak_dbaas_backup" "db-0" {
   public_cloud_id         = xxxxx
   public_cloud_project_id = yyyyy
   dbaas_id                = zzzzz

@@ -1,13 +1,13 @@
 ---
-page_title: "infomaniak_dbaas_backup"
+page_title: "infomaniak_dbaas_restore"
 subcategory: "DBaaS"
 description: |-
-  The DBaas Restore resource allows the user to manage a Restore of a database.
+  The DBaas Restore resource allows the user to restore a database to a certain backup.
 ---
 
-# infomaniak_dbaas
+# infomaniak_dbaas_restore
 
-The DBaas Restore resource allows the user to manage a Restore of a database.
+The DBaas Restore resource allows the user to restore a database to a certain backup.
 
 ## No-Ops
 
@@ -16,10 +16,11 @@ Deleting this resource will effectively delete it from your Terraform state but 
 ## Example
 
 ```hcl
-resource "infomaniak_dbaas" "db-0" {
+resource "infomaniak_dbaas_restore" "db-0" {
   public_cloud_id         = xxxxx
   public_cloud_project_id = yyyyy
   dbaas_id                = zzzzz
+  backup_id               = ttttt
 }
 ```
 
@@ -35,4 +36,4 @@ resource "infomaniak_dbaas" "db-0" {
 ### Read-Only
 
 - `id` (String) A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.
-- `status` (String) The status of the backup.
+- `status` (String) The status of the restore.

@@ -26,7 +26,7 @@ func NewSuccessResponse[K any](data K) helpers.NormalizedApiResponse[K] {
 	}
 }
 
-var _ = Describe("KaaS API Client", func() {
+var _ = Describe("DBaaS API Client", func() {
 	Context("General Testing", func() {
 		client := New(BaseURI, Token, "test")
 

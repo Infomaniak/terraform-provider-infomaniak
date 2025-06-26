@@ -28,7 +28,7 @@ resource "infomaniak_dbaas" "db-0" {
   public_cloud_id = xxxxx
   public_cloud_project_id = yyyyy
   
-  name      = "des baies"
+  name      = "db-0"
   pack_name = "pro-4"
   type      = "mysql"
   version   = "8.0.42"

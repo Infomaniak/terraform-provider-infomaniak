@@ -24,7 +24,7 @@ curl -s -H "Authorization: Bearer $INFOMANIAK_TOKEN" https://api.infomaniak.com/
 ## Example
 
 ```hcl
-resource "infomaniak_dbaas" "db-0" {
+data "infomaniak_dbaas" "db-0" {
   public_cloud_id         = xxxxx
   public_cloud_project_id = yyyyy
   id                      = zzzzz
