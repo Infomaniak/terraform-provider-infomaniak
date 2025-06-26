@@ -22,7 +22,19 @@ resource "infomaniak_kaas" "create_kluster" {
   kubernetes_version = var.cluster_version
   region             = var.cluster_region
 
-  oidc_ca = file(var.oidc_ca_filename)
+  apiserver = {
+    params = {
+      "--oidc-groups-claim" = "custom-set-param"
+    }
+    oidc = {
+      issuer_url      = var.issuer_url
+      client_id       = var.client_id
+      username_claim  = var.username_claim
+      username_prefix = var.username_prefix
+      signing_algs    = var.signing_algs
+      ca              = file(var.oidc_ca_filename)
+    }
+  }
 }
 
 resource "infomaniak_kaas_instance_pool" "create_instance_pool_1" {
