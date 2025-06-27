@@ -5,6 +5,7 @@ import (
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/provider"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -102,36 +103,36 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 					},
 					"audit_logs": schema.SingleNestedAttribute{
 						MarkdownDescription: "Kubernetes audit logs specification files",
-						Optional:            true,
+						Computed:            true,
 						Attributes: map[string]schema.Attribute{
 							"webhook": schema.StringAttribute{
 								MarkdownDescription: "YAML manifest for audit webhook config",
-								Optional:            true,
+								Computed:            true,
 							},
 							"policy": schema.StringAttribute{
 								MarkdownDescription: "YAML manifest for audit policy",
-								Optional:            true,
+								Computed:            true,
 							},
 						},
 					},
 					"oidc": schema.SingleNestedAttribute{
 						Description:         "OIDC specific Apiserver params",
 						MarkdownDescription: "OIDC specific Apiserver params",
-						Optional:            true,
+						Computed:            true,
 						Attributes: map[string]schema.Attribute{
 							"ca": schema.StringAttribute{
-								Optional:            true,
+								Computed:            true,
 								Sensitive:           true,
 								Description:         "OIDC Ca Certificate",
 								MarkdownDescription: "OIDC Ca Certificate",
 							},
 							"issuer_url": schema.StringAttribute{
-								Optional:            true,
+								Computed:            true,
 								Description:         "OIDC issuer URL",
 								MarkdownDescription: "OIDC issuer URL",
 							},
 							"client_id": schema.StringAttribute{
-								Optional:            true,
+								Computed:            true,
 								Description:         "OIDC client identifier",
 								MarkdownDescription: "OIDC client identifier",
 							},
@@ -141,12 +142,12 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 								MarkdownDescription: "OIDC username claim",
 							},
 							"username_prefix": schema.StringAttribute{
-								Optional:            true,
+								Computed:            true,
 								Description:         "OIDC username prefix",
 								MarkdownDescription: "OIDC username prefix",
 							},
 							"signing_algs": schema.StringAttribute{
-								Optional:            true,
+								Computed:            true,
 								Description:         "OIDC signing algorithm. Kubernetes will default it to RS256",
 								MarkdownDescription: "OIDC signing algorithm. Kubernetes will default it to RS256",
 							},
@@ -209,6 +210,10 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	data.Region = types.StringValue(obj.Region)
 	data.KubernetesVersion = types.StringValue(obj.KubernetesVersion)
 	if apiserverParams != nil {
+		if data.Apiserver == nil {
+			data.Apiserver = &ApiserverModel{}
+		}
+		data.Apiserver.Params, _ = types.MapValue(types.StringType, map[string]attr.Value{})
 		if data.Apiserver.AuditLog == nil {
 			data.Apiserver.AuditLog = &AuditLog{}
 		}
