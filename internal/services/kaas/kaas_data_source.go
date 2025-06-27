@@ -95,10 +95,24 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 				MarkdownDescription: "Kubernetes Apiserver editable params",
 				Attributes: map[string]schema.Attribute{
 					"params": schema.MapAttribute{
-						ElementType: types.StringType,
-						Optional: true,
-						Description: "Map of Kubernetes Apiserver params in case the terraform provider does not already abstracts them",
+						ElementType:         types.StringType,
+						Optional:            true,
+						Description:         "Map of Kubernetes Apiserver params in case the terraform provider does not already abstracts them",
 						MarkdownDescription: "Map of Kubernetes Apiserver params in case the terraform provider does not already abstracts them",
+					},
+					"audit_logs": schema.SingleNestedAttribute{
+						MarkdownDescription: "Kubernetes audit logs specification files",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"webhook": schema.StringAttribute{
+								MarkdownDescription: "YAML manifest for audit webhook config",
+								Optional:            true,
+							},
+							"policy": schema.StringAttribute{
+								MarkdownDescription: "YAML manifest for audit policy",
+								Optional:            true,
+							},
+						},
 					},
 					"oidc": schema.SingleNestedAttribute{
 						Description:         "OIDC specific Apiserver params",
@@ -195,7 +209,15 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	data.Region = types.StringValue(obj.Region)
 	data.KubernetesVersion = types.StringValue(obj.KubernetesVersion)
 	if apiserverParams != nil {
-		data.Apiserver.Oidc.Ca = types.StringValue(apiserverParams.OidcCa)
+		if data.Apiserver.AuditLog == nil {
+			data.Apiserver.AuditLog = &AuditLog{}
+		}
+		if data.Apiserver.Oidc == nil {
+			data.Apiserver.Oidc = &OidcModel{}
+		}
+		data.Apiserver.AuditLog.Policy = types.StringPointerValue(apiserverParams.AuditLogPolicy)
+		data.Apiserver.AuditLog.Webhook = types.StringPointerValue(apiserverParams.AuditLogWebhook)
+		data.Apiserver.Oidc.Ca = types.StringPointerValue(apiserverParams.OidcCa)
 		data.Apiserver.Oidc.ClientId = types.StringValue(apiserverParams.Params.ClientId)
 		data.Apiserver.Oidc.IssuerUrl = types.StringValue(apiserverParams.Params.IssuerUrl)
 		data.Apiserver.Oidc.UsernameClaim = types.StringValue(apiserverParams.Params.UsernameClaim)
