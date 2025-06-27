@@ -157,8 +157,8 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				MarkdownDescription: "Kubernetes Apiserver editable params",
 				Attributes: map[string]schema.Attribute{
 					"params": schema.MapAttribute{
-						Optional: true,
-						ElementType: types.StringType,
+						Optional:            true,
+						ElementType:         types.StringType,
 						MarkdownDescription: "Map of Kubernetes Apiserver params in case the terraform provider does not already abstracts them",
 						PlanModifiers: []planmodifier.Map{
 							mapplanmodifier.UseStateForUnknown(),
@@ -287,11 +287,11 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 		oidcInput := &kaas.Apiserver{
 			OidcCa: data.Apiserver.Oidc.Ca.ValueString(),
 			Params: kaas.ApiServerParams{
-				IssuerUrl:                  data.Apiserver.Oidc.IssuerUrl.ValueString(),
-				ClientId:                   data.Apiserver.Oidc.ClientId.ValueString(),
-				UsernameClaim:              data.Apiserver.Oidc.UsernameClaim.ValueString(),
-				UsernamePrefix:             data.Apiserver.Oidc.UsernamePrefix.ValueString(),
-				SigningAlgs:                data.Apiserver.Oidc.SigningAlgs.ValueString(),
+				IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
+				ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
+				UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
+				UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
+				SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
 			},
 			NonSpecificApiServerParams: r.getApiserverParamsValues(data),
 		}
@@ -452,28 +452,6 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	if !data.Apiserver.Oidc.Ca.IsNull() {
-		oidcInput := &kaas.Apiserver{
-			OidcCa: data.Apiserver.Oidc.Ca.ValueString(),
-			Params: kaas.ApiServerParams{
-				IssuerUrl:                  data.Apiserver.Oidc.IssuerUrl.ValueString(),
-				ClientId:                   data.Apiserver.Oidc.ClientId.ValueString(),
-				UsernameClaim:              data.Apiserver.Oidc.UsernameClaim.ValueString(),
-				UsernamePrefix:             data.Apiserver.Oidc.UsernamePrefix.ValueString(),
-				SigningAlgs:                data.Apiserver.Oidc.SigningAlgs.ValueString(),
-			},
-			NonSpecificApiServerParams: r.getApiserverParamsValues(data),
-		}
-		patched, err := r.client.Kaas.PatchApiserverParams(oidcInput, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
-		if !patched || err != nil {
-			resp.Diagnostics.AddError(
-				"Error when creating Oidc",
-				err.Error(),
-			)
-			return
-		}
-	}
-
 	// Wait for kubeconfig to be available
 	kubeconfig, err := r.client.Kaas.GetKubeconfig(
 		int(data.PublicCloudId.ValueInt64()),
@@ -490,6 +468,28 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	data.fill(kaasObject)
+
+	if !data.Apiserver.Oidc.Ca.IsNull() {
+		oidcInput := &kaas.Apiserver{
+			OidcCa: data.Apiserver.Oidc.Ca.ValueString(),
+			Params: kaas.ApiServerParams{
+				IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
+				ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
+				UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
+				UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
+				SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
+			},
+			NonSpecificApiServerParams: r.getApiserverParamsValues(data),
+		}
+		patched, err := r.client.Kaas.PatchApiserverParams(oidcInput, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
+		if !patched || err != nil {
+			resp.Diagnostics.AddError(
+				"Error when creating Oidc",
+				err.Error(),
+			)
+			return
+		}
+	}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
