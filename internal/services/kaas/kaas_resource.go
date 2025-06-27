@@ -195,15 +195,17 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	// Wait for kubeconfig to be available
-	kubeconfig, err := r.client.Kaas.GetKubeconfig(input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
+	kubeconfig, err := r.client.Kaas.GetKubeconfig(int(data.PublicCloudId.ValueInt64()), int(data.PublicCloudProjectId.ValueInt64()), kaasId)
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Could not get kubeconfig for KaaS",
 			err.Error(),
 		)
+	} else {
+		data.Kubeconfig = types.StringValue(kubeconfig)
 	}
 
-	data.fill(kaasObject, kubeconfig)
+	data.fill(kaasObject)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -253,15 +255,17 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Wait for kubeconfig to be available
-	kubeconfig, err := r.client.Kaas.GetKubeconfig(kaasObject.Project.PublicCloudId, kaasObject.Project.ProjectId, kaasObject.Id)
+	kubeconfig, err := r.client.Kaas.GetKubeconfig(int(state.PublicCloudId.ValueInt64()), int(state.PublicCloudProjectId.ValueInt64()), kaasObject.Id)
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Could not get kubeconfig",
 			err.Error(),
 		)
+	} else {
+		state.Kubeconfig = types.StringValue(kubeconfig)
 	}
 
-	state.fill(kaasObject, kubeconfig)
+	state.fill(kaasObject)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -330,9 +334,11 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 			"Could not get kubeconfig",
 			err.Error(),
 		)
+	} else {
+		data.Kubeconfig = types.StringValue(kubeconfig)
 	}
 
-	data.fill(kaasObject, kubeconfig)
+	data.fill(kaasObject)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -430,9 +436,8 @@ func (r *kaasResource) getPackId(data KaasModel, diagnostic *diag.Diagnostics) (
 	return chosenPack, nil
 }
 
-func (model *KaasModel) fill(kaas *kaas.Kaas, kubeconfig string) {
+func (model *KaasModel) fill(kaas *kaas.Kaas) {
 	model.Id = types.Int64Value(int64(kaas.Id))
-	model.Kubeconfig = types.StringValue(kubeconfig)
 	model.Region = types.StringValue(kaas.Region)
 	model.KubernetesVersion = types.StringValue(kaas.KubernetesVersion)
 	model.Name = types.StringValue(kaas.Name)
