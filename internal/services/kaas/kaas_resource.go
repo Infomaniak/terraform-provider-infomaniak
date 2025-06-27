@@ -17,8 +17,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -50,8 +52,9 @@ type KaasModel struct {
 }
 
 type ApiserverModel struct {
-	Params types.Map  `tfsdk:"params"`
-	Oidc   *OidcModel `tfsdk:"oidc"`
+	Params   types.Map  `tfsdk:"params"`
+	Oidc     *OidcModel `tfsdk:"oidc"`
+	AuditLog *AuditLog  `tfsdk:"audit_logs"`
 }
 
 type OidcModel struct {
@@ -61,6 +64,11 @@ type OidcModel struct {
 	UsernamePrefix types.String `tfsdk:"username_prefix"`
 	SigningAlgs    types.String `tfsdk:"signing_algs"`
 	Ca             types.String `tfsdk:"ca"`
+}
+
+type AuditLog struct {
+	Webhook types.String `tfsdk:"webhook"`
+	Policy  types.String `tfsdk:"policy"`
 }
 
 func (r *kaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -162,6 +170,29 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 						MarkdownDescription: "Map of Kubernetes Apiserver params in case the terraform provider does not already abstracts them",
 						PlanModifiers: []planmodifier.Map{
 							mapplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"audit_logs": schema.SingleNestedAttribute{
+						MarkdownDescription: "Kubernetes audit logs specification files",
+						Optional:            true,
+						PlanModifiers: []planmodifier.Object{
+							objectplanmodifier.UseStateForUnknown(),
+						},
+						Attributes: map[string]schema.Attribute{
+							"webhook": schema.StringAttribute{
+								MarkdownDescription: "YAML manifest for audit webhook config",
+								Optional:            true,
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.UseStateForUnknown(),
+								},
+							},
+							"policy": schema.StringAttribute{
+								MarkdownDescription: "YAML manifest for audit policy",
+								Optional:            true,
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.UseStateForUnknown(),
+								},
+							},
 						},
 					},
 					"oidc": schema.SingleNestedAttribute{
@@ -285,26 +316,27 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	data.fill(kaasObject, kubeconfig)
 
-	if !data.Apiserver.Oidc.Ca.IsNull() {
-		oidcInput := &kaas.Apiserver{
-			OidcCa: data.Apiserver.Oidc.Ca.ValueString(),
-			Params: kaas.ApiServerParams{
-				IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
-				ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
-				UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
-				UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
-				SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
-			},
-			NonSpecificApiServerParams: r.getApiserverParamsValues(data),
-		}
-		created, err := r.client.Kaas.CreateApiserverParams(oidcInput, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
-		if !created || err != nil {
-			resp.Diagnostics.AddError(
-				"Error when creating Oidc",
-				err.Error(),
-			)
-			return
-		}
+	
+	oidcInput := &kaas.Apiserver{
+		OidcCa:          data.Apiserver.Oidc.Ca.ValueStringPointer(),
+		AuditLogWebhook: data.Apiserver.AuditLog.Webhook.ValueStringPointer(),
+		AuditLogPolicy:  data.Apiserver.AuditLog.Policy.ValueStringPointer(),
+		Params: kaas.ApiServerParams{
+			IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
+			ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
+			UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
+			UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
+			SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
+		},
+		NonSpecificApiServerParams: r.getApiserverParamsValues(data),
+	}
+	created, err := r.client.Kaas.CreateApiserverParams(oidcInput, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
+	if !created || err != nil {
+		resp.Diagnostics.AddError(
+			"Error when creating Oidc",
+			err.Error(),
+		)
+		return
 	}
 
 	data.fill(kaasObject)
@@ -388,7 +420,15 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		)
 	}
 	if apiserverParams != nil {
-		state.Apiserver.Oidc.Ca = types.StringValue(apiserverParams.OidcCa)
+		if state.Apiserver.AuditLog == nil {
+			state.Apiserver.AuditLog = &AuditLog{}
+		}
+		if state.Apiserver.Oidc == nil {
+			state.Apiserver.Oidc = &OidcModel{}
+		}
+		state.Apiserver.AuditLog.Policy = types.StringPointerValue(apiserverParams.AuditLogPolicy)
+		state.Apiserver.AuditLog.Webhook = types.StringPointerValue(apiserverParams.AuditLogWebhook)
+		state.Apiserver.Oidc.Ca = types.StringPointerValue(apiserverParams.OidcCa)
 		state.Apiserver.Oidc.ClientId = types.StringValue(apiserverParams.Params.ClientId)
 		state.Apiserver.Oidc.IssuerUrl = types.StringValue(apiserverParams.Params.IssuerUrl)
 		state.Apiserver.Oidc.UsernameClaim = types.StringValue(apiserverParams.Params.UsernameClaim)
@@ -471,26 +511,26 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	data.fill(kaasObject)
 
-	if !data.Apiserver.Oidc.Ca.IsNull() {
-		oidcInput := &kaas.Apiserver{
-			OidcCa: data.Apiserver.Oidc.Ca.ValueString(),
-			Params: kaas.ApiServerParams{
-				IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
-				ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
-				UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
-				UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
-				SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
-			},
-			NonSpecificApiServerParams: r.getApiserverParamsValues(data),
-		}
-		patched, err := r.client.Kaas.PatchApiserverParams(oidcInput, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
-		if !patched || err != nil {
-			resp.Diagnostics.AddError(
-				"Error when creating Oidc",
-				err.Error(),
-			)
-			return
-		}
+	oidcInput := &kaas.Apiserver{
+		OidcCa:          data.Apiserver.Oidc.Ca.ValueStringPointer(),
+		AuditLogWebhook: data.Apiserver.AuditLog.Webhook.ValueStringPointer(),
+		AuditLogPolicy:  data.Apiserver.AuditLog.Policy.ValueStringPointer(),
+		Params: kaas.ApiServerParams{
+			IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
+			ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
+			UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
+			UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
+			SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
+		},
+		NonSpecificApiServerParams: r.getApiserverParamsValues(data),
+	}
+	patched, err := r.client.Kaas.PatchApiserverParams(oidcInput, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
+	if !patched || err != nil {
+		resp.Diagnostics.AddError(
+			"Error when creating Oidc",
+			err.Error(),
+		)
+		return
 	}
 
 	// Save updated data into Terraform state

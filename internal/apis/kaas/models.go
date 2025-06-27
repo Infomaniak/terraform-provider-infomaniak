@@ -3,7 +3,6 @@ package kaas
 import (
 	"encoding/json"
 	"fmt"
-	"maps"
 )
 
 type KaasPack struct {
@@ -16,28 +15,40 @@ type Apiserver struct {
 	Params                     ApiServerParams   `json:"apiserver_params,omitempty"`
 	NonSpecificApiServerParams map[string]string `json:"-"`
 
-	OidcCa string `json:"oidc_ca,omitempty"`
+	OidcCa          *string `json:"oidc_ca"`
+	AuditLogWebhook *string `json:"audit-webhook-config"`
+	AuditLogPolicy  *string `json:"audit-policy"`
 }
 
 var _ json.Marshaler = (*Apiserver)(nil)
 
 // We can delete this once json v2 is out, so we can flatten everything without having to do this
 func (a *Apiserver) MarshalJSON() ([]byte, error) {
-	res := make(map[string]string)
 	paramBytes, err := json.Marshal(a.Params)
 	if err != nil {
-		paramBytes = []byte{}
+		paramBytes = []byte("{}")
 	}
 	var paramsMap map[string]string
 	if err := json.Unmarshal(paramBytes, &paramsMap); err != nil {
 		paramsMap = map[string]string{}
 	}
-	maps.Copy(res, paramsMap)
-	maps.Copy(res, a.NonSpecificApiServerParams)
-	return json.Marshal(map[string]any{
-		"apiserver_params": res,
-		"oidc_ca":          a.OidcCa,
+	nonSpecificMap := a.NonSpecificApiServerParams
+	res := make(map[string]*string)
+	for k, v := range paramsMap {
+		val := v
+		res[k] = &val
+	}
+	for k, v := range nonSpecificMap {
+		val := v
+		res[k] = &val
+	}
+	result, err := json.Marshal(map[string]any{
+		"apiserver_params":     res,
+		"oidc_ca":              a.OidcCa,
+		"audit-policy":         a.AuditLogPolicy,
+		"audit-webhook-config": a.AuditLogWebhook,
 	})
+	return result, err
 }
 
 type ApiServerParams struct {
