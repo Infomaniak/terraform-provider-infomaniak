@@ -101,11 +101,11 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 						Description:         "Map of Kubernetes Apiserver params in case the terraform provider does not already abstracts them",
 						MarkdownDescription: "Map of Kubernetes Apiserver params in case the terraform provider does not already abstracts them",
 					},
-					"audit_logs": schema.SingleNestedAttribute{
+					"audit": schema.SingleNestedAttribute{
 						MarkdownDescription: "Kubernetes audit logs specification files",
 						Computed:            true,
 						Attributes: map[string]schema.Attribute{
-							"webhook": schema.StringAttribute{
+							"webhook_config": schema.StringAttribute{
 								MarkdownDescription: "YAML manifest for audit webhook config",
 								Computed:            true,
 							},
@@ -125,6 +125,14 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 								Sensitive:           true,
 								Description:         "OIDC Ca Certificate",
 								MarkdownDescription: "OIDC Ca Certificate",
+							},
+							"groups_claim": schema.StringAttribute{
+								Computed:            true,
+								MarkdownDescription: "OIDC groups claim",
+							},
+							"groups_prefix": schema.StringAttribute{
+								Computed:            true,
+								MarkdownDescription: "OIDC groups prefix",
 							},
 							"issuer_url": schema.StringAttribute{
 								Computed:            true,
@@ -228,6 +236,8 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		data.Apiserver.Oidc.UsernameClaim = types.StringValue(apiserverParams.Params.UsernameClaim)
 		data.Apiserver.Oidc.UsernamePrefix = types.StringValue(apiserverParams.Params.UsernamePrefix)
 		data.Apiserver.Oidc.SigningAlgs = types.StringValue(apiserverParams.Params.SigningAlgs)
+		data.Apiserver.Oidc.GroupsClaim = types.StringValue(apiserverParams.Params.GroupsClaim)
+		data.Apiserver.Oidc.GroupsPrefix = types.StringValue(apiserverParams.Params.GroupsPrefix)
 	}
 
 	// Set state

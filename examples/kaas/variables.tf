@@ -90,6 +90,12 @@ variable "signing_algs" {
 }
 
 
+variable "audit_logs_webhook_filename" {
+  description = "Audit logs webhook yaml filename"
+  type        = string
+  default     = "./webhook.yaml"
+}
+
 variable "oidc_ca_filename" {
   description = "oidc CA certificate local file path"
   type        = string

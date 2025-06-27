@@ -3,6 +3,7 @@ package kaas
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 )
 
 type KaasPack struct {
@@ -28,20 +29,12 @@ func (a *Apiserver) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		paramBytes = []byte("{}")
 	}
-	var paramsMap map[string]string
-	if err := json.Unmarshal(paramBytes, &paramsMap); err != nil {
-		paramsMap = map[string]string{}
-	}
+	paramsMap := make(map[string]string)
+	json.Unmarshal(paramBytes, &paramsMap)
 	nonSpecificMap := a.NonSpecificApiServerParams
-	res := make(map[string]*string)
-	for k, v := range paramsMap {
-		val := v
-		res[k] = &val
-	}
-	for k, v := range nonSpecificMap {
-		val := v
-		res[k] = &val
-	}
+	res := make(map[string]string)
+	maps.Copy(res, paramsMap)
+	maps.Copy(res, nonSpecificMap)
 	result, err := json.Marshal(map[string]any{
 		"apiserver_params":     res,
 		"oidc_ca":              a.OidcCa,
@@ -57,6 +50,8 @@ type ApiServerParams struct {
 	UsernameClaim  string `json:"--oidc-username-claim,omitempty"`
 	UsernamePrefix string `json:"--oidc-username-prefix,omitempty"`
 	SigningAlgs    string `json:"--oidc-signing-algs,omitempty"`
+	GroupsClaim    string `json:"--oidc-groups-claim,omitempty"`
+	GroupsPrefix   string `json:"--oidc-groups-prefix,omitempty"`
 }
 
 type Kaas struct {
