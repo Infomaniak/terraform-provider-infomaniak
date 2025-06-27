@@ -54,7 +54,7 @@ type KaasModel struct {
 type ApiserverModel struct {
 	Params   types.Map  `tfsdk:"params"`
 	Oidc     *OidcModel `tfsdk:"oidc"`
-	AuditLog *AuditLog  `tfsdk:"audit_logs"`
+	AuditLog *AuditLog  `tfsdk:"audit"`
 }
 
 type OidcModel struct {
@@ -63,11 +63,13 @@ type OidcModel struct {
 	UsernameClaim  types.String `tfsdk:"username_claim"`
 	UsernamePrefix types.String `tfsdk:"username_prefix"`
 	SigningAlgs    types.String `tfsdk:"signing_algs"`
+	GroupsClaim    types.String `tfsdk:"groups_claim"`
+	GroupsPrefix   types.String `tfsdk:"groups_prefix"`
 	Ca             types.String `tfsdk:"ca"`
 }
 
 type AuditLog struct {
-	Webhook types.String `tfsdk:"webhook"`
+	Webhook types.String `tfsdk:"webhook_config"`
 	Policy  types.String `tfsdk:"policy"`
 }
 
@@ -172,14 +174,14 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 							mapplanmodifier.UseStateForUnknown(),
 						},
 					},
-					"audit_logs": schema.SingleNestedAttribute{
+					"audit": schema.SingleNestedAttribute{
 						MarkdownDescription: "Kubernetes audit logs specification files",
 						Optional:            true,
 						PlanModifiers: []planmodifier.Object{
 							objectplanmodifier.UseStateForUnknown(),
 						},
 						Attributes: map[string]schema.Attribute{
-							"webhook": schema.StringAttribute{
+							"webhook_config": schema.StringAttribute{
 								MarkdownDescription: "YAML manifest for audit webhook config",
 								Optional:            true,
 								PlanModifiers: []planmodifier.String{
@@ -206,6 +208,20 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									stringplanmodifier.UseStateForUnknown(),
 								},
 								MarkdownDescription: "OIDC Ca Certificate",
+							},
+							"groups_claim": schema.StringAttribute{
+								Optional: true,
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.UseStateForUnknown(),
+								},
+								MarkdownDescription: "OIDC groups claim",
+							},
+							"groups_prefix": schema.StringAttribute{
+								Optional: true,
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.UseStateForUnknown(),
+								},
+								MarkdownDescription: "OIDC groups prefix",
 							},
 							"issuer_url": schema.StringAttribute{
 								Optional: true,
@@ -316,7 +332,6 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	data.fill(kaasObject, kubeconfig)
 
-	
 	oidcInput := &kaas.Apiserver{
 		OidcCa:          data.Apiserver.Oidc.Ca.ValueStringPointer(),
 		AuditLogWebhook: data.Apiserver.AuditLog.Webhook.ValueStringPointer(),
@@ -327,6 +342,8 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 			UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
 			UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
 			SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
+			GroupsClaim:    data.Apiserver.Oidc.GroupsClaim.ValueString(),
+			GroupsPrefix:   data.Apiserver.Oidc.GroupsPrefix.ValueString(),
 		},
 		NonSpecificApiServerParams: r.getApiserverParamsValues(data),
 	}
@@ -434,6 +451,8 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		state.Apiserver.Oidc.UsernameClaim = types.StringValue(apiserverParams.Params.UsernameClaim)
 		state.Apiserver.Oidc.UsernamePrefix = types.StringValue(apiserverParams.Params.UsernamePrefix)
 		state.Apiserver.Oidc.SigningAlgs = types.StringValue(apiserverParams.Params.SigningAlgs)
+		state.Apiserver.Oidc.GroupsClaim = types.StringValue(apiserverParams.Params.GroupsClaim)
+		state.Apiserver.Oidc.GroupsPrefix = types.StringValue(apiserverParams.Params.GroupsPrefix)
 	}
 
 	state.fill(kaasObject)
@@ -521,6 +540,8 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 			UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
 			UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
 			SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
+			GroupsClaim:    data.Apiserver.Oidc.GroupsClaim.ValueString(),
+			GroupsPrefix:   data.Apiserver.Oidc.GroupsPrefix.ValueString(),
 		},
 		NonSpecificApiServerParams: r.getApiserverParamsValues(data),
 	}
