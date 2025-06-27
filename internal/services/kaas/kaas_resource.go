@@ -283,6 +283,8 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 		data.Kubeconfig = types.StringValue(kubeconfig)
 	}
 
+	data.fill(kaasObject, kubeconfig)
+
 	if !data.Apiserver.Oidc.Ca.IsNull() {
 		oidcInput := &kaas.Apiserver{
 			OidcCa: data.Apiserver.Oidc.Ca.ValueString(),
