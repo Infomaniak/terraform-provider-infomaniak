@@ -43,5 +43,5 @@ func (dbaas *DBaaS) Key() string {
 
 type DBaaSProject struct {
 	PublicCloudId int `json:"public_cloud_id,omitempty"`
-	ProjectId     int `json:"project_cloud_project_id,omitempty"`
+	ProjectId     int `json:"id,omitempty"`
 }

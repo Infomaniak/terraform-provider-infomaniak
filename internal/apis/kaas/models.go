@@ -26,7 +26,7 @@ func (kaas *Kaas) Key() string {
 
 type KaasProject struct {
 	PublicCloudId int `json:"public_cloud_id,omitempty"`
-	ProjectId     int `json:"project_cloud_project_id,omitempty"`
+	ProjectId     int `json:"id,omitempty"`
 }
 
 type InstancePool struct {
