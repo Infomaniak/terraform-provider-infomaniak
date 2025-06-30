@@ -222,14 +222,14 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 			data.Apiserver = &ApiserverModel{}
 		}
 		data.Apiserver.Params, _ = types.MapValue(types.StringType, map[string]attr.Value{})
-		if data.Apiserver.AuditLog == nil {
-			data.Apiserver.AuditLog = &AuditLog{}
+		if data.Apiserver.Audit == nil {
+			data.Apiserver.Audit = &Audit{}
 		}
 		if data.Apiserver.Oidc == nil {
 			data.Apiserver.Oidc = &OidcModel{}
 		}
-		data.Apiserver.AuditLog.Policy = types.StringPointerValue(apiserverParams.AuditLogPolicy)
-		data.Apiserver.AuditLog.Webhook = types.StringPointerValue(apiserverParams.AuditLogWebhook)
+		data.Apiserver.Audit.Policy = types.StringPointerValue(apiserverParams.AuditLogPolicy)
+		data.Apiserver.Audit.WebhookConfig = types.StringPointerValue(apiserverParams.AuditLogWebhook)
 		data.Apiserver.Oidc.Ca = types.StringPointerValue(apiserverParams.OidcCa)
 		data.Apiserver.Oidc.ClientId = types.StringValue(apiserverParams.Params.ClientId)
 		data.Apiserver.Oidc.IssuerUrl = types.StringValue(apiserverParams.Params.IssuerUrl)
