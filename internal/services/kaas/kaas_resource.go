@@ -52,9 +52,9 @@ type KaasModel struct {
 }
 
 type ApiserverModel struct {
-	Params   types.Map  `tfsdk:"params"`
-	Oidc     *OidcModel `tfsdk:"oidc"`
-	AuditLog *AuditLog  `tfsdk:"audit"`
+	Params types.Map  `tfsdk:"params"`
+	Oidc   *OidcModel `tfsdk:"oidc"`
+	Audit  *Audit     `tfsdk:"audit"`
 }
 
 type OidcModel struct {
@@ -68,9 +68,9 @@ type OidcModel struct {
 	Ca             types.String `tfsdk:"ca"`
 }
 
-type AuditLog struct {
-	Webhook types.String `tfsdk:"webhook_config"`
-	Policy  types.String `tfsdk:"policy"`
+type Audit struct {
+	WebhookConfig types.String `tfsdk:"webhook_config"`
+	Policy        types.String `tfsdk:"policy"`
 }
 
 func (r *kaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -330,12 +330,12 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 		data.Kubeconfig = types.StringValue(kubeconfig)
 	}
 
-	data.fill(kaasObject, kubeconfig)
+	data.fill(kaasObject)
 
 	oidcInput := &kaas.Apiserver{
 		OidcCa:          data.Apiserver.Oidc.Ca.ValueStringPointer(),
-		AuditLogWebhook: data.Apiserver.AuditLog.Webhook.ValueStringPointer(),
-		AuditLogPolicy:  data.Apiserver.AuditLog.Policy.ValueStringPointer(),
+		AuditLogWebhook: data.Apiserver.Audit.WebhookConfig.ValueStringPointer(),
+		AuditLogPolicy:  data.Apiserver.Audit.Policy.ValueStringPointer(),
 		Params: kaas.ApiServerParams{
 			IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
 			ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
@@ -437,14 +437,14 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		)
 	}
 	if apiserverParams != nil {
-		if state.Apiserver.AuditLog == nil {
-			state.Apiserver.AuditLog = &AuditLog{}
+		if state.Apiserver.Audit == nil {
+			state.Apiserver.Audit = &Audit{}
 		}
 		if state.Apiserver.Oidc == nil {
 			state.Apiserver.Oidc = &OidcModel{}
 		}
-		state.Apiserver.AuditLog.Policy = types.StringPointerValue(apiserverParams.AuditLogPolicy)
-		state.Apiserver.AuditLog.Webhook = types.StringPointerValue(apiserverParams.AuditLogWebhook)
+		state.Apiserver.Audit.Policy = types.StringPointerValue(apiserverParams.AuditLogPolicy)
+		state.Apiserver.Audit.WebhookConfig = types.StringPointerValue(apiserverParams.AuditLogWebhook)
 		state.Apiserver.Oidc.Ca = types.StringPointerValue(apiserverParams.OidcCa)
 		state.Apiserver.Oidc.ClientId = types.StringValue(apiserverParams.Params.ClientId)
 		state.Apiserver.Oidc.IssuerUrl = types.StringValue(apiserverParams.Params.IssuerUrl)
@@ -532,8 +532,8 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	oidcInput := &kaas.Apiserver{
 		OidcCa:          data.Apiserver.Oidc.Ca.ValueStringPointer(),
-		AuditLogWebhook: data.Apiserver.AuditLog.Webhook.ValueStringPointer(),
-		AuditLogPolicy:  data.Apiserver.AuditLog.Policy.ValueStringPointer(),
+		AuditLogWebhook: data.Apiserver.Audit.WebhookConfig.ValueStringPointer(),
+		AuditLogPolicy:  data.Apiserver.Audit.Policy.ValueStringPointer(),
 		Params: kaas.ApiServerParams{
 			IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
 			ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
