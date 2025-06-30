@@ -350,25 +350,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
 	if data.Apiserver != nil {
-		apiserverParamsInput := &kaas.Apiserver{
-			NonSpecificApiServerParams: r.getApiserverParamsValues(data),
-		}
-		if data.Apiserver.Audit != nil {
-			apiserverParamsInput.AuditLogPolicy = data.Apiserver.Audit.Policy.ValueStringPointer()
-			apiserverParamsInput.AuditLogWebhook = data.Apiserver.Audit.WebhookConfig.ValueStringPointer()
-		}
-		if data.Apiserver.Oidc != nil {
-			apiserverParamsInput.OidcCa = data.Apiserver.Oidc.Ca.ValueStringPointer()
-			apiserverParamsInput.Params = &kaas.ApiServerParams{
-				IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
-				ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
-				UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
-				UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
-				SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
-				GroupsClaim:    data.Apiserver.Oidc.GroupsClaim.ValueString(),
-				GroupsPrefix:   data.Apiserver.Oidc.GroupsPrefix.ValueString(),
-			}
-		}
+		apiserverParamsInput := r.buildApiserverParamsInput(data)
 		created, err := r.client.Kaas.PatchApiserverParams(apiserverParamsInput, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
 		if !created || err != nil {
 			resp.Diagnostics.AddError(
@@ -550,25 +532,7 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	data.fill(kaasObject)
 
 	if data.Apiserver != nil {
-		apiserverParamsInput := &kaas.Apiserver{
-			NonSpecificApiServerParams: r.getApiserverParamsValues(data),
-		}
-		if data.Apiserver.Audit != nil {
-			apiserverParamsInput.AuditLogPolicy = data.Apiserver.Audit.Policy.ValueStringPointer()
-			apiserverParamsInput.AuditLogWebhook = data.Apiserver.Audit.WebhookConfig.ValueStringPointer()
-		}
-		if data.Apiserver.Oidc != nil {
-			apiserverParamsInput.OidcCa = data.Apiserver.Oidc.Ca.ValueStringPointer()
-			apiserverParamsInput.Params = &kaas.ApiServerParams{
-				IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
-				ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
-				UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
-				UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
-				SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
-				GroupsClaim:    data.Apiserver.Oidc.GroupsClaim.ValueString(),
-				GroupsPrefix:   data.Apiserver.Oidc.GroupsPrefix.ValueString(),
-			}
-		}
+		apiserverParamsInput := r.buildApiserverParamsInput(data)
 		patched, err := r.client.Kaas.PatchApiserverParams(apiserverParamsInput, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
 		if !patched || err != nil {
 			resp.Diagnostics.AddError(
@@ -580,6 +544,29 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *kaasResource) buildApiserverParamsInput(data KaasModel) *kaas.Apiserver {
+	apiserverParamsInput := &kaas.Apiserver{
+		NonSpecificApiServerParams: r.getApiserverParamsValues(data),
+	}
+	if data.Apiserver.Audit != nil {
+		apiserverParamsInput.AuditLogPolicy = data.Apiserver.Audit.Policy.ValueStringPointer()
+		apiserverParamsInput.AuditLogWebhook = data.Apiserver.Audit.WebhookConfig.ValueStringPointer()
+	}
+	if data.Apiserver.Oidc != nil {
+		apiserverParamsInput.OidcCa = data.Apiserver.Oidc.Ca.ValueStringPointer()
+		apiserverParamsInput.Params = &kaas.ApiServerParams{
+			IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
+			ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
+			UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
+			UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
+			SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
+			GroupsClaim:    data.Apiserver.Oidc.GroupsClaim.ValueString(),
+			GroupsPrefix:   data.Apiserver.Oidc.GroupsPrefix.ValueString(),
+		}
+	}
+	return apiserverParamsInput
 }
 
 func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
