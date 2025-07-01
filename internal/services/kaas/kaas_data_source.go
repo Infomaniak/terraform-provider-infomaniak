@@ -218,19 +218,7 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	if apiserverParams != nil {
-		data.SetDefaultValues(ctx)
-		data.Apiserver.Audit.Policy = types.StringPointerValue(apiserverParams.AuditLogPolicy)
-		data.Apiserver.Audit.WebhookConfig = types.StringPointerValue(apiserverParams.AuditLogWebhook)
-		data.Apiserver.Oidc.Ca = types.StringPointerValue(apiserverParams.OidcCa)
-		if apiserverParams.Params != nil {
-			data.Apiserver.Oidc.ClientId = types.StringValue(apiserverParams.Params.ClientId)
-			data.Apiserver.Oidc.IssuerUrl = types.StringValue(apiserverParams.Params.IssuerUrl)
-			data.Apiserver.Oidc.UsernameClaim = types.StringValue(apiserverParams.Params.UsernameClaim)
-			data.Apiserver.Oidc.UsernamePrefix = types.StringValue(apiserverParams.Params.UsernamePrefix)
-			data.Apiserver.Oidc.SigningAlgs = types.StringValue(apiserverParams.Params.SigningAlgs)
-			data.Apiserver.Oidc.GroupsClaim = types.StringValue(apiserverParams.Params.GroupsClaim)
-			data.Apiserver.Oidc.GroupsPrefix = types.StringValue(apiserverParams.Params.GroupsPrefix)
-		}
+		data.fillApiserverState(ctx, apiserverParams)
 	}
 
 	// Set state

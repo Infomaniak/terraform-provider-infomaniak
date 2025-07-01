@@ -359,10 +359,61 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 			)
 			return
 		}
+
+		data.fillApiserverState(ctx, apiserverParamsInput)
 	}
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (state *KaasModel) fillApiserverState(ctx context.Context, apiserverParams *kaas.Apiserver) {
+	if state.shouldUpdateApiserver() {
+		state.SetDefaultValues(ctx)
+		state.updateAuditConfig(apiserverParams)
+		state.updateOIDCConfig(apiserverParams)
+		if state.canSetApiserverToNil() {
+			state.Apiserver = nil
+		}
+	}
+}
+
+func (state *KaasModel) shouldUpdateApiserver() bool {
+	apiserver := state.Apiserver
+	return apiserver != nil && (apiserver.Audit != nil || apiserver.Oidc != nil || !apiserver.Params.IsNull())
+}
+
+func (state *KaasModel) updateAuditConfig(apiserverParams *kaas.Apiserver) {
+	if apiserverParams.AuditLogPolicy == nil && apiserverParams.AuditLogWebhook == nil {
+		state.Apiserver.Audit = nil
+	} else {
+		state.Apiserver.Audit.Policy = types.StringPointerValue(apiserverParams.AuditLogPolicy)
+		state.Apiserver.Audit.WebhookConfig = types.StringPointerValue(apiserverParams.AuditLogWebhook)
+	}
+}
+
+func (state *KaasModel) updateOIDCConfig(apiserverParams *kaas.Apiserver) {
+	if apiserverParams.Params != nil {
+		params := apiserverParams.Params
+		state.Apiserver.Oidc = &OidcModel{
+			ClientId:       types.StringValue(params.ClientId),
+			IssuerUrl:      types.StringValue(params.IssuerUrl),
+			UsernameClaim:  types.StringValue(params.UsernameClaim),
+			UsernamePrefix: types.StringValue(params.UsernamePrefix),
+			SigningAlgs:    types.StringValue(params.SigningAlgs),
+			GroupsClaim:    types.StringValue(params.GroupsClaim),
+			GroupsPrefix:   types.StringValue(params.GroupsPrefix),
+			Ca:             types.StringPointerValue(apiserverParams.OidcCa),
+		}
+	} else {
+		state.Apiserver.Oidc = nil
+		state.Apiserver.Params = types.MapNull(types.StringType)
+	}
+}
+
+func (state *KaasModel) canSetApiserverToNil() bool {
+	apiserver := state.Apiserver
+	return apiserver.Audit == nil && apiserver.Oidc == nil && apiserver.Params.IsNull()
 }
 
 func (r *kaasResource) waitUntilActive(ctx context.Context, kaas *kaas.Kaas, id int) (*kaas.Kaas, error) {
@@ -443,19 +494,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	if apiserverParams != nil {
-		state.SetDefaultValues(ctx)
-		state.Apiserver.Audit.Policy = types.StringPointerValue(apiserverParams.AuditLogPolicy)
-		state.Apiserver.Audit.WebhookConfig = types.StringPointerValue(apiserverParams.AuditLogWebhook)
-		state.Apiserver.Oidc.Ca = types.StringPointerValue(apiserverParams.OidcCa)
-		if apiserverParams.Params != nil {
-			state.Apiserver.Oidc.ClientId = types.StringValue(apiserverParams.Params.ClientId)
-			state.Apiserver.Oidc.IssuerUrl = types.StringValue(apiserverParams.Params.IssuerUrl)
-			state.Apiserver.Oidc.UsernameClaim = types.StringValue(apiserverParams.Params.UsernameClaim)
-			state.Apiserver.Oidc.UsernamePrefix = types.StringValue(apiserverParams.Params.UsernamePrefix)
-			state.Apiserver.Oidc.SigningAlgs = types.StringValue(apiserverParams.Params.SigningAlgs)
-			state.Apiserver.Oidc.GroupsClaim = types.StringValue(apiserverParams.Params.GroupsClaim)
-			state.Apiserver.Oidc.GroupsPrefix = types.StringValue(apiserverParams.Params.GroupsPrefix)
-		}
+		state.fillApiserverState(ctx, apiserverParams)
 	}
 
 	// Save updated data into Terraform state
@@ -541,6 +580,8 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 			)
 			return
 		}
+		data.fillApiserverState(ctx, apiserverParamsInput)
+
 	}
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

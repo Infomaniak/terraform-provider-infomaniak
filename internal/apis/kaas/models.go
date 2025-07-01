@@ -13,7 +13,7 @@ type KaasPack struct {
 }
 
 type Apiserver struct {
-	Params                     *ApiServerParams   `json:"apiserver_params,omitempty"`
+	Params                     *ApiServerParams   `json:"apiserver_params"`
 	NonSpecificApiServerParams map[string]string `json:"-"`
 
 	OidcCa          *string `json:"oidc_ca"`
