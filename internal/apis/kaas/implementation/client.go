@@ -263,27 +263,6 @@ func (client *Client) DeleteInstancePool(publicCloudId int, publicCloudProjectId
 	return result.Data, nil
 }
 
-func (client *Client) CreateApiserverParams(input *kaas.Apiserver, publicCloudId int, projectId int, kaasId int) (bool, error) {
-	var result helpers.NormalizedApiResponse[bool]
-	resp, err := client.resty.R().
-		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
-		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
-		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
-		SetBody(input).
-		SetResult(&result).
-		SetError(&result).
-		Post(EndpointApiserver)
-	if err != nil {
-		return false, err
-	}
-
-	if resp.IsError() {
-		return false, result.Error
-	}
-
-	return result.Data, nil
-}
-
 func (client *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int, projectId int, kaasId int) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 	resp, err := client.resty.R().

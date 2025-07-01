@@ -279,9 +279,6 @@ func (c *Client) DeleteInstancePool(publicCloudId int, publicCloudProjectId int,
 func (c *Client) GetApiserverParams(publicCloudId int, projectId int, kaasId int) (*kaas.Apiserver, error) {
 	return nil, nil
 }
-func (c *Client) CreateApiserverParams(input *kaas.Apiserver, publicCloudId int, projectId int, kaasId int) (bool, error) {
-	return true, nil
-}
 func (c *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int, projectId int, kaasId int) (bool, error) {
 	return true, nil
 }

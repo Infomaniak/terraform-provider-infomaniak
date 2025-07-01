@@ -17,6 +17,5 @@ type Api interface {
 	DeleteInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) (bool, error)
 
 	GetApiserverParams(publicCloudId int, projectId int, kaasId int) (*Apiserver, error)
-	CreateApiserverParams(input *Apiserver, publicCloudId int, projectId int, kaasId int) (bool, error)
 	PatchApiserverParams(input *Apiserver, publicCloudId int, projectId int, kaasId int) (bool, error)
 }
