@@ -51,6 +51,21 @@ type KaasModel struct {
 	Apiserver         *ApiserverModel `tfsdk:"apiserver"`
 }
 
+func (m *KaasModel) SetDefaultValues(ctx context.Context) {
+	if m.Apiserver == nil {
+		defaultParams, _ := types.MapValueFrom(ctx, types.StringType, map[string]string{})
+		m.Apiserver = &ApiserverModel{
+			Params: defaultParams,
+		}
+	}
+	if m.Apiserver.Audit == nil {
+		m.Apiserver.Audit = &Audit{}
+	}
+	if m.Apiserver.Oidc == nil {
+		m.Apiserver.Oidc = &OidcModel{}
+	}
+}
+
 type ApiserverModel struct {
 	Params types.Map  `tfsdk:"params"`
 	Oidc   *OidcModel `tfsdk:"oidc"`
@@ -332,31 +347,37 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	data.fill(kaasObject)
 
-	oidcInput := &kaas.Apiserver{
-		OidcCa:          data.Apiserver.Oidc.Ca.ValueStringPointer(),
-		AuditLogWebhook: data.Apiserver.Audit.WebhookConfig.ValueStringPointer(),
-		AuditLogPolicy:  data.Apiserver.Audit.Policy.ValueStringPointer(),
-		Params: kaas.ApiServerParams{
-			IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
-			ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
-			UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
-			UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
-			SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
-			GroupsClaim:    data.Apiserver.Oidc.GroupsClaim.ValueString(),
-			GroupsPrefix:   data.Apiserver.Oidc.GroupsPrefix.ValueString(),
-		},
-		NonSpecificApiServerParams: r.getApiserverParamsValues(data),
-	}
-	created, err := r.client.Kaas.CreateApiserverParams(oidcInput, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
-	if !created || err != nil {
-		resp.Diagnostics.AddError(
-			"Error when creating Oidc",
-			err.Error(),
-		)
-		return
-	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
-	data.fill(kaasObject)
+	if data.Apiserver != nil {
+		apiserverParamsInput := &kaas.Apiserver{
+			NonSpecificApiServerParams: r.getApiserverParamsValues(data),
+		}
+		if data.Apiserver.Audit != nil {
+			apiserverParamsInput.AuditLogPolicy = data.Apiserver.Audit.Policy.ValueStringPointer()
+			apiserverParamsInput.AuditLogWebhook = data.Apiserver.Audit.WebhookConfig.ValueStringPointer()
+		}
+		if data.Apiserver.Oidc != nil {
+			apiserverParamsInput.OidcCa = data.Apiserver.Oidc.Ca.ValueStringPointer()
+			apiserverParamsInput.Params = &kaas.ApiServerParams{
+				IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
+				ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
+				UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
+				UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
+				SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
+				GroupsClaim:    data.Apiserver.Oidc.GroupsClaim.ValueString(),
+				GroupsPrefix:   data.Apiserver.Oidc.GroupsPrefix.ValueString(),
+			}
+		}
+		created, err := r.client.Kaas.PatchApiserverParams(apiserverParamsInput, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
+		if !created || err != nil {
+			resp.Diagnostics.AddError(
+				"Error when creating Oidc",
+				err.Error(),
+			)
+			return
+		}
+	}
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -418,6 +439,8 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
+	state.fill(kaasObject)
+
 	// Wait for kubeconfig to be available
 	kubeconfig, err := r.client.Kaas.GetKubeconfig(int(state.PublicCloudId.ValueInt64()), int(state.PublicCloudProjectId.ValueInt64()), kaasObject.Id)
 	if err != nil {
@@ -429,33 +452,29 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		state.Kubeconfig = types.StringValue(kubeconfig)
 	}
 
-	apiserverParams, err := r.client.Kaas.GetApiserverParams(kaasObject.Project.PublicCloudId, kaasObject.Project.ProjectId, kaasObject.Id)
+	apiserverParams, err := r.client.Kaas.GetApiserverParams(int(state.PublicCloudId.ValueInt64()), int(state.PublicCloudProjectId.ValueInt64()), kaasObject.Id)
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Could not get Oidc",
 			err.Error(),
 		)
 	}
+
 	if apiserverParams != nil {
-		if state.Apiserver.Audit == nil {
-			state.Apiserver.Audit = &Audit{}
-		}
-		if state.Apiserver.Oidc == nil {
-			state.Apiserver.Oidc = &OidcModel{}
-		}
+		state.SetDefaultValues(ctx)
 		state.Apiserver.Audit.Policy = types.StringPointerValue(apiserverParams.AuditLogPolicy)
 		state.Apiserver.Audit.WebhookConfig = types.StringPointerValue(apiserverParams.AuditLogWebhook)
 		state.Apiserver.Oidc.Ca = types.StringPointerValue(apiserverParams.OidcCa)
-		state.Apiserver.Oidc.ClientId = types.StringValue(apiserverParams.Params.ClientId)
-		state.Apiserver.Oidc.IssuerUrl = types.StringValue(apiserverParams.Params.IssuerUrl)
-		state.Apiserver.Oidc.UsernameClaim = types.StringValue(apiserverParams.Params.UsernameClaim)
-		state.Apiserver.Oidc.UsernamePrefix = types.StringValue(apiserverParams.Params.UsernamePrefix)
-		state.Apiserver.Oidc.SigningAlgs = types.StringValue(apiserverParams.Params.SigningAlgs)
-		state.Apiserver.Oidc.GroupsClaim = types.StringValue(apiserverParams.Params.GroupsClaim)
-		state.Apiserver.Oidc.GroupsPrefix = types.StringValue(apiserverParams.Params.GroupsPrefix)
+		if apiserverParams.Params != nil {
+			state.Apiserver.Oidc.ClientId = types.StringValue(apiserverParams.Params.ClientId)
+			state.Apiserver.Oidc.IssuerUrl = types.StringValue(apiserverParams.Params.IssuerUrl)
+			state.Apiserver.Oidc.UsernameClaim = types.StringValue(apiserverParams.Params.UsernameClaim)
+			state.Apiserver.Oidc.UsernamePrefix = types.StringValue(apiserverParams.Params.UsernamePrefix)
+			state.Apiserver.Oidc.SigningAlgs = types.StringValue(apiserverParams.Params.SigningAlgs)
+			state.Apiserver.Oidc.GroupsClaim = types.StringValue(apiserverParams.Params.GroupsClaim)
+			state.Apiserver.Oidc.GroupsPrefix = types.StringValue(apiserverParams.Params.GroupsPrefix)
+		}
 	}
-
-	state.fill(kaasObject)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -530,30 +549,35 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	data.fill(kaasObject)
 
-	oidcInput := &kaas.Apiserver{
-		OidcCa:          data.Apiserver.Oidc.Ca.ValueStringPointer(),
-		AuditLogWebhook: data.Apiserver.Audit.WebhookConfig.ValueStringPointer(),
-		AuditLogPolicy:  data.Apiserver.Audit.Policy.ValueStringPointer(),
-		Params: kaas.ApiServerParams{
-			IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
-			ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
-			UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
-			UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
-			SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
-			GroupsClaim:    data.Apiserver.Oidc.GroupsClaim.ValueString(),
-			GroupsPrefix:   data.Apiserver.Oidc.GroupsPrefix.ValueString(),
-		},
-		NonSpecificApiServerParams: r.getApiserverParamsValues(data),
+	if data.Apiserver != nil {
+		apiserverParamsInput := &kaas.Apiserver{
+			NonSpecificApiServerParams: r.getApiserverParamsValues(data),
+		}
+		if data.Apiserver.Audit != nil {
+			apiserverParamsInput.AuditLogPolicy = data.Apiserver.Audit.Policy.ValueStringPointer()
+			apiserverParamsInput.AuditLogWebhook = data.Apiserver.Audit.WebhookConfig.ValueStringPointer()
+		}
+		if data.Apiserver.Oidc != nil {
+			apiserverParamsInput.OidcCa = data.Apiserver.Oidc.Ca.ValueStringPointer()
+			apiserverParamsInput.Params = &kaas.ApiServerParams{
+				IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
+				ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
+				UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
+				UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
+				SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
+				GroupsClaim:    data.Apiserver.Oidc.GroupsClaim.ValueString(),
+				GroupsPrefix:   data.Apiserver.Oidc.GroupsPrefix.ValueString(),
+			}
+		}
+		patched, err := r.client.Kaas.PatchApiserverParams(apiserverParamsInput, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
+		if !patched || err != nil {
+			resp.Diagnostics.AddError(
+				"Error when creating Oidc",
+				err.Error(),
+			)
+			return
+		}
 	}
-	patched, err := r.client.Kaas.PatchApiserverParams(oidcInput, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
-	if !patched || err != nil {
-		resp.Diagnostics.AddError(
-			"Error when creating Oidc",
-			err.Error(),
-		)
-		return
-	}
-
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
