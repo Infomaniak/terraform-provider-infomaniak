@@ -21,6 +21,17 @@ resource "infomaniak_kaas" "create_kluster" {
   pack_name          = var.cluster_type
   kubernetes_version = var.cluster_version
   region             = var.cluster_region
+
+  apiserver = {
+    oidc = {
+      issuer_url      = var.issuer_url
+      client_id       = var.client_id
+      username_claim  = var.username_claim
+      username_prefix = var.username_prefix
+      signing_algs    = var.signing_algs
+      ca              = file(var.oidc_ca_filename)
+    }
+  }
 }
 
 resource "infomaniak_kaas_instance_pool" "create_instance_pool_1" {
