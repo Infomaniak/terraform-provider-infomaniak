@@ -217,8 +217,7 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 						Optional:            true,
 						Attributes: map[string]schema.Attribute{
 							"ca": schema.StringAttribute{
-								Optional:  true,
-								Sensitive: true,
+								Optional: true,
 								PlanModifiers: []planmodifier.String{
 									stringplanmodifier.UseStateForUnknown(),
 								},
@@ -396,13 +395,13 @@ func (state *KaasModel) updateOIDCConfig(apiserverParams *kaas.Apiserver) {
 	if apiserverParams.Params != nil {
 		params := apiserverParams.Params
 		state.Apiserver.Oidc = &OidcModel{
-			ClientId:       types.StringValue(params.ClientId),
-			IssuerUrl:      types.StringValue(params.IssuerUrl),
-			UsernameClaim:  types.StringValue(params.UsernameClaim),
-			UsernamePrefix: types.StringValue(params.UsernamePrefix),
-			SigningAlgs:    types.StringValue(params.SigningAlgs),
-			GroupsClaim:    types.StringValue(params.GroupsClaim),
-			GroupsPrefix:   types.StringValue(params.GroupsPrefix),
+			ClientId:       types.StringPointerValue(params.ClientId),
+			IssuerUrl:      types.StringPointerValue(params.IssuerUrl),
+			UsernameClaim:  types.StringPointerValue(params.UsernameClaim),
+			UsernamePrefix: types.StringPointerValue(params.UsernamePrefix),
+			SigningAlgs:    types.StringPointerValue(params.SigningAlgs),
+			GroupsClaim:    types.StringPointerValue(params.GroupsClaim),
+			GroupsPrefix:   types.StringPointerValue(params.GroupsPrefix),
 			Ca:             types.StringPointerValue(apiserverParams.OidcCa),
 		}
 	} else {
@@ -598,13 +597,13 @@ func (r *kaasResource) buildApiserverParamsInput(data KaasModel) *kaas.Apiserver
 	if data.Apiserver.Oidc != nil {
 		apiserverParamsInput.OidcCa = data.Apiserver.Oidc.Ca.ValueStringPointer()
 		apiserverParamsInput.Params = &kaas.ApiServerParams{
-			IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueString(),
-			ClientId:       data.Apiserver.Oidc.ClientId.ValueString(),
-			UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueString(),
-			UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueString(),
-			SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueString(),
-			GroupsClaim:    data.Apiserver.Oidc.GroupsClaim.ValueString(),
-			GroupsPrefix:   data.Apiserver.Oidc.GroupsPrefix.ValueString(),
+			IssuerUrl:      data.Apiserver.Oidc.IssuerUrl.ValueStringPointer(),
+			ClientId:       data.Apiserver.Oidc.ClientId.ValueStringPointer(),
+			UsernameClaim:  data.Apiserver.Oidc.UsernameClaim.ValueStringPointer(),
+			UsernamePrefix: data.Apiserver.Oidc.UsernamePrefix.ValueStringPointer(),
+			SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueStringPointer(),
+			GroupsClaim:    data.Apiserver.Oidc.GroupsClaim.ValueStringPointer(),
+			GroupsPrefix:   data.Apiserver.Oidc.GroupsPrefix.ValueStringPointer(),
 		}
 	}
 	return apiserverParamsInput
