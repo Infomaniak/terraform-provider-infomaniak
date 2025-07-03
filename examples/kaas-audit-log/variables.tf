@@ -58,3 +58,16 @@ variable "pool_labels" {
     "node-role.kubernetes.io/worker" = "high"
   }
 }
+
+
+# See https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/#audit-policy for more details on Kubernetes Auditing configuration
+variable "audit_logs_webhook_filename" {
+  description = "Audit logs webhook yaml filename"
+  type        = string
+}
+
+
+variable "audit_logs_policy_filename" {
+  description = "Audit logs policy yaml filename"
+  type        = string
+}
