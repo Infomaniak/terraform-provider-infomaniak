@@ -121,7 +121,6 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 						Attributes: map[string]schema.Attribute{
 							"ca": schema.StringAttribute{
 								Computed:            true,
-								Sensitive:           true,
 								Description:         "OIDC Ca Certificate",
 								MarkdownDescription: "OIDC Ca Certificate",
 							},

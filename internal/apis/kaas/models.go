@@ -13,7 +13,7 @@ type KaasPack struct {
 }
 
 type Apiserver struct {
-	Params                     *ApiServerParams   `json:"apiserver_params"`
+	Params                     *ApiServerParams  `json:"apiserver_params"`
 	NonSpecificApiServerParams map[string]string `json:"-"`
 
 	OidcCa          *string `json:"oidc_ca"`
@@ -45,13 +45,13 @@ func (a *Apiserver) MarshalJSON() ([]byte, error) {
 }
 
 type ApiServerParams struct {
-	IssuerUrl      string `json:"--oidc-issuer-url,omitempty"`
-	ClientId       string `json:"--oidc-client-id,omitempty"`
-	UsernameClaim  string `json:"--oidc-username-claim,omitempty"`
-	UsernamePrefix string `json:"--oidc-username-prefix,omitempty"`
-	SigningAlgs    string `json:"--oidc-signing-algs,omitempty"`
-	GroupsClaim    string `json:"--oidc-groups-claim,omitempty"`
-	GroupsPrefix   string `json:"--oidc-groups-prefix,omitempty"`
+	IssuerUrl      *string `json:"--oidc-issuer-url,omitempty"`
+	ClientId       *string `json:"--oidc-client-id,omitempty"`
+	UsernameClaim  *string `json:"--oidc-username-claim,omitempty"`
+	UsernamePrefix *string `json:"--oidc-username-prefix,omitempty"`
+	SigningAlgs    *string `json:"--oidc-signing-algs,omitempty"`
+	GroupsClaim    *string `json:"--oidc-groups-claim,omitempty"`
+	GroupsPrefix   *string `json:"--oidc-groups-prefix,omitempty"`
 }
 
 type Kaas struct {
