@@ -25,6 +25,7 @@ type DBaaSConnectionInfo struct {
 	Port     string `json:"port"`
 	User     string `json:"user"`
 	Password string `json:"password"`
+	Ca       string `json:"ca"`
 }
 
 type DBaaSBackup struct {
