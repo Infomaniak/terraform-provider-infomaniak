@@ -52,6 +52,7 @@ type DBaasModel struct {
 	Port     types.String `tfsdk:"port"`
 	User     types.String `tfsdk:"user"`
 	Password types.String `tfsdk:"password"`
+	Ca       types.String `tfsdk:"ca"`
 }
 
 func (r *dbaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -140,6 +141,10 @@ func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				Computed:            true,
 				Sensitive:           true,
 				MarkdownDescription: "The password to access this database.",
+			},
+			"ca": schema.StringAttribute{
+				Computed: true,
+				MarkdownDescription: "The Database CA Certificate",
 			},
 		},
 		MarkdownDescription: "The dbaas resource allows the user to manage a dbaas project",
@@ -418,6 +423,7 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS, connectionInfos *dbaas.DBaaSCo
 	model.Port = types.StringValue(connectionInfos.Port)
 	model.User = types.StringValue(connectionInfos.User)
 	model.Password = types.StringValue(connectionInfos.Password)
+	model.Ca = types.StringValue(connectionInfos.Ca)
 }
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int) (*dbaas.DBaaS, error) {
 	t := time.NewTicker(5 * time.Second)
