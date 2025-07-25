@@ -329,7 +329,6 @@ func (r *recordResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	rawTarget := data.ComputeRawTarget()
 
-	// CreateKaas API call logic
 	record, err := r.client.Domain.CreateRecord(
 		data.ZoneFqdn.ValueString(),
 		data.Type.ValueString(),
@@ -339,7 +338,7 @@ func (r *recordResource) Create(ctx context.Context, req resource.CreateRequest,
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error when creating KaaS",
+			"Error when creating Record",
 			err.Error(),
 		)
 		return
@@ -363,7 +362,7 @@ func (r *recordResource) Read(ctx context.Context, req resource.ReadRequest, res
 	record, err := r.client.Domain.GetRecord(state.ZoneFqdn.ValueString(), state.Id.ValueInt64())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error when reading KaaS",
+			"Error when reading Record",
 			err.Error(),
 		)
 		return
@@ -403,14 +402,13 @@ func (r *recordResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	// DeleteKaas API call logic
 	_, err := r.client.Domain.DeleteRecord(
 		data.ZoneFqdn.ValueString(),
 		state.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error when deleting KaaS",
+			"Error when deleting Record",
 			err.Error(),
 		)
 		return
@@ -420,32 +418,28 @@ func (r *recordResource) Delete(ctx context.Context, req resource.DeleteRequest,
 func (r *recordResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	idParts := strings.Split(req.ID, ",")
 
-	if len(idParts) != 3 || idParts[0] == "" || idParts[1] == "" || idParts[2] == "" {
+	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("Expected import identifier with format: public_cloud_id,public_cloud_project_id,id. Got: %q", req.ID),
+			fmt.Sprintf("Expected import identifier with format: zone_fqdn,id. Got: %q", req.ID),
 		)
 		return
 	}
 
 	var errorList error
 
-	publicCloudId, err := strconv.ParseInt(idParts[0], 10, 64)
-	errorList = errors.Join(errorList, err)
-	publicCloudProjectId, err := strconv.ParseInt(idParts[1], 10, 64)
-	errorList = errors.Join(errorList, err)
-	kaasId, err := strconv.ParseInt(idParts[2], 10, 64)
+	zoneFQDN := idParts[0]
+	recordId, err := strconv.ParseInt(idParts[1], 10, 64)
 	errorList = errors.Join(errorList, err)
 
 	if errorList != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("Expected import identifier with format: public_cloud_id,public_cloud_project_id,id. Got: %q", req.ID),
+			fmt.Sprintf("Expected import identifier with format: zone_fqdn,id. Got: %q", req.ID),
 		)
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_id"), publicCloudId)...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_project_id"), publicCloudProjectId)...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), kaasId)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("zone_fqdn"), zoneFQDN)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), recordId)...)
 }
