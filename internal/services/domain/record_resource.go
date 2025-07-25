@@ -8,6 +8,7 @@ import (
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/domain"
+	"terraform-provider-infomaniak/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -90,7 +91,7 @@ func (r *recordResource) Configure(ctx context.Context, req resource.ConfigureRe
 		return
 	}
 
-	client, err := apis.GetApiClient(req.ProviderData)
+	client, err := provider.GetApiClient(req.ProviderData)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Record Resource Configure Type",

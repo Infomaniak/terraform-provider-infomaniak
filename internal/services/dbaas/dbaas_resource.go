@@ -9,6 +9,7 @@ import (
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
+	"terraform-provider-infomaniak/internal/provider"
 	"terraform-provider-infomaniak/internal/services/scopes"
 	"time"
 
@@ -66,7 +67,7 @@ func (r *dbaasResource) Configure(ctx context.Context, req resource.ConfigureReq
 		return
 	}
 
-	client, err := apis.GetApiClient(req.ProviderData)
+	client, err := provider.GetApiClient(req.ProviderData)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -142,7 +143,7 @@ func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				MarkdownDescription: "The password to access this database.",
 			},
 			"ca": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
 				MarkdownDescription: "The Database CA Certificate",
 			},
 		},
