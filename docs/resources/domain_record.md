@@ -74,6 +74,7 @@ This field **conflicts with** the `target` field (i.e., cannot be set at the sam
 - `tag` (String) Tag name such as `issue`, `issuewild`, or `iodef`. Relevant for: CAA.
 - `algorithm` (Integer) Cryptographic algorithm identifier. Relevant for: DNSKEY, DS, SSHFP.
 - `public_key` (String) Base64-encoded public key. Relevant for: DNSKEY.
+- `key_tag` (Integer) Key Tag of the DNSKEY. Relevant for: DS.
 - `digest_type` (Integer) Digest algorithm type used to hash the DNSKEY. Relevant for: DS.
 - `digest` (String) Digest value (usually a hex string). Relevant for: DS.
 - `selector` (Integer) Specifies which part of the certificate is matched. Relevant for: TLSA, SMIMEA.

@@ -57,6 +57,7 @@ type RecordDataModel struct {
 	Target               types.String `tfsdk:"target"`                // MX, SRV, CNAME, NS, PTR
 	Weight               types.Int64  `tfsdk:"weight"`                // SRV
 	Port                 types.Int64  `tfsdk:"port"`                  // SRV
+	KeyTag               types.Int64  `tfsdk:"key_tag"`               // DS
 	Algorithm            types.Int64  `tfsdk:"algorithm"`             // DNSKEY, DS, SSHFP, TLSA
 	DigestType           types.Int64  `tfsdk:"digest_type"`           // DS, TLSA
 	Digest               types.String `tfsdk:"digest"`                // DS, TLSA, SSHFP
@@ -208,6 +209,10 @@ func (r *recordResource) Schema(ctx context.Context, req resource.SchemaRequest,
 					},
 
 					// For DS
+					"key_tag": schema.Int64Attribute{
+						Optional:            true,
+						MarkdownDescription: "The Key Tag of the Record (DS).",
+					},
 					"digest_type": schema.Int64Attribute{
 						Optional:            true,
 						MarkdownDescription: "The digest type of the Record (DS).",
@@ -386,6 +391,25 @@ func (r *recordResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
+	rawTarget := data.ComputeRawTarget()
+
+	record, err := r.client.Domain.UpdateRecord(
+		data.ZoneFqdn.ValueString(),
+		state.Id.ValueInt64(),
+		data.Type.ValueString(),
+		data.Source.ValueString(),
+		rawTarget,
+		data.TTL.ValueInt64(),
+	)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when updating Record",
+			err.Error(),
+		)
+		return
+	}
+
+	data.Id = types.Int64Value(int64(record.ID))
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
