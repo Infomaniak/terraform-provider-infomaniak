@@ -106,14 +106,21 @@ func (client *Client) GetRecord(zoneFqdn string, id int64) (*domain.Record, erro
 	return result.Data, nil
 }
 
+type CreateRecordRequest struct {
+	Type   string `json:"type"`
+	Source string `json:"source"`
+	Target string `json:"target"`
+	TTL    int64  `json:"ttl"`
+}
+
 func (client *Client) CreateRecord(zoneFqdn, recordType, source, target string, ttl int64) (*domain.Record, error) {
 	var result helpers.NormalizedApiResponse[*domain.Record]
 
-	var input = map[string]any{
-		"type":   recordType,
-		"source": source,
-		"target": target,
-		"ttl":    ttl,
+	var input = CreateRecordRequest{
+		Type:   recordType,
+		Source: source,
+		Target: target,
+		TTL:    ttl,
 	}
 
 	resp, err := client.resty.R().
@@ -137,11 +144,11 @@ func (client *Client) CreateRecord(zoneFqdn, recordType, source, target string, 
 func (client *Client) UpdateRecord(zoneFqdn string, id int64, recordType, source, target string, ttl int64) (*domain.Record, error) {
 	var result helpers.NormalizedApiResponse[*domain.Record]
 
-	var input = map[string]any{
-		"type":   recordType,
-		"source": source,
-		"target": target,
-		"ttl":    ttl,
+	var input = CreateRecordRequest{
+		Type:   recordType,
+		Source: source,
+		Target: target,
+		TTL:    ttl,
 	}
 
 	resp, err := client.resty.R().
