@@ -33,11 +33,11 @@ func (model *RecordModel) ComputeRawTarget() string {
 		}
 	case domain.RecordCNAME:
 		record = &dns.CNAME{
-			Target: dns.Fqdn(model.Target.ValueString()),
+			Target: dns.Fqdn(model.Data.Target.ValueString()),
 		}
 	case domain.RecordDNAME:
 		record = &dns.DNAME{
-			Target: dns.Fqdn(model.Target.ValueString()),
+			Target: dns.Fqdn(model.Data.Target.ValueString()),
 		}
 	case domain.RecordDNSKEY:
 		record = &dns.DNSKEY{
@@ -48,7 +48,7 @@ func (model *RecordModel) ComputeRawTarget() string {
 		}
 	case domain.RecordDS:
 		record = &dns.DS{
-			KeyTag:     uint16(model.Id.ValueInt64()), // or model.KeyTag.ValueInt64() if separate
+			KeyTag:     uint16(model.Data.KeyTag.ValueInt64()),
 			Algorithm:  uint8(model.Data.Algorithm.ValueInt64()),
 			DigestType: uint8(model.Data.DigestType.ValueInt64()),
 			Digest:     model.Data.Digest.ValueString(),
@@ -56,15 +56,15 @@ func (model *RecordModel) ComputeRawTarget() string {
 	case domain.RecordMX:
 		record = &dns.MX{
 			Preference: uint16(model.Data.Priority.ValueInt64()),
-			Mx:         dns.Fqdn(model.Target.ValueString()),
+			Mx:         dns.Fqdn(model.Data.Target.ValueString()),
 		}
 	case domain.RecordNS:
 		record = &dns.NS{
-			Ns: dns.Fqdn(model.Target.ValueString()),
+			Ns: dns.Fqdn(model.Data.Target.ValueString()),
 		}
 	case domain.RecordPTR:
 		record = &dns.PTR{
-			Ptr: dns.Fqdn(model.Target.ValueString()),
+			Ptr: dns.Fqdn(model.Data.Target.ValueString()),
 		}
 	case domain.RecordSMIMEA:
 		record = &dns.SMIMEA{
@@ -88,7 +88,7 @@ func (model *RecordModel) ComputeRawTarget() string {
 			Priority: uint16(model.Data.Priority.ValueInt64()),
 			Weight:   uint16(model.Data.Weight.ValueInt64()),
 			Port:     uint16(model.Data.Port.ValueInt64()),
-			Target:   dns.Fqdn(model.Target.ValueString()),
+			Target:   dns.Fqdn(model.Data.Target.ValueString()),
 		}
 	case domain.RecordSSHFP:
 		record = &dns.SSHFP{

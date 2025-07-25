@@ -7,5 +7,6 @@ type Api interface {
 
 	GetRecord(zoneFqdn string, id int64) (*Record, error)
 	CreateRecord(zoneFqdn, recordType, source, target string, ttl int64) (*Record, error)
+	UpdateRecord(zoneFqdn string, id int64, recordType, source, target string, ttl int64) (*Record, error)
 	DeleteRecord(zoneFqdn string, id int64) (bool, error)
 }

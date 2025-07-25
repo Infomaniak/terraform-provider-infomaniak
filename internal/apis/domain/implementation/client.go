@@ -119,11 +119,39 @@ func (client *Client) CreateRecord(zoneFqdn, recordType, source, target string, 
 	resp, err := client.resty.R().
 		SetPathParam("zone_fqdn", fmt.Sprint(zoneFqdn)).
 		SetQueryParam("with", "idn,records_description").
-		SetDebug(true).
 		SetResult(&result).
 		SetBody(input).
 		SetError(&result).
 		Post(EndpointRecords)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) UpdateRecord(zoneFqdn string, id int64, recordType, source, target string, ttl int64) (*domain.Record, error) {
+	var result helpers.NormalizedApiResponse[*domain.Record]
+
+	var input = map[string]any{
+		"type":   recordType,
+		"source": source,
+		"target": target,
+		"ttl":    ttl,
+	}
+
+	resp, err := client.resty.R().
+		SetPathParam("zone_fqdn", fmt.Sprint(zoneFqdn)).
+		SetPathParam("id", fmt.Sprint(id)).
+		SetQueryParam("with", "idn,records_description").
+		SetResult(&result).
+		SetBody(input).
+		SetError(&result).
+		Put(EndpointRecord)
 	if err != nil {
 		return nil, err
 	}
