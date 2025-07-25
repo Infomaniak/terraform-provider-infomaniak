@@ -1,12 +1,10 @@
 package apis
 
 import (
-	"fmt"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
 	implem_dbaas "terraform-provider-infomaniak/internal/apis/dbaas/implementation"
 	"terraform-provider-infomaniak/internal/apis/domain"
 	"terraform-provider-infomaniak/internal/apis/kaas"
-	"terraform-provider-infomaniak/internal/provider"
 
 	implem_kaas "terraform-provider-infomaniak/internal/apis/kaas/implementation"
 	mock_kaas "terraform-provider-infomaniak/internal/apis/kaas/mock"
@@ -35,19 +33,4 @@ func NewClient(baseUri, token, version string) *Client {
 		DBaas:  implem_dbaas.New(baseUri, token, version),
 		Domain: implem_domain.New(baseUri, token, version),
 	}
-}
-
-// GetApiClient is a utility function to get an API client from a resource / datasource
-func GetApiClient(providerData any) (*Client, error) {
-	data, ok := providerData.(*provider.IkProviderData)
-	if !ok {
-		return nil, fmt.Errorf("expected *provider.IkProviderData, got: %T", providerData)
-	}
-
-	client := NewClient(data.Data.Host.ValueString(), data.Data.Token.ValueString(), data.Version.ValueString())
-	if data.Version.ValueString() == "test" {
-		client = NewMockClient()
-	}
-
-	return client, nil
 }

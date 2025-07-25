@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"terraform-provider-infomaniak/internal/apis"
+	"terraform-provider-infomaniak/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -44,7 +45,7 @@ func (r *zoneResource) Configure(ctx context.Context, req resource.ConfigureRequ
 		return
 	}
 
-	client, err := apis.GetApiClient(req.ProviderData)
+	client, err := provider.GetApiClient(req.ProviderData)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Zone Resource Configure Type",

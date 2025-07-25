@@ -3,6 +3,7 @@ package dbaas
 import (
 	"context"
 	"terraform-provider-infomaniak/internal/apis"
+	"terraform-provider-infomaniak/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -32,7 +33,7 @@ func (d *dbaasDataSource) Configure(_ context.Context, req datasource.ConfigureR
 		return
 	}
 
-	client, err := apis.GetApiClient(req.ProviderData)
+	client, err := provider.GetApiClient(req.ProviderData)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
