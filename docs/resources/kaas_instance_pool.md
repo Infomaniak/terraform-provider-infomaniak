@@ -33,6 +33,10 @@ resource "infomaniak_kaas_instance_pool" "instance_pool" {
   flavor_name       = "a1-ram2-disk20-perf1"
   min_instances     = 4
   availability_zone = "az-1"
+
+  labels = {
+    "node-role.kubernetes.io/worker" = "high"
+  }
 }
 ```
 
@@ -47,6 +51,10 @@ resource "infomaniak_kaas_instance_pool" "instance_pool" {
 - `availability_zone` (String) The availability zone where the instances will be populated.
 - `flavor_name` (String) The flavor for the instances.
 - `min_instances` (Integer) The minimum amount of instances in the pool.
+
+### Optional Configuration
+
+- `labels` (Map) Custom Kubernetes node labels.
 
 ### Read-Only
 
