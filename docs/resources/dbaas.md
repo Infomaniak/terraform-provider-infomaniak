@@ -55,3 +55,4 @@ resource "infomaniak_dbaas" "db-0" {
 - `port` (String) The port to access the Database.
 - `user` (String) The user to access the Database.
 - `password` (String, Sensitive) The Kubeconfig to access the Database.
+- `ca` (String) The database CA certificate.
