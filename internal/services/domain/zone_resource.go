@@ -124,6 +124,7 @@ func (r *zoneResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	state.Id = types.Int64Value(int64(zone.ID))
+	state.Fqdn = types.StringValue(zone.FQDN)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)

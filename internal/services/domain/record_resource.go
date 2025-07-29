@@ -144,7 +144,7 @@ func (r *recordResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				Optional:            true,
 				Computed:            true,
 				MarkdownDescription: "The TTL of the Record.",
-				Default:             int64default.StaticInt64(2500),
+				Default:             int64default.StaticInt64(3600),
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.UseStateForUnknown(),
 				},
@@ -374,6 +374,17 @@ func (r *recordResource) Read(ctx context.Context, req resource.ReadRequest, res
 	}
 
 	state.Id = types.Int64Value(int64(record.ID))
+	state.TTL = types.Int64Value(int64(record.TTL))
+	state.Source = types.StringValue(record.Source)
+	state.Type = types.StringValue(record.Type)
+
+	// If we have neither of them, we fill them with the API
+	// However in this state (import), we can't know which field is planned by the user
+	if state.Target.IsNull() && state.Data == nil {
+		state.Target = types.StringValue(record.Target)
+		state.Data = &RecordDataModel{}
+		state.ParseRawTarget(record.Target)
+	}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)

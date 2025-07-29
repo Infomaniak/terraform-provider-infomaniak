@@ -50,7 +50,7 @@ resource "infomaniak_record" "recordB" {
 ### Optional
 
 - `description` (String) The description of the record.
-- `ttl` (String) The TTL of the Record.
+- `ttl` (Integer) The TTL of the Record.
 - `target` (String) The target of the Record (cannot be used with `data`).
 - `data` ([Object](#nested-schema-for-data)) Components of a record.
 
