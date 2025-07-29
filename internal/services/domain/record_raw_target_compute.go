@@ -1,10 +1,12 @@
 package domain
 
 import (
+	"fmt"
 	"net"
 	"strings"
 	"terraform-provider-infomaniak/internal/apis/domain"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/miekg/dns"
 )
 
@@ -110,4 +112,96 @@ func (model *RecordModel) ComputeRawTarget() string {
 	}
 
 	return strings.TrimPrefix(record.String(), record.Header().String())
+}
+
+func (model *RecordModel) ParseRawTarget(raw string) error {
+	// We need to prepend a fake name to make dns.NewRR happy
+	full := fmt.Sprintf("example.com. 3600 IN %s %s", model.Type.ValueString(), raw)
+
+	rr, err := dns.NewRR(full)
+	if err != nil {
+		return fmt.Errorf("failed to parse DNS record: %w", err)
+	}
+
+	switch v := rr.(type) {
+	case *dns.A:
+		model.Data.IP = types.StringValue(v.A.String())
+
+	case *dns.AAAA:
+		model.Data.IP = types.StringValue(v.AAAA.String())
+
+	case *dns.CAA:
+		model.Data.Flags = types.Int64Value(int64(v.Flag))
+		model.Data.Tag = types.StringValue(v.Tag)
+		model.Data.Value = types.StringValue(v.Value)
+
+	case *dns.CNAME:
+		model.Data.Target = types.StringValue(strings.TrimSuffix(v.Target, "."))
+
+	case *dns.DNAME:
+		model.Data.Target = types.StringValue(strings.TrimSuffix(v.Target, "."))
+
+	case *dns.DNSKEY:
+		model.Data.Flags = types.Int64Value(int64(v.Flags))
+		model.Data.Algorithm = types.Int64Value(int64(v.Algorithm))
+		model.Data.PublicKey = types.StringValue(v.PublicKey)
+
+	case *dns.DS:
+		model.Data.KeyTag = types.Int64Value(int64(v.KeyTag))
+		model.Data.Algorithm = types.Int64Value(int64(v.Algorithm))
+		model.Data.DigestType = types.Int64Value(int64(v.DigestType))
+		model.Data.Digest = types.StringValue(v.Digest)
+
+	case *dns.MX:
+		model.Data.Priority = types.Int64Value(int64(v.Preference))
+		model.Data.Target = types.StringValue(strings.TrimSuffix(v.Mx, "."))
+
+	case *dns.NS:
+		model.Data.Target = types.StringValue(strings.TrimSuffix(v.Ns, "."))
+
+	case *dns.PTR:
+		model.Data.Target = types.StringValue(strings.TrimSuffix(v.Ptr, "."))
+
+	case *dns.SMIMEA:
+		model.Data.Priority = types.Int64Value(int64(v.Usage))
+		model.Data.Selector = types.Int64Value(int64(v.Selector))
+		model.Data.MatchingType = types.Int64Value(int64(v.MatchingType))
+		model.Data.CertAssocData = types.StringValue(v.Certificate)
+
+	case *dns.SOA:
+		model.Data.MName = types.StringValue(strings.TrimSuffix(v.Ns, "."))
+		model.Data.RName = types.StringValue(strings.TrimSuffix(v.Mbox, "."))
+		model.Data.Serial = types.Int64Value(int64(v.Serial))
+		model.Data.Refresh = types.Int64Value(int64(v.Refresh))
+		model.Data.Retry = types.Int64Value(int64(v.Retry))
+		model.Data.Expire = types.Int64Value(int64(v.Expire))
+		model.Data.Minimum = types.Int64Value(int64(v.Minttl))
+
+	case *dns.SRV:
+		model.Data.Priority = types.Int64Value(int64(v.Priority))
+		model.Data.Weight = types.Int64Value(int64(v.Weight))
+		model.Data.Port = types.Int64Value(int64(v.Port))
+		model.Data.Target = types.StringValue(strings.TrimSuffix(v.Target, "."))
+
+	case *dns.SSHFP:
+		model.Data.FingerprintAlgorithm = types.Int64Value(int64(v.Algorithm))
+		model.Data.FingerprintType = types.Int64Value(int64(v.Type))
+		model.Data.Fingerprint = types.StringValue(v.FingerPrint)
+
+	case *dns.TLSA:
+		model.Data.Priority = types.Int64Value(int64(v.Usage))
+		model.Data.Selector = types.Int64Value(int64(v.Selector))
+		model.Data.MatchingType = types.Int64Value(int64(v.MatchingType))
+		model.Data.CertAssocData = types.StringValue(v.Certificate)
+
+	case *dns.TXT:
+		if len(v.Txt) > 0 {
+			model.Data.Value = types.StringValue(v.Txt[0])
+		}
+
+	default:
+		return fmt.Errorf("unsupported record type: %T", rr)
+	}
+
+	return nil
 }

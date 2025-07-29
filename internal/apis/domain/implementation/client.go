@@ -2,6 +2,7 @@ package implementation
 
 import (
 	"fmt"
+	"strings"
 	"terraform-provider-infomaniak/internal/apis/domain"
 	"terraform-provider-infomaniak/internal/apis/helpers"
 
@@ -89,7 +90,7 @@ func (client *Client) GetRecord(zoneFqdn string, id int64) (*domain.Record, erro
 	var result helpers.NormalizedApiResponse[*domain.Record]
 
 	resp, err := client.resty.R().
-		SetPathParam("zone_fqdn", fmt.Sprint(zoneFqdn)).
+		SetPathParam("zone_fqdn", strings.TrimSuffix(zoneFqdn, ".")).
 		SetPathParam("id", fmt.Sprint(id)).
 		SetQueryParam("with", "idn,records_description").
 		SetResult(&result).
@@ -124,7 +125,7 @@ func (client *Client) CreateRecord(zoneFqdn, recordType, source, target string, 
 	}
 
 	resp, err := client.resty.R().
-		SetPathParam("zone_fqdn", fmt.Sprint(zoneFqdn)).
+		SetPathParam("zone_fqdn", strings.TrimSuffix(zoneFqdn, ".")).
 		SetQueryParam("with", "idn,records_description").
 		SetResult(&result).
 		SetBody(input).
@@ -152,7 +153,7 @@ func (client *Client) UpdateRecord(zoneFqdn string, id int64, recordType, source
 	}
 
 	resp, err := client.resty.R().
-		SetPathParam("zone_fqdn", fmt.Sprint(zoneFqdn)).
+		SetPathParam("zone_fqdn", strings.TrimSuffix(zoneFqdn, ".")).
 		SetPathParam("id", fmt.Sprint(id)).
 		SetQueryParam("with", "idn,records_description").
 		SetResult(&result).
@@ -174,7 +175,7 @@ func (client *Client) DeleteRecord(zoneFqdn string, id int64) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().
-		SetPathParam("zone_fqdn", fmt.Sprint(zoneFqdn)).
+		SetPathParam("zone_fqdn", strings.TrimSuffix(zoneFqdn, ".")).
 		SetPathParam("id", fmt.Sprint(id)).
 		SetResult(&result).
 		SetError(&result).
