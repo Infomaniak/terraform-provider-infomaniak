@@ -46,8 +46,8 @@ type KaasInstancePoolModel struct {
 	AvailabilityZone types.String `tfsdk:"availability_zone"`
 	FlavorName       types.String `tfsdk:"flavor_name"`
 	MinInstances     types.Int32  `tfsdk:"min_instances"`
-	// MaxInstances types.Int32  `tfsdk:"max_instances"`
-	Labels types.Map `tfsdk:"labels"`
+	MaxInstances     types.Int32  `tfsdk:"max_instances"`
+	Labels           types.Map    `tfsdk:"labels"`
 }
 
 func (r *kaasInstancePoolResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -135,17 +135,17 @@ func (r *kaasInstancePoolResource) Schema(ctx context.Context, req resource.Sche
 			},
 			"min_instances": schema.Int32Attribute{
 				Required:            true,
-				Description:         "The minimum instances in this instance pool (should be equal to max_instance until the AutoScaling feature is released)",
-				MarkdownDescription: "The minimum instances in this instance pool (should be equal to max_instance until the AutoScaling feature is released)",
+				Description:         "The minimum amount of instances in this instance pool",
+				MarkdownDescription: "The minimum amount of instances in this instance pool",
 				PlanModifiers: []planmodifier.Int32{
 					int32planmodifier.UseStateForUnknown(),
 				},
 			},
-			// "max_instances": schema.Int32Attribute{
-			// 	Required:            true,
-			// 	Description:         "The maximum instances in this instance pool (should be equal to min_instance until the AutoScaling feature is released)",
-			// 	MarkdownDescription: "The maximum instances in this instance pool (should be equal to min_instance until the AutoScaling feature is released)",
-			// },
+			"max_instances": schema.Int32Attribute{
+				Required:            true,
+				Description:         "The maximum amount of instances in this instance pool",
+				MarkdownDescription: "The maximum amount of instances in this instance pool",
+			},
 			"labels": schema.MapAttribute{
 				ElementType: types.StringType,
 				Optional:    true,
@@ -177,8 +177,8 @@ func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.Crea
 		AvailabilityZone: data.AvailabilityZone.ValueString(),
 		FlavorName:       data.FlavorName.ValueString(),
 		MinInstances:     data.MinInstances.ValueInt32(),
-		// MaxInstances: data.MaxInstances.ValueInt32(),
-		Labels: r.getLabelsValues(data),
+		MaxInstances:     data.MaxInstances.ValueInt32(),
+		Labels:           r.getLabelsValues(data),
 	}
 
 	// CreateKaas API call logic
@@ -311,8 +311,8 @@ func (r *kaasInstancePoolResource) Update(ctx context.Context, req resource.Upda
 		Name:         data.Name.ValueString(),
 		FlavorName:   data.FlavorName.ValueString(),
 		MinInstances: data.MinInstances.ValueInt32(),
-		// MaxInstances: data.MaxInstances.ValueInt32(),
-		Labels: r.getLabelsValues(data),
+		MaxInstances: data.MaxInstances.ValueInt32(),
+		Labels:       r.getLabelsValues(data),
 	}
 
 	_, err := r.client.Kaas.UpdateInstancePool(
@@ -414,6 +414,6 @@ func (model *KaasInstancePoolModel) fill(instancePool *kaas.InstancePool) {
 	model.Name = types.StringValue(instancePool.Name)
 	model.FlavorName = types.StringValue(instancePool.FlavorName)
 	model.MinInstances = types.Int32Value(instancePool.MinInstances)
+	model.MaxInstances = types.Int32Value(instancePool.MaxInstances)
 	model.AvailabilityZone = types.StringValue(instancePool.AvailabilityZone)
-	// data.MaxInstances = types.Int32Value(obj.MaxInstances)
 }

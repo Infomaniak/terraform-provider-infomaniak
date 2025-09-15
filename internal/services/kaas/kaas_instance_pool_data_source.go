@@ -82,10 +82,10 @@ func (d *kaasInstancePoolDataSource) Schema(ctx context.Context, _ datasource.Sc
 				Computed:    true,
 				Description: "The minimum amount of instances in the instance pool",
 			},
-			// "max_instances": schema.Int32Attribute{
-			// 	Computed:    true,
-			// 	Description: "The maximum amount of instances in the instance pool",
-			// },
+			"max_instances": schema.Int32Attribute{
+				Computed:    true,
+				Description: "The maximum amount of instances in the instance pool",
+			},
 		},
 		MarkdownDescription: "The kaas data source allows the user to manage a kaas project",
 	}
@@ -115,7 +115,7 @@ func (d *kaasInstancePoolDataSource) Read(ctx context.Context, req datasource.Re
 	data.Name = types.StringValue(obj.Name)
 	data.FlavorName = types.StringValue(obj.FlavorName)
 	data.MinInstances = types.Int32Value(obj.MinInstances)
-	// data.MaxInstances = types.Int32Value(obj.MaxInstances)
+	data.MaxInstances = types.Int32Value(obj.MaxInstances)
 
 	// Set state
 	diags := resp.State.Set(ctx, &data)
