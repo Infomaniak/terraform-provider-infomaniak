@@ -144,7 +144,7 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Description:         "The version of Kubernetes associated with the KaaS being installed",
 				MarkdownDescription: "The version of Kubernetes associated with the KaaS being installed",
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{
