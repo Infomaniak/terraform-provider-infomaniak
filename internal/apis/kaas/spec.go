@@ -18,4 +18,6 @@ type Api interface {
 
 	GetApiserverParams(publicCloudId int64, projectId int64, kaasId int64) (*Apiserver, error)
 	PatchApiserverParams(input *Apiserver, publicCloudId int64, projectId int64, kaasId int64) (bool, error)
+	PutIPFilters(cidrs []string, publicCloudId, projectId, kaasId int64) (bool, error)
+	GetIPFilters(publicCloudId, projectId, kaasId int64) ([]string, error)
 }

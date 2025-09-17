@@ -61,9 +61,10 @@ func (m *KaasModel) SetDefaultValues(ctx context.Context) {
 }
 
 type ApiserverModel struct {
-	Params types.Map  `tfsdk:"params"`
-	Oidc   *OidcModel `tfsdk:"oidc"`
-	Audit  *Audit     `tfsdk:"audit"`
+	AllowRequestsFromCIDR types.List `tfsdk:"acl_rules"`
+	Params                types.Map  `tfsdk:"params"`
+	Oidc                  *OidcModel `tfsdk:"oidc"`
+	Audit                 *Audit     `tfsdk:"audit"`
 }
 
 type OidcModel struct {
@@ -182,6 +183,8 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 			return
 		}
 
+		r.applyIPFilters(ctx, &data, input.Project.PublicCloudId, input.Project.ProjectId, kaasId, &resp.Diagnostics)
+
 		data.fillApiserverState(ctx, apiserverParamsInput)
 	}
 
@@ -198,6 +201,16 @@ func (state *KaasModel) fillApiserverState(ctx context.Context, apiserverParams 
 			state.Apiserver = nil
 		}
 	}
+}
+
+func (state *KaasModel) fillFilteredCidr(ctx context.Context, cidr []string) diag.Diagnostics {
+	var diagnostics diag.Diagnostics
+	if len(cidr) > 0 {
+		listValue, diags := types.ListValueFrom(ctx, types.StringType, cidr)
+		state.Apiserver.AllowRequestsFromCIDR = listValue
+		diagnostics = diags
+	}
+	return diagnostics
 }
 
 func (state *KaasModel) shouldUpdateApiserver() bool {
@@ -314,6 +327,15 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		state.fillApiserverState(ctx, apiserverParams)
 	}
 
+	filteredIps, err := r.client.Kaas.GetIPFilters(state.PublicCloudId.ValueInt64(), state.PublicCloudProjectId.ValueInt64(), kaasObject.Id)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Could not get IP filter",
+			err.Error(),
+		)
+	}
+	resp.Diagnostics.Append(state.fillFilteredCidr(ctx, filteredIps)...)
+
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -356,6 +378,7 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	if data.Apiserver != nil {
 		r.handleApiserverConfig(ctx, &data, input, resp)
+		r.applyIPFilters(ctx, &data, input.Project.PublicCloudId, input.Project.ProjectId, input.Id, &resp.Diagnostics)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -402,6 +425,29 @@ func (r *kaasResource) handleApiserverConfig(ctx context.Context, data *KaasMode
 		return
 	}
 	data.fillApiserverState(ctx, apiserverParamsInput)
+}
+
+func (r *kaasResource) applyIPFilters(ctx context.Context, data *KaasModel, publicCloudId, projectId, kaasId int64, diags *diag.Diagnostics) {
+	if data.Apiserver == nil || data.Apiserver.AllowRequestsFromCIDR.IsNull() {
+		return
+	}
+
+	allowedCidrs := make([]string, 0, len(data.Apiserver.AllowRequestsFromCIDR.Elements()))
+	diags.Append(data.Apiserver.AllowRequestsFromCIDR.ElementsAs(ctx, &allowedCidrs, true)...)
+	if diags.HasError() {
+		return
+	}
+
+	ok, err := r.client.Kaas.PutIPFilters(allowedCidrs, publicCloudId, projectId, kaasId)
+	if !ok || err != nil {
+		var errMsg string
+		if err != nil {
+			errMsg = err.Error()
+		} else {
+			errMsg = "PatchIPFilters returned false but no error was provided"
+		}
+		diags.AddError("Error when applying network filtering", errMsg)
+	}
 }
 
 func (r *kaasResource) buildApiserverParamsInput(data KaasModel) *kaas.Apiserver {
