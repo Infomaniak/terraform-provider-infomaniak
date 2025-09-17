@@ -374,9 +374,15 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 			resp.Diagnostics.Append(data.Apiserver.AllowRequestsFromCIDR.ElementsAs(ctx, &allowedCidrs, true)...)
 			ok, err := r.client.Kaas.PatchIPFilters(allowedCidrs, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
 			if !ok || err != nil {
+				var errMsg string
+				if err != nil {
+					errMsg = err.Error()
+				} else {
+					errMsg = "PatchIPFilters returned false but no error was provided"
+				}
 				resp.Diagnostics.AddError(
 					"Error when applying network filtering",
-					err.Error(),
+					errMsg,
 				)
 			}
 		}
@@ -627,9 +633,15 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 			resp.Diagnostics.Append(data.Apiserver.AllowRequestsFromCIDR.ElementsAs(ctx, &allowedCidrs, true)...)
 			ok, err := r.client.Kaas.PatchIPFilters(allowedCidrs, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
 			if !ok || err != nil {
+				var errMsg string
+				if err != nil {
+					errMsg = err.Error()
+				} else {
+					errMsg = "PatchIPFilters returned false but no error was provided"
+				}
 				resp.Diagnostics.AddError(
 					"Error when applying network filtering",
-					err.Error(),
+					errMsg,
 				)
 			}
 		}

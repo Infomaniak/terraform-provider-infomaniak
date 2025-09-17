@@ -309,7 +309,7 @@ func (client *Client) GetApiserverParams(publicCloudId int, projectId int, kaasI
 func (client *Client) PatchIPFilters(cidrs []string, publicCloudId int, projectId int, kaasId int) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 	body := map[string][]string{
-		"ip_filters" : cidrs,
+		"ip_filters": cidrs,
 	}
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
