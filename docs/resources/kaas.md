@@ -71,8 +71,8 @@ resource "infomaniak_kaas" "kluster" {
 ### Optional Configuration
 
 - `apiserver` (Object): The object to configure Kubernetes Apiserver settings. This configuration allows you to customize the behavior of the Apiserver, including audit logging and authentication settings.
+  - `allow_requests_from_cidr` (List): The whitelisted CIDRs/IPs allowed to access the Kubernetes API Server.
   - `audit` (Object): The object to configure Kubernetes audit logs using [Kubernetes YAML resources](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/). Audit logs provide a record of all requests made to the Apiserver, and can be used for security and compliance purposes.
-    - `allow_requests_from_cidr` (List): The whitelisted CIDRs/IPs allowed to access the Kubernetes Control Plane.
     - `webhook_config` (File): The YAML file specifying the Webhook Config for audit logs. This file defines the endpoint where audit logs will be sent, and can be used to integrate with external logging and monitoring systems.
     - `policy` (File): The YAML file defining the [Audit Policy](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/#audit-policy) for the cluster. This file specifies the types of events that will be audited, and the level of logging that will be performed.
   - `oidc` (Object): The object to configure OpenID Connect (OIDC) for authentication in the Kubernetes Cluster using [Apiserver flags](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server). OIDC provides a standardized way to authenticate users and services, and can be used to integrate with external identity providers.
