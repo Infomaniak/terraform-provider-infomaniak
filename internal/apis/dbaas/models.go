@@ -38,6 +38,11 @@ type DBaaSRestore struct {
 	Status string `json:"status,omitempty"`
 }
 
+type DBaaSRestoration struct {
+	BackupId    string `json:"backup_id"`
+	PointInTime string `json:"pitr_restore_date,omitempty"`
+}
+
 func (dbaas *DBaaS) Key() string {
 	return fmt.Sprintf("%d-%d-%d", dbaas.Project.PublicCloudId, dbaas.Project.ProjectId, dbaas.Id)
 }
