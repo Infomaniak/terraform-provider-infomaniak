@@ -114,8 +114,25 @@ func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	data.Version = types.StringValue(obj.Version)
 	data.Type = types.StringValue(obj.Type)
 
+	filteredIps, err := d.client.DBaas.GetIpFilters(
+		int(data.PublicCloudId.ValueInt64()),
+		int(data.PublicCloudProjectId.ValueInt64()),
+		int(data.Id.ValueInt64()),
+	)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when reading DBaaS filtered IPs",
+			err.Error(),
+		)
+		return
+	}
+
+	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, filteredIps)
+	data.AllowedCIRDs = listFilteredIps
+	resp.Diagnostics.Append(diags...)
+
 	// Set state
-	diags := resp.State.Set(ctx, &data)
+	diags = resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
