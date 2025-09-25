@@ -39,6 +39,12 @@ variable "db_version" {
   default     = "8.0.42"
 }
 
+variable "point_in_time" {
+  description = "Restoration precise point in time"
+  type        = string
+  default     = "2005-08-15T15:52:01+00:00"
+}
+
 variable "allowed_cidrs" {
   description = "CIDR whitelist"
   type        = list(string)

@@ -209,7 +209,7 @@ func (client *Client) CreateRestore(publicCloudId int, publicCloudProjectId int,
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
-		SetQueryParam("backup_id", restoration.BackupId).
+		SetBody(restoration).
 		SetResult(&result).
 		SetError(&result).
 		Post(EndpointDatabaseRestores)

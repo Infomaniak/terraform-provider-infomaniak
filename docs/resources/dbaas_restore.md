@@ -21,6 +21,7 @@ resource "infomaniak_dbaas_restore" "db-0" {
   public_cloud_project_id = yyyyy
   dbaas_id                = zzzzz
   backup_id               = ttttt
+  point_in_time           = "2025-10-27T10:24:01+00:00"
 }
 ```
 
@@ -32,6 +33,10 @@ resource "infomaniak_dbaas_restore" "db-0" {
 - `public_cloud_project_id` (Integer) The id of the public cloud project where DBaaS is installed.
 - `dbaas_id` (Integer) The id of the dbaas project.
 - `backup_id` (String) The id of the backup to recover from.
+
+### Optional
+
+- `point_in_time` (Date) Point in time recovery date in ISO 3339 format
 
 ### Read-Only
 
