@@ -53,6 +53,8 @@ type DBaasModel struct {
 	User     types.String `tfsdk:"user"`
 	Password types.String `tfsdk:"password"`
 	Ca       types.String `tfsdk:"ca"`
+
+	AllowedCIRDs types.List `tfsdk:"allowedCIDRs"`
 }
 
 func (r *dbaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -145,6 +147,11 @@ func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 			"ca": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "The Database CA Certificate",
+			},
+			"allowedCIDRs": schema.ListAttribute{
+				Optional:            true,
+				ElementType:         types.StringType,
+				MarkdownDescription: "Allowed to query Database IP whitelist",
 			},
 		},
 		MarkdownDescription: "The dbaas resource allows the user to manage a dbaas project",
