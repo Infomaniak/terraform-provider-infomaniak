@@ -258,7 +258,7 @@ func (client *Client) PatchIpFilters(publicCloudId int, publicCloudProjectId int
 		}).
 		SetResult(&result).
 		SetError(&result).
-		Get(EndpointDatabaseRestore)
+		Put(EndpointDatabaseIpFilter)
 	if err != nil {
 		return false, err
 	}
@@ -279,7 +279,7 @@ func (client *Client) GetIpFilters(publicCloudId int, publicCloudProjectId int, 
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
 		SetResult(&result).
 		SetError(&result).
-		Get(EndpointDatabaseRestore)
+		Get(EndpointDatabaseIpFilter)
 	if err != nil {
 		return nil, err
 	}

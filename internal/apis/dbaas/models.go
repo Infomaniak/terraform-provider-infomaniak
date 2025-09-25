@@ -23,6 +23,8 @@ type DBaaS struct {
 	Name    string `json:"name,omitempty"`
 	Region  string `json:"region,omitempty"`
 	Status  string `json:"status,omitempty"`
+
+	AllowedCIDRs []string
 }
 
 // avoid crashes when the backend returns [] instead of null when connection is not yet avaialble
