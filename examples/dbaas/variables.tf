@@ -38,3 +38,11 @@ variable "db_version" {
   type        = string
   default     = "8.0.42"
 }
+
+variable "allowed_cidrs" {
+  description = "CIDR whitelist"
+  type        = list(string)
+  default     = [
+    "0.0.0.0/0"
+  ]
+}

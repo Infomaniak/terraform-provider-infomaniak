@@ -22,6 +22,8 @@ resource "infomaniak_dbaas" "db-0" {
   type      = var.db_type
   version   = var.db_version
   region    = var.db_region
+
+  allowedCIDRs = var.allowed_cidrs
 }
 
 resource "infomaniak_dbaas_backup" "db-0-backup-0" {
