@@ -202,14 +202,14 @@ func (client *Client) DeleteBackup(publicCloudId int, publicCloudProjectId int, 
 	return result.Data, nil
 }
 
-func (client *Client) CreateRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string) (*dbaas.DBaaSRestore, error) {
+func (client *Client) CreateRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, restoration dbaas.DBaaSRestoration) (*dbaas.DBaaSRestore, error) {
 	var result helpers.NormalizedApiResponse[*dbaas.DBaaSRestore]
 
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
-		SetQueryParam("backup_id", backupId).
+		SetQueryParam("backup_id", restoration.BackupId).
 		SetResult(&result).
 		SetError(&result).
 		Post(EndpointDatabaseRestores)

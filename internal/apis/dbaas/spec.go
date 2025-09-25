@@ -12,7 +12,7 @@ type Api interface {
 	GetBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string) (*DBaaSBackup, error)
 	DeleteBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string) (bool, error)
 
-	CreateRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string) (*DBaaSRestore, error)
+	CreateRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, restoration DBaaSRestoration) (*DBaaSRestore, error)
 	GetRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, restoreId string) (*DBaaSRestore, error)
 	PatchIpFilters(publicCloudId int, publicCloudProjectId int, dbaasId int, filters []string) (bool, error)
 	GetIpFilters(publicCloudId int, publicCloudProjectId int, dbaasId int) ([]string, error)
