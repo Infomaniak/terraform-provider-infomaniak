@@ -226,6 +226,26 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
+	allowedCIDRs := make([]string, 0, len(data.AllowedCIRDs.Elements()))
+	resp.Diagnostics.Append(data.AllowedCIRDs.ElementsAs(ctx, &allowedCIDRs, false)...)
+	ok, err := r.client.DBaas.PatchIpFilters(
+		input.Project.PublicCloudId,
+		input.Project.ProjectId,
+		dbaasId,
+		allowedCIDRs,
+	)
+	if !ok {
+		resp.Diagnostics.AddError("Unknown IP filter error", "")
+		return
+	}
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when updating IP Filters",
+			err.Error(),
+		)
+		return
+	}
+
 	data.fill(dbaasObject, connectionInfos)
 
 	// Save data into Terraform state
@@ -268,6 +288,23 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		)
 		return
 	}
+
+	filteredIps, err := r.client.DBaas.GetIpFilters(
+		int(state.PublicCloudId.ValueInt64()),
+		int(state.PublicCloudProjectId.ValueInt64()),
+		int(state.Id.ValueInt64()),
+	)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when reading DBaaS filtered IPs",
+			err.Error(),
+		)
+		return
+	}
+
+	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, filteredIps)
+	state.AllowedCIRDs = listFilteredIps
+	resp.Diagnostics.Append(diags...)
 
 	state.fill(dbaasObject, connectionInfos)
 
@@ -339,6 +376,24 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 			err.Error(),
 		)
 		return
+	}
+
+	allowedCIDRs := make([]string, 0, len(data.AllowedCIRDs.Elements()))
+	resp.Diagnostics.Append(data.AllowedCIRDs.ElementsAs(ctx, &allowedCIDRs, false)...)
+	ok, err := r.client.DBaas.PatchIpFilters(
+		int(state.PublicCloudId.ValueInt64()),
+		int(state.PublicCloudProjectId.ValueInt64()),
+		int(state.Id.ValueInt64()),
+		allowedCIDRs,
+	)
+	if !ok {
+		resp.Diagnostics.AddError("Unknown IP filter error", "")
+	}
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when updating IP Filters",
+			err.Error(),
+		)
 	}
 
 	state.fill(dbaasObject, connectionInfos)
