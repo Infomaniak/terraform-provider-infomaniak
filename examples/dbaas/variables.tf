@@ -43,6 +43,8 @@ variable "allowed_cidrs" {
   description = "CIDR whitelist"
   type        = list(string)
   default     = [
-    "0.0.0.0/0"
+    "162.1.15.122/32",
+    "1.1.1.1",
+    
   ]
 }

@@ -54,7 +54,7 @@ type DBaasModel struct {
 	Password types.String `tfsdk:"password"`
 	Ca       types.String `tfsdk:"ca"`
 
-	AllowedCIRDs types.List `tfsdk:"allowedCIDRs"`
+	AllowedCIDRs types.List `tfsdk:"allowedCIDRs"`
 }
 
 func (r *dbaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -149,7 +149,7 @@ func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				MarkdownDescription: "The Database CA Certificate",
 			},
 			"allowedCIDRs": schema.ListAttribute{
-				Optional:            true,
+				Required:            true,
 				ElementType:         types.StringType,
 				MarkdownDescription: "Allowed to query Database IP whitelist",
 			},
@@ -226,8 +226,8 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	allowedCIDRs := make([]string, 0, len(data.AllowedCIRDs.Elements()))
-	resp.Diagnostics.Append(data.AllowedCIRDs.ElementsAs(ctx, &allowedCIDRs, false)...)
+	allowedCIDRs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
+	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &allowedCIDRs, false)...)
 	ok, err := r.client.DBaas.PatchIpFilters(
 		input.Project.PublicCloudId,
 		input.Project.ProjectId,
@@ -303,7 +303,7 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	}
 
 	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, filteredIps)
-	state.AllowedCIRDs = listFilteredIps
+	state.AllowedCIDRs = listFilteredIps
 	resp.Diagnostics.Append(diags...)
 
 	state.fill(dbaasObject, connectionInfos)
@@ -378,15 +378,15 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	allowedCIDRs := make([]string, 0, len(data.AllowedCIRDs.Elements()))
-	resp.Diagnostics.Append(data.AllowedCIRDs.ElementsAs(ctx, &allowedCIDRs, false)...)
+	allowedCIDRs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
+	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &allowedCIDRs, false)...)
 	ok, err := r.client.DBaas.PatchIpFilters(
 		int(state.PublicCloudId.ValueInt64()),
 		int(state.PublicCloudProjectId.ValueInt64()),
 		int(state.Id.ValueInt64()),
 		allowedCIDRs,
 	)
-	if !ok {
+	if !ok && err == nil {
 		resp.Diagnostics.AddError("Unknown IP filter error", "")
 	}
 	if err != nil {
@@ -394,7 +394,9 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 			"Error when updating IP Filters",
 			err.Error(),
 		)
+		return
 	}
+	dbaasObject.AllowedCIDRs = allowedCIDRs
 
 	state.fill(dbaasObject, connectionInfos)
 
@@ -486,6 +488,8 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS, connectionInfos *dbaas.DBaaSCo
 	model.User = types.StringValue(connectionInfos.User)
 	model.Password = types.StringValue(connectionInfos.Password)
 	model.Ca = types.StringValue(connectionInfos.Ca)
+
+	model.AllowedCIDRs, _ = types.ListValueFrom(context.TODO(), types.StringType, dbaas.AllowedCIDRs)
 }
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int) (*dbaas.DBaaS, error) {
 	t := time.NewTicker(5 * time.Second)

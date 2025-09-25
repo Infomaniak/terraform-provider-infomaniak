@@ -128,7 +128,7 @@ func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	}
 
 	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, filteredIps)
-	data.AllowedCIRDs = listFilteredIps
+	data.AllowedCIDRs = listFilteredIps
 	resp.Diagnostics.Append(diags...)
 
 	// Set state
