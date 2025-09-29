@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -67,9 +68,10 @@ func (m *KaasModel) SetDefaultValues(ctx context.Context) {
 }
 
 type ApiserverModel struct {
-	Params types.Map  `tfsdk:"params"`
-	Oidc   *OidcModel `tfsdk:"oidc"`
-	Audit  *Audit     `tfsdk:"audit"`
+	AllowRequestsFromCIDR types.List `tfsdk:"allow_requests_from_cidr"`
+	Params                types.Map  `tfsdk:"params"`
+	Oidc                  *OidcModel `tfsdk:"oidc"`
+	Audit                 *Audit     `tfsdk:"audit"`
 }
 
 type OidcModel struct {
@@ -181,6 +183,14 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"apiserver": schema.SingleNestedAttribute{
 				MarkdownDescription: "Kubernetes Apiserver editable params",
 				Attributes: map[string]schema.Attribute{
+					"allow_requests_from_cidr": schema.ListAttribute{
+						Optional:            true,
+						ElementType:         types.StringType,
+						MarkdownDescription: "List of CIDR blocks allowed to access to control plane. You can also set specific IPs (eg: 1.2.3.4)",
+						PlanModifiers: []planmodifier.List{
+							listplanmodifier.UseStateForUnknown(),
+						},
+					},
 					"params": schema.MapAttribute{
 						Optional:            true,
 						ElementType:         types.StringType,
@@ -359,6 +369,24 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 			return
 		}
 
+		if !data.Apiserver.AllowRequestsFromCIDR.IsNull() {
+			allowedCidrs := make([]string, 0, len(data.Apiserver.AllowRequestsFromCIDR.Elements()))
+			resp.Diagnostics.Append(data.Apiserver.AllowRequestsFromCIDR.ElementsAs(ctx, &allowedCidrs, true)...)
+			ok, err := r.client.Kaas.PatchIPFilters(allowedCidrs, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
+			if !ok || err != nil {
+				var errMsg string
+				if err != nil {
+					errMsg = err.Error()
+				} else {
+					errMsg = "PatchIPFilters returned false but no error was provided"
+				}
+				resp.Diagnostics.AddError(
+					"Error when applying network filtering",
+					errMsg,
+				)
+			}
+		}
+
 		data.fillApiserverState(ctx, apiserverParamsInput)
 	}
 
@@ -375,6 +403,16 @@ func (state *KaasModel) fillApiserverState(ctx context.Context, apiserverParams 
 			state.Apiserver = nil
 		}
 	}
+}
+
+func (state *KaasModel) fillFilteredCidr(ctx context.Context, cidr []string) diag.Diagnostics {
+	var diagnostics diag.Diagnostics
+	if len(cidr) > 0 {
+		listValue, diags := types.ListValueFrom(ctx, types.StringType, cidr)
+		state.Apiserver.AllowRequestsFromCIDR = listValue
+		diagnostics = diags
+	}
+	return diagnostics
 }
 
 func (state *KaasModel) shouldUpdateApiserver() bool {
@@ -496,6 +534,15 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		state.fillApiserverState(ctx, apiserverParams)
 	}
 
+	filteredIps, err := r.client.Kaas.GetIPFilters(int(state.PublicCloudId.ValueInt64()), int(state.PublicCloudProjectId.ValueInt64()), kaasObject.Id)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Could not get IP filter",
+			err.Error(),
+		)
+	}
+	resp.Diagnostics.Append(state.fillFilteredCidr(ctx, filteredIps)...)
+
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -580,6 +627,24 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 			return
 		}
 		data.fillApiserverState(ctx, apiserverParamsInput)
+
+		if !data.Apiserver.AllowRequestsFromCIDR.IsNull() {
+			allowedCidrs := make([]string, 0, len(data.Apiserver.AllowRequestsFromCIDR.Elements()))
+			resp.Diagnostics.Append(data.Apiserver.AllowRequestsFromCIDR.ElementsAs(ctx, &allowedCidrs, true)...)
+			ok, err := r.client.Kaas.PatchIPFilters(allowedCidrs, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
+			if !ok || err != nil {
+				var errMsg string
+				if err != nil {
+					errMsg = err.Error()
+				} else {
+					errMsg = "PatchIPFilters returned false but no error was provided"
+				}
+				resp.Diagnostics.AddError(
+					"Error when applying network filtering",
+					errMsg,
+				)
+			}
+		}
 
 	}
 	// Save updated data into Terraform state

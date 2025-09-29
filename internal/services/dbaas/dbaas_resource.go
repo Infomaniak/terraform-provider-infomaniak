@@ -143,7 +143,7 @@ func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				MarkdownDescription: "The password to access this database.",
 			},
 			"ca": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
 				MarkdownDescription: "The Database CA Certificate",
 			},
 		},
