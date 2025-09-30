@@ -316,7 +316,6 @@ func (client *Client) PatchIPFilters(cidrs []string, publicCloudId int, projectI
 		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
 		SetBody(body).
-		SetDebug(true).
 		SetResult(&result).
 		SetError(&result).
 		Put(EndpointIPFilter)
@@ -338,7 +337,6 @@ func (client *Client) GetIPFilters(publicCloudId int, projectId int, kaasId int)
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
 		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
-		SetDebug(true).
 		SetResult(&result).
 		SetError(&result).
 		Get(EndpointIPFilter)

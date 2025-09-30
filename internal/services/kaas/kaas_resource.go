@@ -574,7 +574,7 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		Name:              data.Name.ValueString(),
 		PackId:            chosenPackState.Id,
 		Region:            state.Region.ValueString(),
-		KubernetesVersion: state.KubernetesVersion.ValueString(),
+		KubernetesVersion: data.KubernetesVersion.ValueString(),
 	}
 
 	_, err = r.client.Kaas.UpdateKaas(input)
