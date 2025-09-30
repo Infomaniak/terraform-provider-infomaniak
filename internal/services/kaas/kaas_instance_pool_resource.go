@@ -247,6 +247,10 @@ func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data Kaa
 			return nil, nil
 		}
 
+		if len(found.ErrorMessages) > 0 {
+			return nil, errors.New(strings.Join(found.ErrorMessages, ","))
+		}
+
 		// We need the instance pool to be active, have the same state as us, be scaled properly and be in bound of the autoscaling
 		isActive := found.Status == "Active"
 		isEquivalent := found.MinInstances == data.MinInstances.ValueInt32()

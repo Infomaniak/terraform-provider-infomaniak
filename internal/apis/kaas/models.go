@@ -89,6 +89,8 @@ type InstancePool struct {
 
 	TargetInstances    int32 `json:"target_instances,omitempty"`
 	AvailableInstances int32 `json:"available_instances,omitempty"`
+
+	ErrorMessages []string `json:"error_messages,omitempty"`
 }
 
 func (instancePool *InstancePool) Key() string {
