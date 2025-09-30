@@ -577,6 +577,10 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		KubernetesVersion: data.KubernetesVersion.ValueString(),
 	}
 
+	if state.KubernetesVersion.ValueString() == data.KubernetesVersion.ValueString() {
+		input.KubernetesVersion = ""
+	}
+
 	_, err = r.client.Kaas.UpdateKaas(input)
 	if err != nil {
 		resp.Diagnostics.AddError(
