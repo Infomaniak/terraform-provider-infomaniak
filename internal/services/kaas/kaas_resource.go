@@ -333,15 +333,9 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	// Wait for kubeconfig to be available
-	kubeconfig, err := r.client.Kaas.GetKubeconfig(int(data.PublicCloudId.ValueInt64()), int(data.PublicCloudProjectId.ValueInt64()), kaasId)
+	err = r.fetchAndSetKubeconfig(&data, input)
 	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Could not get kubeconfig for KaaS",
-			err.Error(),
-		)
-	} else {
-		data.Kubeconfig = types.StringValue(kubeconfig)
+		resp.Diagnostics.AddWarning("could not fetch and set kubeconfig", err.Error())
 	}
 
 	data.fill(kaasObject)
@@ -473,15 +467,9 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	state.fill(kaasObject)
 
-	// Wait for kubeconfig to be available
-	kubeconfig, err := r.client.Kaas.GetKubeconfig(int(state.PublicCloudId.ValueInt64()), int(state.PublicCloudProjectId.ValueInt64()), kaasObject.Id)
+	err = r.fetchAndSetKubeconfig(&state, kaasObject)
 	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Could not get kubeconfig",
-			err.Error(),
-		)
-	} else {
-		state.Kubeconfig = types.StringValue(kubeconfig)
+		resp.Diagnostics.AddWarning("could not fetch and set kubeconfig", err.Error())
 	}
 
 	apiserverParams, err := r.client.Kaas.GetApiserverParams(int(state.PublicCloudId.ValueInt64()), int(state.PublicCloudProjectId.ValueInt64()), kaasObject.Id)
@@ -504,7 +492,6 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	var state KaasModel
 	var data KaasModel
 
-	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 
@@ -517,7 +504,34 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	// Update API call logic
+	input := r.prepareUpdateInput(state, data, chosenPackState.Id)
+
+	if _, err := r.client.Kaas.UpdateKaas(input); err != nil {
+		resp.Diagnostics.AddError("Error when updating KaaS", err.Error())
+		return
+	}
+
+	kaasObject, err := r.waitUntilActive(ctx, input, input.Id)
+	if err != nil || kaasObject == nil {
+		resp.Diagnostics.AddError("Error waiting for KaaS activation", err.Error())
+		return
+	}
+
+	err = r.fetchAndSetKubeconfig(&data, input)
+	if err != nil {
+		resp.Diagnostics.AddWarning("could not fetch and set kubeconfig", err.Error())
+	}
+
+	data.fill(kaasObject)
+
+	if data.Apiserver != nil {
+		r.handleApiserverConfig(ctx, &data, input, resp)
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *kaasResource) prepareUpdateInput(state, data KaasModel, packID int) *kaas.Kaas {
 	input := &kaas.Kaas{
 		Project: kaas.KaasProject{
 			PublicCloudId: int(data.PublicCloudId.ValueInt64()),
@@ -525,7 +539,7 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		},
 		Id:                int(state.Id.ValueInt64()),
 		Name:              data.Name.ValueString(),
-		PackId:            chosenPackState.Id,
+		PackId:            packID,
 		Region:            state.Region.ValueString(),
 		KubernetesVersion: data.KubernetesVersion.ValueString(),
 	}
@@ -534,60 +548,30 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		input.KubernetesVersion = ""
 	}
 
-	_, err = r.client.Kaas.UpdateKaas(input)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error when updating KaaS",
-			err.Error(),
-		)
-		return
-	}
+	return input
+}
 
-	kaasObject, err := r.waitUntilActive(ctx, input, input.Id)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error when getting KaaS",
-			err.Error(),
-		)
-		return
-	}
-
-	if kaasObject == nil {
-		return
-	}
-
-	// Wait for kubeconfig to be available
+func (r *kaasResource) fetchAndSetKubeconfig(data *KaasModel, input *kaas.Kaas) error {
 	kubeconfig, err := r.client.Kaas.GetKubeconfig(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(state.Id.ValueInt64()),
+		input.Project.PublicCloudId,
+		input.Project.ProjectId,
+		input.Id,
 	)
 	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Could not get kubeconfig",
-			err.Error(),
-		)
-	} else {
-		data.Kubeconfig = types.StringValue(kubeconfig)
+		return fmt.Errorf("could not get kubeconfig: %w", err)
 	}
+	data.Kubeconfig = types.StringValue(kubeconfig)
+	return nil
+}
 
-	data.fill(kaasObject)
-
-	if data.Apiserver != nil {
-		apiserverParamsInput := r.buildApiserverParamsInput(data)
-		patched, err := r.client.Kaas.PatchApiserverParams(apiserverParamsInput, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
-		if !patched || err != nil {
-			resp.Diagnostics.AddError(
-				"Error when creating Oidc",
-				err.Error(),
-			)
-			return
-		}
-		data.fillApiserverState(ctx, apiserverParamsInput)
-
+func (r *kaasResource) handleApiserverConfig(ctx context.Context, data *KaasModel, input *kaas.Kaas, resp *resource.UpdateResponse) {
+	apiserverParamsInput := r.buildApiserverParamsInput(*data)
+	patched, err := r.client.Kaas.PatchApiserverParams(apiserverParamsInput, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
+	if !patched || err != nil {
+		resp.Diagnostics.AddError("Error when patching Apiserver params", err.Error())
+		return
 	}
-	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	data.fillApiserverState(ctx, apiserverParamsInput)
 }
 
 func (r *kaasResource) buildApiserverParamsInput(data KaasModel) *kaas.Apiserver {

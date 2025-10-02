@@ -198,7 +198,8 @@ func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.Crea
 	data.Id = types.Int64Value(int64(instancePoolId))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
-	instancePoolObject, err := r.waitUntilActive(ctx, data, instancePoolId)
+	isScalingDown := false
+	instancePoolObject, err := r.waitUntilActive(ctx, data, instancePoolId, isScalingDown)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error when waiting for KaaS Instance Pool to be Active",
@@ -231,7 +232,9 @@ func (r *kaasInstancePoolResource) getLabelsValues(data KaasInstancePoolModel) m
 	return labels
 }
 
-func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data KaasInstancePoolModel, id int) (*kaas.InstancePool, error) {
+func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data KaasInstancePoolModel, id int, scalingDown bool) (*kaas.InstancePool, error) {
+	scaleDownFailedQuotaCount := 0
+	scaleDownFailedQuotaAllowedRetrys := 5
 	for {
 		found, err := r.client.Kaas.GetInstancePool(
 			int(data.PublicCloudId.ValueInt64()),
@@ -248,6 +251,11 @@ func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data Kaa
 		}
 
 		if len(found.ErrorMessages) > 0 {
+			// Special case when we hit quota failure but we are scaling down. OpenStack can take some time to update so we let him do his work
+			if (found.Status == "ScalingDown" || scalingDown) && scaleDownFailedQuotaCount <= scaleDownFailedQuotaAllowedRetrys {
+				scaleDownFailedQuotaCount++
+				continue
+			}
 			return nil, errors.New(strings.Join(found.ErrorMessages, ","))
 		}
 
@@ -332,7 +340,8 @@ func (r *kaasInstancePoolResource) Update(ctx context.Context, req resource.Upda
 		return
 	}
 
-	instancePoolObject, err := r.waitUntilActive(ctx, data, int(state.Id.ValueInt64()))
+	scalingDown := data.MaxInstances.ValueInt32() < state.MaxInstances.ValueInt32()
+	instancePoolObject, err := r.waitUntilActive(ctx, data, int(state.Id.ValueInt64()), scalingDown)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error when waiting for KaaS Instance Pool to be Active",
