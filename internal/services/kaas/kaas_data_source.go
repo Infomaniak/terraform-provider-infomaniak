@@ -94,6 +94,11 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 				Description:         "Kubernetes Apiserver editable params",
 				MarkdownDescription: "Kubernetes Apiserver editable params",
 				Attributes: map[string]schema.Attribute{
+					"acl_rules": schema.ListAttribute{
+						Computed:            true,
+						ElementType:         types.StringType,
+						MarkdownDescription: "List of CIDR blocks allowed to access to control plane. You can also set specific IPs (eg: 1.2.3.4)",
+					},
 					"params": schema.MapAttribute{
 						ElementType:         types.StringType,
 						Optional:            true,
@@ -219,6 +224,15 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	if apiserverParams != nil {
 		data.fillApiserverState(ctx, apiserverParams)
 	}
+
+	filteredIps, err := d.client.Kaas.GetIPFilters(int(data.PublicCloudId.ValueInt64()), int(data.PublicCloudProjectId.ValueInt64()), int(data.Id.ValueInt64()))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Could not get IP filter",
+			err.Error(),
+		)
+	}
+	resp.Diagnostics.Append(data.fillFilteredCidr(ctx, filteredIps)...)
 
 	// Set state
 	diags := resp.State.Set(ctx, &data)
