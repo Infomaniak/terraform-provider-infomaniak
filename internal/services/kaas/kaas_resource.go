@@ -61,7 +61,7 @@ func (m *KaasModel) SetDefaultValues(ctx context.Context) {
 }
 
 type ApiserverModel struct {
-	AllowRequestsFromCIDR types.List `tfsdk:"allow_requests_from_cidr"`
+	AllowRequestsFromCIDR types.List `tfsdk:"acl_rules"`
 	Params                types.Map  `tfsdk:"params"`
 	Oidc                  *OidcModel `tfsdk:"oidc"`
 	Audit                 *Audit     `tfsdk:"audit"`
