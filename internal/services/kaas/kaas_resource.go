@@ -68,7 +68,7 @@ func (m *KaasModel) SetDefaultValues(ctx context.Context) {
 }
 
 type ApiserverModel struct {
-	AllowRequestsFromCIDR types.List `tfsdk:"allow_requests_from_cidr"`
+	AllowRequestsFromCIDR types.List `tfsdk:"acl_rules"`
 	Params                types.Map  `tfsdk:"params"`
 	Oidc                  *OidcModel `tfsdk:"oidc"`
 	Audit                 *Audit     `tfsdk:"audit"`
@@ -183,7 +183,7 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"apiserver": schema.SingleNestedAttribute{
 				MarkdownDescription: "Kubernetes Apiserver editable params",
 				Attributes: map[string]schema.Attribute{
-					"allow_requests_from_cidr": schema.ListAttribute{
+					"acl_rules": schema.ListAttribute{
 						Optional:            true,
 						ElementType:         types.StringType,
 						MarkdownDescription: "List of CIDR blocks allowed to access to control plane. You can also set specific IPs (eg: 1.2.3.4)",

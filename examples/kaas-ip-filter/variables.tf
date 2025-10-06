@@ -33,7 +33,7 @@ variable "cluster_version" {
   default     = "1.31"
 }
 
-variable "allow_requests_from_cidr" {
+variable "acl_rules" {
   description = "Allow only specific cidrs / IPs to access to control plane"
   type = list(string)
   default = [

@@ -23,6 +23,6 @@ resource "infomaniak_kaas" "create_kluster" {
   region             = var.cluster_region
 
   apiserver = {
-    allow_requests_from_cidr = var.allow_requests_from_cidr
+    acl_rules = var.acl_rules
   }
 }

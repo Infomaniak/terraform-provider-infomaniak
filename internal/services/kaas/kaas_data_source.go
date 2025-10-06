@@ -94,7 +94,7 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 				Description:         "Kubernetes Apiserver editable params",
 				MarkdownDescription: "Kubernetes Apiserver editable params",
 				Attributes: map[string]schema.Attribute{
-					"allow_requests_from_cidr": schema.ListAttribute{
+					"acl_rules": schema.ListAttribute{
 						Computed:            true,
 						ElementType:         types.StringType,
 						MarkdownDescription: "List of CIDR blocks allowed to access to control plane. You can also set specific IPs (eg: 1.2.3.4)",
