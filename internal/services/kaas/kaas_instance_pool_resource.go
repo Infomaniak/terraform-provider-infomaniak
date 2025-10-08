@@ -46,8 +46,8 @@ type KaasInstancePoolModel struct {
 	AvailabilityZone types.String `tfsdk:"availability_zone"`
 	FlavorName       types.String `tfsdk:"flavor_name"`
 	MinInstances     types.Int32  `tfsdk:"min_instances"`
-	// MaxInstances types.Int32  `tfsdk:"max_instances"`
-	Labels types.Map `tfsdk:"labels"`
+	MaxInstances     types.Int32  `tfsdk:"max_instances"`
+	Labels           types.Map    `tfsdk:"labels"`
 }
 
 func (r *kaasInstancePoolResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -135,17 +135,20 @@ func (r *kaasInstancePoolResource) Schema(ctx context.Context, req resource.Sche
 			},
 			"min_instances": schema.Int32Attribute{
 				Required:            true,
-				Description:         "The minimum instances in this instance pool (should be equal to max_instance until the AutoScaling feature is released)",
-				MarkdownDescription: "The minimum instances in this instance pool (should be equal to max_instance until the AutoScaling feature is released)",
+				Description:         "The minimum amount of instances in this instance pool",
+				MarkdownDescription: "The minimum amount of instances in this instance pool",
 				PlanModifiers: []planmodifier.Int32{
 					int32planmodifier.UseStateForUnknown(),
 				},
 			},
-			// "max_instances": schema.Int32Attribute{
-			// 	Required:            true,
-			// 	Description:         "The maximum instances in this instance pool (should be equal to min_instance until the AutoScaling feature is released)",
-			// 	MarkdownDescription: "The maximum instances in this instance pool (should be equal to min_instance until the AutoScaling feature is released)",
-			// },
+			"max_instances": schema.Int32Attribute{
+				Required:            true,
+				Description:         "The maximum amount of instances in this instance pool",
+				MarkdownDescription: "The maximum amount of instances in this instance pool",
+				PlanModifiers: []planmodifier.Int32{
+					int32planmodifier.UseStateForUnknown(),
+				},
+			},
 			"labels": schema.MapAttribute{
 				ElementType: types.StringType,
 				Optional:    true,
@@ -177,8 +180,8 @@ func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.Crea
 		AvailabilityZone: data.AvailabilityZone.ValueString(),
 		FlavorName:       data.FlavorName.ValueString(),
 		MinInstances:     data.MinInstances.ValueInt32(),
-		// MaxInstances: data.MaxInstances.ValueInt32(),
-		Labels: r.getLabelsValues(data),
+		MaxInstances:     data.MaxInstances.ValueInt32(),
+		Labels:           r.getLabelsValues(data),
 	}
 
 	// CreateKaas API call logic
@@ -198,7 +201,8 @@ func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.Crea
 	data.Id = types.Int64Value(int64(instancePoolId))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
-	instancePoolObject, err := r.waitUntilActive(ctx, data, instancePoolId)
+	isScalingDown := false
+	instancePoolObject, err := r.waitUntilActive(ctx, data, instancePoolId, isScalingDown)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error when waiting for KaaS Instance Pool to be Active",
@@ -231,32 +235,43 @@ func (r *kaasInstancePoolResource) getLabelsValues(data KaasInstancePoolModel) m
 	return labels
 }
 
-func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data KaasInstancePoolModel, id int) (*kaas.InstancePool, error) {
+func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data KaasInstancePoolModel, id int, scalingDown bool) (*kaas.InstancePool, error) {
+	scaleDownFailedQuotaCount := 0
+	scaleDownFailedQuotaAllowedRetrys := 5
+	ticker := time.NewTicker(5 * time.Second)
 	for {
-		found, err := r.client.Kaas.GetInstancePool(
-			int(data.PublicCloudId.ValueInt64()),
-			int(data.PublicCloudProjectId.ValueInt64()),
-			int(data.KaasId.ValueInt64()),
-			id,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		if ctx.Err() != nil {
+		select {
+		case <-ctx.Done():
 			return nil, nil
-		}
+		case <-ticker.C:
+			found, err := r.client.Kaas.GetInstancePool(
+				int(data.PublicCloudId.ValueInt64()),
+				int(data.PublicCloudProjectId.ValueInt64()),
+				int(data.KaasId.ValueInt64()),
+				id,
+			)
+			if err != nil {
+				return nil, err
+			}
 
-		// We need the instance pool to be active, have the same state as us, be scaled properly and be in bound of the autoscaling
-		isActive := found.Status == "Active"
-		isEquivalent := found.MinInstances == data.MinInstances.ValueInt32()
-		isScaledProperly := found.AvailableInstances == found.TargetInstances
-		isInBound := found.MinInstances <= found.TargetInstances && found.TargetInstances <= found.MaxInstances
-		if isActive && isEquivalent && isScaledProperly && isInBound {
-			return found, nil
-		}
+			if len(found.ErrorMessages) > 0 {
+				// Special case when we hit quota failure but we are scaling down. OpenStack can take some time to update so we let him do his work
+				if (found.Status == "ScalingDown" || scalingDown) && scaleDownFailedQuotaCount <= scaleDownFailedQuotaAllowedRetrys {
+					scaleDownFailedQuotaCount++
+					continue
+				}
+				return nil, errors.New(strings.Join(found.ErrorMessages, ","))
+			}
 
-		time.Sleep(5 * time.Second)
+			// We need the instance pool to be active, have the same state as us, be scaled properly and be in bound of the autoscaling
+			isActive := found.Status == "Active"
+			isEquivalent := found.MinInstances == data.MinInstances.ValueInt32()
+			isScaledProperly := found.AvailableInstances == found.TargetInstances
+			isInBound := found.MinInstances <= found.TargetInstances && found.TargetInstances <= found.MaxInstances
+			if isActive && isEquivalent && isScaledProperly && isInBound {
+				return found, nil
+			}
+		}
 	}
 }
 
@@ -285,6 +300,13 @@ func (r *kaasInstancePoolResource) Read(ctx context.Context, req resource.ReadRe
 		return
 	}
 
+	if len(obj.ErrorMessages) > 0 {
+		resp.Diagnostics.AddWarning(
+			"KaaS was in error state:",
+			strings.Join(obj.ErrorMessages, ","),
+		)
+	}
+
 	data.fill(obj)
 
 	// Save updated data into Terraform state
@@ -311,8 +333,8 @@ func (r *kaasInstancePoolResource) Update(ctx context.Context, req resource.Upda
 		Name:         data.Name.ValueString(),
 		FlavorName:   data.FlavorName.ValueString(),
 		MinInstances: data.MinInstances.ValueInt32(),
-		// MaxInstances: data.MaxInstances.ValueInt32(),
-		Labels: r.getLabelsValues(data),
+		MaxInstances: data.MaxInstances.ValueInt32(),
+		Labels:       r.getLabelsValues(data),
 	}
 
 	_, err := r.client.Kaas.UpdateInstancePool(
@@ -328,7 +350,8 @@ func (r *kaasInstancePoolResource) Update(ctx context.Context, req resource.Upda
 		return
 	}
 
-	instancePoolObject, err := r.waitUntilActive(ctx, data, int(state.Id.ValueInt64()))
+	scalingDown := data.MaxInstances.ValueInt32() < state.MaxInstances.ValueInt32()
+	instancePoolObject, err := r.waitUntilActive(ctx, data, int(state.Id.ValueInt64()), scalingDown)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error when waiting for KaaS Instance Pool to be Active",
@@ -414,6 +437,6 @@ func (model *KaasInstancePoolModel) fill(instancePool *kaas.InstancePool) {
 	model.Name = types.StringValue(instancePool.Name)
 	model.FlavorName = types.StringValue(instancePool.FlavorName)
 	model.MinInstances = types.Int32Value(instancePool.MinInstances)
+	model.MaxInstances = types.Int32Value(instancePool.MaxInstances)
 	model.AvailabilityZone = types.StringValue(instancePool.AvailabilityZone)
-	// data.MaxInstances = types.Int32Value(obj.MaxInstances)
 }
