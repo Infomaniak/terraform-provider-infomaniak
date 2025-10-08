@@ -53,6 +53,8 @@ type DBaasModel struct {
 	User     types.String `tfsdk:"user"`
 	Password types.String `tfsdk:"password"`
 	Ca       types.String `tfsdk:"ca"`
+
+	AllowedCIDRs types.List `tfsdk:"allowedCIDRs"`
 }
 
 func (r *dbaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -146,6 +148,11 @@ func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				Computed:            true,
 				MarkdownDescription: "The Database CA Certificate",
 			},
+			"allowedCIDRs": schema.ListAttribute{
+				Required:            true,
+				ElementType:         types.StringType,
+				MarkdownDescription: "Allowed to query Database IP whitelist",
+			},
 		},
 		MarkdownDescription: "The dbaas resource allows the user to manage a dbaas project",
 	}
@@ -219,6 +226,26 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
+	allowedCIDRs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
+	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &allowedCIDRs, false)...)
+	ok, err := r.client.DBaas.PatchIpFilters(
+		input.Project.PublicCloudId,
+		input.Project.ProjectId,
+		dbaasId,
+		allowedCIDRs,
+	)
+	if !ok {
+		resp.Diagnostics.AddError("Unknown IP filter error", "")
+		return
+	}
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when updating IP Filters",
+			err.Error(),
+		)
+		return
+	}
+
 	data.fill(dbaasObject, connectionInfos)
 
 	// Save data into Terraform state
@@ -261,6 +288,23 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		)
 		return
 	}
+
+	filteredIps, err := r.client.DBaas.GetIpFilters(
+		int(state.PublicCloudId.ValueInt64()),
+		int(state.PublicCloudProjectId.ValueInt64()),
+		int(state.Id.ValueInt64()),
+	)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when reading DBaaS filtered IPs",
+			err.Error(),
+		)
+		return
+	}
+
+	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, filteredIps)
+	state.AllowedCIDRs = listFilteredIps
+	resp.Diagnostics.Append(diags...)
 
 	state.fill(dbaasObject, connectionInfos)
 
@@ -333,6 +377,26 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		)
 		return
 	}
+
+	allowedCIDRs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
+	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &allowedCIDRs, false)...)
+	ok, err := r.client.DBaas.PatchIpFilters(
+		int(state.PublicCloudId.ValueInt64()),
+		int(state.PublicCloudProjectId.ValueInt64()),
+		int(state.Id.ValueInt64()),
+		allowedCIDRs,
+	)
+	if !ok && err == nil {
+		resp.Diagnostics.AddError("Unknown IP filter error", "")
+	}
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when updating IP Filters",
+			err.Error(),
+		)
+		return
+	}
+	dbaasObject.AllowedCIDRs = allowedCIDRs
 
 	state.fill(dbaasObject, connectionInfos)
 
@@ -424,6 +488,8 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS, connectionInfos *dbaas.DBaaSCo
 	model.User = types.StringValue(connectionInfos.User)
 	model.Password = types.StringValue(connectionInfos.Password)
 	model.Ca = types.StringValue(connectionInfos.Ca)
+
+	model.AllowedCIDRs, _ = types.ListValueFrom(context.TODO(), types.StringType, dbaas.AllowedCIDRs)
 }
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int) (*dbaas.DBaaS, error) {
 	t := time.NewTicker(5 * time.Second)

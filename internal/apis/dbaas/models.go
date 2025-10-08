@@ -18,6 +18,8 @@ type DBaaS struct {
 	Name    string `json:"name,omitempty"`
 	Region  string `json:"region,omitempty"`
 	Status  string `json:"status,omitempty"`
+
+	AllowedCIDRs []string
 }
 
 type DBaaSConnectionInfo struct {
