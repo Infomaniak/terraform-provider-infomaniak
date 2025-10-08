@@ -44,7 +44,7 @@ resource "infomaniak_record" "recordB" {
 ### Required
 
 - `zone_fqdn` (String) The FQDN of the zone where the record should be put in.
-- `type` (String) Record Type. One of : "A", "AAAA", "CAA", "CNAME", "DNAME", "MX", "NS", "PTR", "TXT", "DNSKEY", "DS", "HTTPS", "SMIMEA", "SRV", "SSHFP", "TLSA".
+- `type` (String) Record Type. One of : "A", "AAAA", "CAA", "CNAME", "DNAME", "MX", "NS", "TXT", "DS", "HTTPS", "SMIMEA", "SRV", "SSHFP", "TLSA".
 - `source` (String) The source of the record.
 
 ### Optional
@@ -72,8 +72,7 @@ This field **conflicts with** the `target` field (i.e., cannot be set at the sam
 - `port` (Integer) Port number used for the service. Relevant for: SRV.
 - `flags` (Integer) Flags used in the record. Relevant for: CAA.
 - `tag` (String) Tag name such as `issue`, `issuewild`, or `iodef`. Relevant for: CAA.
-- `algorithm` (Integer) Cryptographic algorithm identifier. Relevant for: DNSKEY, DS, SSHFP.
-- `public_key` (String) Base64-encoded public key. Relevant for: DNSKEY.
+- `algorithm` (Integer) Cryptographic algorithm identifier. Relevant for: DS, SSHFP.
 - `key_tag` (Integer) Key Tag of the DNSKEY. Relevant for: DS.
 - `digest_type` (Integer) Digest algorithm type used to hash the DNSKEY. Relevant for: DS.
 - `digest` (String) Digest value (usually a hex string). Relevant for: DS.
@@ -83,12 +82,5 @@ This field **conflicts with** the `target` field (i.e., cannot be set at the sam
 - `fingerprint_algorithm` (Integer) Algorithm used to create the SSH key fingerprint. Relevant for: SSHFP.
 - `fingerprint_type` (Integer) Type of hash used for the fingerprint (e.g., SHA1, SHA256). Relevant for: SSHFP.
 - `fingerprint` (String) Hex-encoded fingerprint of the SSH public key. Relevant for: SSHFP.
-- `mname` (String) Primary nameserver hostname. Relevant for: SOA.
-- `rname` (String) Email address of the domain administrator (with `@` replaced by `.`). Relevant for: SOA.
-- `serial` (Integer) Serial number used for zone versioning. Relevant for: SOA.
-- `refresh` (Integer) Time interval (in seconds) before the zone should be refreshed. Relevant for: SOA.
-- `retry` (Integer) Retry interval (in seconds) for failed refresh attempts. Relevant for: SOA.
-- `expire` (Integer) Expiry time (in seconds) after which zone data is no longer authoritative. Relevant for: SOA.
-- `minimum` (Integer) Minimum TTL for negative caching. Relevant for: SOA.
 - `target` (String) Target FQDN of the record. Relevant for: MX, CNAME, DNAME, NS, PTR, etc.
 - `value` (String) Generic string value for the record. Relevant for: TXT, CAA, and other textual records.

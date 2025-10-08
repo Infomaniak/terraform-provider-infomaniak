@@ -67,14 +67,6 @@ type RecordDataModel struct {
 	Flags                types.Int64  `tfsdk:"flags"`                 // CAA, DNSKEY
 	Tag                  types.String `tfsdk:"tag"`                   // CAA
 	Value                types.String `tfsdk:"value"`                 // CAA, TXT
-	Serial               types.Int64  `tfsdk:"serial"`                // SOA
-	Refresh              types.Int64  `tfsdk:"refresh"`               // SOA
-	Retry                types.Int64  `tfsdk:"retry"`                 // SOA
-	Expire               types.Int64  `tfsdk:"expire"`                // SOA
-	Minimum              types.Int64  `tfsdk:"minimum"`               // SOA
-	MName                types.String `tfsdk:"mname"`                 // SOA
-	RName                types.String `tfsdk:"rname"`                 // SOA
-	PublicKey            types.String `tfsdk:"public_key"`            // DNSKEY
 	Fingerprint          types.String `tfsdk:"fingerprint"`           // SSHFP
 	FingerprintType      types.Int64  `tfsdk:"fingerprint_type"`      // SSHFP
 	FingerprintAlgorithm types.Int64  `tfsdk:"fingerprint_algorithm"` // SSHFP
@@ -203,10 +195,6 @@ func (r *recordResource) Schema(ctx context.Context, req resource.SchemaRequest,
 						Optional:            true,
 						MarkdownDescription: "The algorithm of the Record (DNSKEY, DS, SSHFP).",
 					},
-					"public_key": schema.StringAttribute{
-						Optional:            true,
-						MarkdownDescription: "The public key of the Record (DNSKEY).",
-					},
 
 					// For DS
 					"key_tag": schema.Int64Attribute{
@@ -248,36 +236,6 @@ func (r *recordResource) Schema(ctx context.Context, req resource.SchemaRequest,
 					"fingerprint": schema.StringAttribute{
 						Optional:            true,
 						MarkdownDescription: "The fingerprint of the Record (SSHFP).",
-					},
-
-					// For SOA
-					"mname": schema.StringAttribute{
-						Optional:            true,
-						MarkdownDescription: "The primary nameserver for the SOA record.",
-					},
-					"rname": schema.StringAttribute{
-						Optional:            true,
-						MarkdownDescription: "The responsible party email for the SOA record.",
-					},
-					"serial": schema.Int64Attribute{
-						Optional:            true,
-						MarkdownDescription: "The serial number for the SOA record.",
-					},
-					"refresh": schema.Int64Attribute{
-						Optional:            true,
-						MarkdownDescription: "The refresh interval for the SOA record.",
-					},
-					"retry": schema.Int64Attribute{
-						Optional:            true,
-						MarkdownDescription: "The retry interval for the SOA record.",
-					},
-					"expire": schema.Int64Attribute{
-						Optional:            true,
-						MarkdownDescription: "The expire time for the SOA record.",
-					},
-					"minimum": schema.Int64Attribute{
-						Optional:            true,
-						MarkdownDescription: "The minimum TTL for the SOA record.",
 					},
 
 					"target": schema.StringAttribute{

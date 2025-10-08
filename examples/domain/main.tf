@@ -4,7 +4,7 @@ terraform {
   required_providers {
     infomaniak = {
       source  = "Infomaniak/infomaniak"
-      version = "~> 1.0"
+      version = "~> 1.1.9"
     }
   }
 }

@@ -41,13 +41,6 @@ func (model *RecordModel) ComputeRawTarget() string {
 		record = &dns.DNAME{
 			Target: dns.Fqdn(model.Data.Target.ValueString()),
 		}
-	case domain.RecordDNSKEY:
-		record = &dns.DNSKEY{
-			Flags:     uint16(model.Data.Flags.ValueInt64()),
-			Protocol:  3,
-			Algorithm: uint8(model.Data.Algorithm.ValueInt64()),
-			PublicKey: model.Data.PublicKey.ValueString(),
-		}
 	case domain.RecordDS:
 		record = &dns.DS{
 			KeyTag:     uint16(model.Data.KeyTag.ValueInt64()),
@@ -64,26 +57,12 @@ func (model *RecordModel) ComputeRawTarget() string {
 		record = &dns.NS{
 			Ns: dns.Fqdn(model.Data.Target.ValueString()),
 		}
-	case domain.RecordPTR:
-		record = &dns.PTR{
-			Ptr: dns.Fqdn(model.Data.Target.ValueString()),
-		}
 	case domain.RecordSMIMEA:
 		record = &dns.SMIMEA{
 			Usage:        uint8(model.Data.Priority.ValueInt64()),
 			Selector:     uint8(model.Data.Selector.ValueInt64()),
 			MatchingType: uint8(model.Data.MatchingType.ValueInt64()),
 			Certificate:  model.Data.CertAssocData.ValueString(),
-		}
-	case domain.RecordSOA:
-		record = &dns.SOA{
-			Ns:      dns.Fqdn(model.Data.MName.ValueString()),
-			Mbox:    dns.Fqdn(model.Data.RName.ValueString()),
-			Serial:  uint32(model.Data.Serial.ValueInt64()),
-			Refresh: uint32(model.Data.Refresh.ValueInt64()),
-			Retry:   uint32(model.Data.Retry.ValueInt64()),
-			Expire:  uint32(model.Data.Expire.ValueInt64()),
-			Minttl:  uint32(model.Data.Minimum.ValueInt64()),
 		}
 	case domain.RecordSRV:
 		record = &dns.SRV{
@@ -141,11 +120,6 @@ func (model *RecordModel) ParseRawTarget(raw string) error {
 	case *dns.DNAME:
 		model.Data.Target = types.StringValue(strings.TrimSuffix(v.Target, "."))
 
-	case *dns.DNSKEY:
-		model.Data.Flags = types.Int64Value(int64(v.Flags))
-		model.Data.Algorithm = types.Int64Value(int64(v.Algorithm))
-		model.Data.PublicKey = types.StringValue(v.PublicKey)
-
 	case *dns.DS:
 		model.Data.KeyTag = types.Int64Value(int64(v.KeyTag))
 		model.Data.Algorithm = types.Int64Value(int64(v.Algorithm))
@@ -167,15 +141,6 @@ func (model *RecordModel) ParseRawTarget(raw string) error {
 		model.Data.Selector = types.Int64Value(int64(v.Selector))
 		model.Data.MatchingType = types.Int64Value(int64(v.MatchingType))
 		model.Data.CertAssocData = types.StringValue(v.Certificate)
-
-	case *dns.SOA:
-		model.Data.MName = types.StringValue(strings.TrimSuffix(v.Ns, "."))
-		model.Data.RName = types.StringValue(strings.TrimSuffix(v.Mbox, "."))
-		model.Data.Serial = types.Int64Value(int64(v.Serial))
-		model.Data.Refresh = types.Int64Value(int64(v.Refresh))
-		model.Data.Retry = types.Int64Value(int64(v.Retry))
-		model.Data.Expire = types.Int64Value(int64(v.Expire))
-		model.Data.Minimum = types.Int64Value(int64(v.Minttl))
 
 	case *dns.SRV:
 		model.Data.Priority = types.Int64Value(int64(v.Priority))

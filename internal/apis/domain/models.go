@@ -23,20 +23,17 @@ var (
 	RecordCAA    RecordType = "CAA"
 	RecordCNAME  RecordType = "CNAME"
 	RecordDNAME  RecordType = "DNAME"
-	RecordDNSKEY RecordType = "DNSKEY"
 	RecordDS     RecordType = "DS"
 	RecordMX     RecordType = "MX"
 	RecordNS     RecordType = "NS"
-	RecordPTR    RecordType = "PTR"
 	RecordSMIMEA RecordType = "SMIMEA"
-	RecordSOA    RecordType = "SOA"
 	RecordSRV    RecordType = "SRV"
 	RecordSSHFP  RecordType = "SSHFP"
 	RecordTLSA   RecordType = "TLSA"
 	RecordTXT    RecordType = "TXT"
 )
 
-var RecordTypes = []RecordType{RecordA, RecordAAAA, RecordCAA, RecordCNAME, RecordDNAME, RecordDNSKEY, RecordDS, RecordMX, RecordPTR, RecordSMIMEA, RecordSOA, RecordSRV, RecordSSHFP, RecordTLSA, RecordTXT}
+var RecordTypes = []RecordType{RecordA, RecordAAAA, RecordCAA, RecordCNAME, RecordDNAME, RecordDS, RecordMX, RecordSMIMEA, RecordSRV, RecordSSHFP, RecordTLSA, RecordTXT}
 
 func IsValidRecordType(t RecordType) bool {
 	return slices.Contains(RecordTypes, t)
@@ -59,13 +56,10 @@ type (
 	recordTypeCAA    struct{ string }
 	recordTypeCNAME  struct{ string }
 	recordTypeDNAME  struct{ string }
-	recordTypeDNSKEY struct{ string }
 	recordTypeDS     struct{ string }
 	recordTypeMX     struct{ string }
 	recordTypeNS     struct{ string }
-	recordTypePTR    struct{ string }
 	recordTypeSMIMEA struct{ string }
-	recordTypeSOA    struct{ string }
 	recordTypeSRV    struct{ string }
 	recordTypeSSHFP  struct{ string }
 	recordTypeTLSA   struct{ string }
@@ -78,13 +72,10 @@ var (
 	RecordTypeCAA    = recordTypeCAA{"CAA"}
 	RecordTypeCNAME  = recordTypeCNAME{"CNAME"}
 	RecordTypeDNAME  = recordTypeDNAME{"DNAME"}
-	RecordTypeDNSKEY = recordTypeDNSKEY{"DNSKEY"}
 	RecordTypeDS     = recordTypeDS{"DS"}
 	RecordTypeMX     = recordTypeMX{"MX"}
 	RecordTypeNS     = recordTypeNS{"NS"}
-	RecordTypePTR    = recordTypePTR{"PTR"}
 	RecordTypeSMIMEA = recordTypeSMIMEA{"SMIMEA"}
-	RecordTypeSOA    = recordTypeSOA{"SOA"}
 	RecordTypeSRV    = recordTypeSRV{"SRV"}
 	RecordTypeSSHFP  = recordTypeSSHFP{"SSHFP"}
 	RecordTypeTLSA   = recordTypeTLSA{"TLSA"}
@@ -92,5 +83,5 @@ var (
 )
 
 type RecordConstraint interface {
-	recordTypeA | recordTypeAAAA | recordTypeCAA | recordTypeCNAME | recordTypeDNAME | recordTypeDNSKEY | recordTypeDS | recordTypeMX | recordTypePTR | recordTypeSMIMEA | recordTypeSOA | recordTypeSRV | recordTypeSSHFP | recordTypeTLSA | recordTypeTXT | recordTypeNS
+	recordTypeA | recordTypeAAAA | recordTypeCAA | recordTypeCNAME | recordTypeDNAME | recordTypeDS | recordTypeMX | recordTypeSMIMEA | recordTypeSRV | recordTypeSSHFP | recordTypeTLSA | recordTypeTXT | recordTypeNS
 }
