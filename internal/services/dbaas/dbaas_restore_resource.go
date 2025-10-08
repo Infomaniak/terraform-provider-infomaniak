@@ -37,6 +37,7 @@ type DBaasRestoreModel struct {
 	DBaasId              types.Int64  `tfsdk:"dbaas_id"`
 	BackupId             types.String `tfsdk:"backup_id"`
 	Id                   types.String `tfsdk:"id"`
+	PointInTime          types.String `tfsdk:"point_in_time"`
 }
 
 func (r *dbaasRestoreResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -80,6 +81,13 @@ func (r *dbaasRestoreResource) Schema(ctx context.Context, req resource.SchemaRe
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"point_in_time": schema.StringAttribute{
+				Optional:            true,
+				MarkdownDescription: "Point in time recovery date in ISO 3339 format",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 		},
 		MarkdownDescription: "The dbaas restore resource allows the user to restore a backup for a certain dbaas",
 	}
@@ -97,12 +105,16 @@ func (r *dbaasRestoreResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
+	restoration := dbaas.DBaaSRestoration{
+		BackupId: data.BackupId.ValueString(),
+		PointInTime: data.PointInTime.ValueString(),
+	}
 	// CreateBackup API call logic
 	restore, err := r.client.DBaas.CreateRestore(
 		int(data.PublicCloudId.ValueInt64()),
 		int(data.PublicCloudProjectId.ValueInt64()),
 		int(data.DBaasId.ValueInt64()),
-		data.BackupId.ValueString(),
+		restoration,
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
