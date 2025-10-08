@@ -33,32 +33,6 @@ variable "cluster_version" {
   default     = "1.31"
 }
 
-variable "pool_type" {
-  description = "Pool instance type"
-  type        = string
-  default     = "a1-ram2-disk20-perf1"
-}
-
-variable "pool_min" {
-  description = "Minimum pool instance number"
-  type        = number
-  default     = 3
-}
-
-variable "pool_az" {
-  description = "Pool instance availability zone"
-  type        = string
-  default     = "az-2"
-}
-
-variable "pool_labels" {
-  description = "Pool instance custom labels"
-  type = map(string)
-  default = {
-    "node-role.kubernetes.io/worker" = "high"
-  }
-}
-
 
 # See https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/#audit-policy for more details on Kubernetes Auditing configuration
 variable "audit_logs_webhook_filename" {

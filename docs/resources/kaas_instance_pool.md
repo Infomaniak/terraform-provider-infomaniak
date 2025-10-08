@@ -32,6 +32,7 @@ resource "infomaniak_kaas_instance_pool" "instance_pool" {
   name              = "instance-pool-1"
   flavor_name       = "a1-ram2-disk20-perf1"
   min_instances     = 4
+  max_instances     = 10
   availability_zone = "az-1"
 
   labels = {
@@ -51,6 +52,7 @@ resource "infomaniak_kaas_instance_pool" "instance_pool" {
 - `availability_zone` (String) The availability zone where the instances will be populated.
 - `flavor_name` (String) The flavor for the instances.
 - `min_instances` (Integer) The minimum amount of instances in the pool.
+- `max_instances` (Integer) The maximum amount of instances in the pool. 
 
 ### Optional Configuration
 
@@ -59,3 +61,8 @@ resource "infomaniak_kaas_instance_pool" "instance_pool" {
 ### Read-Only
 
 - `id` (Integer) A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.
+
+## Autoscaling
+
+If you want autoscaling disabled, you must set `min_instance` == `max_instance`.
+If you want autoscaling enabled, then you must set both to different values, with `max_instance` > `min_instance`.
