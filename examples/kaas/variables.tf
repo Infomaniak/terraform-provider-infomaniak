@@ -42,6 +42,12 @@ variable "pool_type" {
 variable "pool_min" {
   description = "Minimum pool instance number"
   type        = number
+  default     = 2
+}
+
+variable "pool_max" {
+  description = "Maximum pool instance number"
+  type        = number
   default     = 3
 }
 

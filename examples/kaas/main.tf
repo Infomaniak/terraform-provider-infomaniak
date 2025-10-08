@@ -31,6 +31,7 @@ resource "infomaniak_kaas_instance_pool" "create_instance_pool_1" {
   name              = "${infomaniak_kaas.create_kluster.name}-pool-1"
   flavor_name       = var.pool_type
   min_instances     = var.pool_min
+  max_instances     = var.pool_max
   availability_zone = var.pool_az
 
   labels            = var.pool_labels
