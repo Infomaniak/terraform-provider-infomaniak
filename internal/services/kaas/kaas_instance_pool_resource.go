@@ -145,6 +145,9 @@ func (r *kaasInstancePoolResource) Schema(ctx context.Context, req resource.Sche
 				Required:            true,
 				Description:         "The maximum amount of instances in this instance pool",
 				MarkdownDescription: "The maximum amount of instances in this instance pool",
+				PlanModifiers: []planmodifier.Int32{
+					int32planmodifier.UseStateForUnknown(),
+				},
 			},
 			"labels": schema.MapAttribute{
 				ElementType: types.StringType,
@@ -235,40 +238,40 @@ func (r *kaasInstancePoolResource) getLabelsValues(data KaasInstancePoolModel) m
 func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data KaasInstancePoolModel, id int, scalingDown bool) (*kaas.InstancePool, error) {
 	scaleDownFailedQuotaCount := 0
 	scaleDownFailedQuotaAllowedRetrys := 5
+	ticker := time.NewTicker(5 * time.Second)
 	for {
-		found, err := r.client.Kaas.GetInstancePool(
-			int(data.PublicCloudId.ValueInt64()),
-			int(data.PublicCloudProjectId.ValueInt64()),
-			int(data.KaasId.ValueInt64()),
-			id,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		if ctx.Err() != nil {
+		select {
+		case <-ctx.Done():
 			return nil, nil
-		}
-
-		if len(found.ErrorMessages) > 0 {
-			// Special case when we hit quota failure but we are scaling down. OpenStack can take some time to update so we let him do his work
-			if (found.Status == "ScalingDown" || scalingDown) && scaleDownFailedQuotaCount <= scaleDownFailedQuotaAllowedRetrys {
-				scaleDownFailedQuotaCount++
-				continue
+		case <-ticker.C:
+			found, err := r.client.Kaas.GetInstancePool(
+				int(data.PublicCloudId.ValueInt64()),
+				int(data.PublicCloudProjectId.ValueInt64()),
+				int(data.KaasId.ValueInt64()),
+				id,
+			)
+			if err != nil {
+				return nil, err
 			}
-			return nil, errors.New(strings.Join(found.ErrorMessages, ","))
-		}
 
-		// We need the instance pool to be active, have the same state as us, be scaled properly and be in bound of the autoscaling
-		isActive := found.Status == "Active"
-		isEquivalent := found.MinInstances == data.MinInstances.ValueInt32()
-		isScaledProperly := found.AvailableInstances == found.TargetInstances
-		isInBound := found.MinInstances <= found.TargetInstances && found.TargetInstances <= found.MaxInstances
-		if isActive && isEquivalent && isScaledProperly && isInBound {
-			return found, nil
-		}
+			if len(found.ErrorMessages) > 0 {
+				// Special case when we hit quota failure but we are scaling down. OpenStack can take some time to update so we let him do his work
+				if (found.Status == "ScalingDown" || scalingDown) && scaleDownFailedQuotaCount <= scaleDownFailedQuotaAllowedRetrys {
+					scaleDownFailedQuotaCount++
+					continue
+				}
+				return nil, errors.New(strings.Join(found.ErrorMessages, ","))
+			}
 
-		time.Sleep(5 * time.Second)
+			// We need the instance pool to be active, have the same state as us, be scaled properly and be in bound of the autoscaling
+			isActive := found.Status == "Active"
+			isEquivalent := found.MinInstances == data.MinInstances.ValueInt32()
+			isScaledProperly := found.AvailableInstances == found.TargetInstances
+			isInBound := found.MinInstances <= found.TargetInstances && found.TargetInstances <= found.MaxInstances
+			if isActive && isEquivalent && isScaledProperly && isInBound {
+				return found, nil
+			}
+		}
 	}
 }
 
@@ -295,6 +298,13 @@ func (r *kaasInstancePoolResource) Read(ctx context.Context, req resource.ReadRe
 			err.Error(),
 		)
 		return
+	}
+
+	if len(obj.ErrorMessages) > 0 {
+		resp.Diagnostics.AddWarning(
+			"KaaS was in error state:",
+			strings.Join(obj.ErrorMessages, ","),
+		)
 	}
 
 	data.fill(obj)

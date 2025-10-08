@@ -333,7 +333,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	err = r.fetchAndSetKubeconfig(&data, input)
+	err = r.fetchAndSetKubeconfig(&data, kaasObject)
 	if err != nil {
 		resp.Diagnostics.AddWarning("could not fetch and set kubeconfig", err.Error())
 	}
@@ -517,7 +517,7 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	err = r.fetchAndSetKubeconfig(&data, input)
+	err = r.fetchAndSetKubeconfig(&data, kaasObject)
 	if err != nil {
 		resp.Diagnostics.AddWarning("could not fetch and set kubeconfig", err.Error())
 	}
