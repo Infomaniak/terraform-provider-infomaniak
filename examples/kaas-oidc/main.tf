@@ -29,6 +29,7 @@ resource "infomaniak_kaas" "create_kluster" {
       username_claim  = var.username_claim
       username_prefix = var.username_prefix
       signing_algs    = var.signing_algs
+      required_claim  = var.required_claim
       ca              = file(var.oidc_ca_filename)
     }
   }

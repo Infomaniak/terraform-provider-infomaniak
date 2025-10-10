@@ -152,6 +152,10 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 								Description:         "OIDC username prefix",
 								MarkdownDescription: "OIDC username prefix",
 							},
+							"required_claim": schema.StringAttribute{
+								Computed: true,
+								MarkdownDescription: "A key=value pair that describes a required claim in the ID Token.",
+							},
 							"signing_algs": schema.StringAttribute{
 								Computed:            true,
 								Description:         "OIDC signing algorithm. Kubernetes will default it to RS256",

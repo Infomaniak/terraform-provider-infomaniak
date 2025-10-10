@@ -74,6 +74,7 @@ resource "infomaniak_kaas" "kluster" {
     - `username_claim` (String): The claim in the OIDC token that contains the username. This claim is used to extract the username from the OIDC token, and can be used to authenticate users.
     - `username_prefix` (String): The prefix to be added to the username. This prefix can be used to distinguish between different types of users, or to integrate with existing user management systems.
     - `signing_algs` (String): The signing algorithms supported by the OIDC issuer. This specifies the algorithms that can be used to sign OIDC tokens, and can be used to ensure that tokens are properly verified.
+    - `required_claim` (String): A key=value pair that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value. Repeat this flag to specify multiple claims.
     - `ca` (File): The OIDC CA Certificate file. This file contains the CA certificate used to verify the authenticity of OIDC tokens, and is used to establish trust with the OIDC issuer.
 
 ### Read-Only

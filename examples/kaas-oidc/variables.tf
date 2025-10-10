@@ -54,6 +54,11 @@ variable "username_prefix" {
   type        = string
 }
 
+variable "required_claim" {
+  description = "OIDC required claim"
+  type        = string
+}
+
 variable "signing_algs" {
   description = "OIDC effective signing algorithm"
   type        = string
