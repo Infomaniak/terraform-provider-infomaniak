@@ -52,6 +52,7 @@ type ApiServerParams struct {
 	SigningAlgs    *string `json:"--oidc-signing-algs,omitempty"`
 	GroupsClaim    *string `json:"--oidc-groups-claim,omitempty"`
 	GroupsPrefix   *string `json:"--oidc-groups-prefix,omitempty"`
+	RequiredClaim  *string `json:"--oidc-required-claim,omitempty"`
 }
 
 type Kaas struct {

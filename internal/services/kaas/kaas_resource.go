@@ -80,6 +80,7 @@ type OidcModel struct {
 	SigningAlgs    types.String `tfsdk:"signing_algs"`
 	GroupsClaim    types.String `tfsdk:"groups_claim"`
 	GroupsPrefix   types.String `tfsdk:"groups_prefix"`
+	RequiredClaim  types.String `tfsdk:"required_claim"`
 	Ca             types.String `tfsdk:"ca"`
 }
 
@@ -265,6 +266,13 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 								},
 								MarkdownDescription: "OIDC username prefix",
 							},
+							"required_claim": schema.StringAttribute{
+								Optional: true,
+								PlanModifiers: []planmodifier.String{
+									stringplanmodifier.UseStateForUnknown(),
+								},
+								MarkdownDescription: "A key=value pair that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value. Repeat this flag to specify multiple claims.",
+							},
 							"signing_algs": schema.StringAttribute{
 								Optional: true,
 								PlanModifiers: []planmodifier.String{
@@ -396,6 +404,7 @@ func (state *KaasModel) updateOIDCConfig(apiserverParams *kaas.Apiserver) {
 			SigningAlgs:    types.StringPointerValue(params.SigningAlgs),
 			GroupsClaim:    types.StringPointerValue(params.GroupsClaim),
 			GroupsPrefix:   types.StringPointerValue(params.GroupsPrefix),
+			RequiredClaim:  types.StringPointerValue(params.RequiredClaim),
 			Ca:             types.StringPointerValue(apiserverParams.OidcCa),
 		}
 	} else {
@@ -592,6 +601,7 @@ func (r *kaasResource) buildApiserverParamsInput(data KaasModel) *kaas.Apiserver
 			SigningAlgs:    data.Apiserver.Oidc.SigningAlgs.ValueStringPointer(),
 			GroupsClaim:    data.Apiserver.Oidc.GroupsClaim.ValueStringPointer(),
 			GroupsPrefix:   data.Apiserver.Oidc.GroupsPrefix.ValueStringPointer(),
+			RequiredClaim:  data.Apiserver.Oidc.RequiredClaim.ValueStringPointer(),
 		}
 	}
 	return apiserverParamsInput
