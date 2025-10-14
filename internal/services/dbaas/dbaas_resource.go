@@ -181,7 +181,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	// CreateDBaas API call logic
-	dbaasId, err := r.client.DBaas.CreateDBaaS(input)
+	createInfos, err := r.client.DBaas.CreateDBaaS(input)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error when creating DBaaS",
@@ -190,10 +190,10 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	data.Id = types.Int64Value(int64(dbaasId))
+	data.Id = types.Int64Value(int64(createInfos.Id))
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
-	dbaasObject, err := r.waitUntilActive(ctx, input, dbaasId)
+	dbaasObject, err := r.waitUntilActive(ctx, input, createInfos.Id)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error when waiting for DBaaS to be Active",
@@ -206,20 +206,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	connectionInfos, err := r.client.DBaas.GetPassword(
-		input.Project.PublicCloudId,
-		input.Project.ProjectId,
-		dbaasId,
-	)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error when reading DBaaS connection infos",
-			err.Error(),
-		)
-		return
-	}
-
-	data.fill(dbaasObject, connectionInfos)
+	data.fill(dbaasObject)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -249,20 +236,7 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	connectionInfos, err := r.client.DBaas.GetPassword(
-		int(state.PublicCloudId.ValueInt64()),
-		int(state.PublicCloudProjectId.ValueInt64()),
-		int(state.Id.ValueInt64()),
-	)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error when reading DBaaS connection infos",
-			err.Error(),
-		)
-		return
-	}
-
-	state.fill(dbaasObject, connectionInfos)
+	state.fill(dbaasObject)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -321,20 +295,7 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	connectionInfos, err := r.client.DBaas.GetPassword(
-		int(state.PublicCloudId.ValueInt64()),
-		int(state.PublicCloudProjectId.ValueInt64()),
-		int(state.Id.ValueInt64()),
-	)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error when reading DBaaS connection infos",
-			err.Error(),
-		)
-		return
-	}
-
-	state.fill(dbaasObject, connectionInfos)
+	state.fill(dbaasObject)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -411,7 +372,7 @@ func (r *dbaasResource) getPackId(data DBaasModel, diagnostic *diag.Diagnostics)
 	return pack, nil
 }
 
-func (model *DBaasModel) fill(dbaas *dbaas.DBaaS, connectionInfos *dbaas.DBaaSConnectionInfo) {
+func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
 	model.Id = types.Int64Value(int64(dbaas.Id))
 	model.Region = types.StringValue(dbaas.Region)
 	model.Type = types.StringValue(dbaas.Type)
@@ -419,12 +380,13 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS, connectionInfos *dbaas.DBaaSCo
 	model.Name = types.StringValue(dbaas.Name)
 	model.PackName = types.StringValue(dbaas.Pack.Name)
 
-	model.Host = types.StringValue(connectionInfos.Host)
-	model.Port = types.StringValue(connectionInfos.Port)
-	model.User = types.StringValue(connectionInfos.User)
-	model.Password = types.StringValue(connectionInfos.Password)
-	model.Ca = types.StringValue(connectionInfos.Ca)
+	model.Host = types.StringValue(dbaas.Connection.Host)
+	model.Port = types.StringValue(dbaas.Connection.Port)
+	model.User = types.StringValue(dbaas.Connection.User)
+	model.Password = types.StringValue(dbaas.Connection.Password)
+	model.Ca = types.StringValue(dbaas.Connection.Ca)
 }
+
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int) (*dbaas.DBaaS, error) {
 	t := time.NewTicker(5 * time.Second)
 	for {

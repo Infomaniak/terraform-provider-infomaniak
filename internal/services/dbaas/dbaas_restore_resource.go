@@ -118,7 +118,7 @@ func (r *dbaasRestoreResource) Create(ctx context.Context, req resource.CreateRe
 	restore, err = r.waitUntilActive(ctx,
 		int(data.PublicCloudId.ValueInt64()),
 		int(data.PublicCloudProjectId.ValueInt64()),
-		int(data.DBaasId.ValueInt64()),
+		restore.NewService.Id,
 		data.BackupId.ValueString(),
 		restore.Id,
 	)
