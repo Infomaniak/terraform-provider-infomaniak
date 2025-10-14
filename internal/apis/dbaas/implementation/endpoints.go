@@ -9,7 +9,6 @@ var (
 
 	EndpointDatabases        = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas"
 	EndpointDatabase         = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas/{dbaas_id}"
-	EndpointDatabasePassword = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas/{dbaas_id}/password"
 	EndpointDatabaseBackups  = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas/{dbaas_id}/backups"
 	EndpointDatabaseBackup   = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas/{dbaas_id}/backups/{backup_id}"
 	EndpointDatabaseRestores = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas/{dbaas_id}/restores"
