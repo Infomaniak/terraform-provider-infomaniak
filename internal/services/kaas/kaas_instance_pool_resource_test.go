@@ -14,8 +14,6 @@ import (
 )
 
 func TestKaasInstancePoolResource_Config(t *testing.T) {
-	t.Parallel()
-
 	testCases := map[string]resource.TestCase{
 		"resource.kaas_instance_pool.good": {
 			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
@@ -27,7 +25,7 @@ func TestKaasInstancePoolResource_Config(t *testing.T) {
 						resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "name", "coucou"),
 						resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "flavor_name", "test"),
 						resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "min_instances", "3"),
-						// resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "max_instances", "6"),
+						resource.TestCheckResourceAttr("infomaniak_kaas_instance_pool.instance_pool", "max_instances", "6"),
 					),
 				},
 			},
@@ -50,15 +48,15 @@ func TestKaasInstancePoolResource_Config(t *testing.T) {
 				},
 			},
 		},
-		// "resource.kaas_instance_pool.missing_max_instances": {
-		// 	ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
-		// 	Steps: []resource.TestStep{
-		// 		{
-		// 			Config:      test.MustGetTestFile("schema", "resource_kaas_instance_pool_missing_max_instances.tf"),
-		// 			ExpectError: regexp.MustCompile(`The argument "max_instances" is required, but no definition was found.`),
-		// 		},
-		// 	},
-		// },
+		"resource.kaas_instance_pool.missing_max_instances": {
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
+			Steps: []resource.TestStep{
+				{
+					Config:      test.MustGetTestFile("schema", "resource_kaas_instance_pool_missing_max_instances.tf"),
+					ExpectError: regexp.MustCompile(`The argument "max_instances" is required, but no definition was found.`),
+				},
+			},
+		},
 		"resource.kaas_instance_pool.missing_min_instances": {
 			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
@@ -98,6 +96,7 @@ func TestKaasInstancePoolResource_Config(t *testing.T) {
 	}
 
 	for name, tc := range testCases {
+		tc.IsUnitTest = true
 		t.Run(name, func(t *testing.T) {
 			resource.Test(t, tc)
 		})
@@ -105,7 +104,6 @@ func TestKaasInstancePoolResource_Config(t *testing.T) {
 }
 
 func TestKaasInstancePoolResource_Plan(t *testing.T) {
-	t.Parallel()
 
 	testCases := map[string]resource.TestCase{
 		"resource.kaas_instance_pool.no_changes": {
@@ -155,6 +153,7 @@ func TestKaasInstancePoolResource_Plan(t *testing.T) {
 	}
 
 	for name, tc := range testCases {
+		tc.IsUnitTest = true
 		t.Run(name, func(t *testing.T) {
 			resource.Test(t, tc)
 		})
@@ -219,6 +218,7 @@ func TestKaasInstancePoolResource_Import(t *testing.T) {
 	resourceId := instancePool.Id
 
 	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
 		ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
