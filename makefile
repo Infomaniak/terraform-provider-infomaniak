@@ -15,7 +15,7 @@ prepare-reports:
 
 testacc: prepare-go prepare-logs prepare-reports
 	@echo "=== Running acceptance tests ==="
-	TF_ACC=1 go test -v -coverprofile=$(REPORT_DIR)/acc_coverage.out -json ./... > $(REPORT_DIR)/test_results.json;
+	go test -v -coverprofile=$(REPORT_DIR)/acc_coverage.out -json ./... > $(REPORT_DIR)/test_results.json;
 	@echo "=== Generating reports ==="
 	@if [ -f $(REPORT_DIR)/acc_coverage.out ]; then \
 		go tool cover -func=$(REPORT_DIR)/acc_coverage.out > $(REPORT_DIR)/coverage_summary.txt; \
