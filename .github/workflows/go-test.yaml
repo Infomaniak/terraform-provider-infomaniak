@@ -1,0 +1,46 @@
+name: Go Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: []
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.25'
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Run acceptance tests with Cobertura reports
+      run: make testacc
+    
+    - name: Generate global coverage
+      run: make global-coverage
+  
+    - name: Generate cobertura report
+      run: make cobertura
+
+    - name: Upload test reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-reports
+        path: |
+          reports/
+          !reports/*.tmp
+
+    - name: Cobertura pull request comment
+      uses: 5monkeys/cobertura-action@ee5787cc56634acddedc51f21c7947985531e6eb
+      with:
+        path: reports/cobertura.xml
+        only_changed_files: ${{ github.event_name == 'pull_request' }}
+        minimum_coverage: 10

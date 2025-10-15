@@ -15,7 +15,7 @@ prepare-reports:
 
 testacc: prepare-go prepare-logs prepare-reports
 	@echo "=== Running acceptance tests ==="
-	-TF_ACC=1 go test -v -coverprofile=$(REPORT_DIR)/acc_coverage.out -json ./... > $(REPORT_DIR)/test_results.json
+	TF_ACC=1 go test -v -coverprofile=$(REPORT_DIR)/acc_coverage.out -json ./... > $(REPORT_DIR)/test_results.json;
 	@echo "=== Generating reports ==="
 	@if [ -f $(REPORT_DIR)/acc_coverage.out ]; then \
 		go tool cover -func=$(REPORT_DIR)/acc_coverage.out > $(REPORT_DIR)/coverage_summary.txt; \
@@ -49,4 +49,4 @@ cobertura: prepare-go prepare-reports
 		echo "No coverage data found"; \
 	fi
 
-.PHONY: prepare-logs prepare-reports testacc testacc-report cobertura
+.PHONY: prepare-go prepare-logs prepare-reports testacc global-coverage cobertura
