@@ -74,7 +74,7 @@ func (client *Client) GetDBaaS(publicCloudId int, publicCloudProjectId int, dbaa
 }
 
 func (client *Client) CreateDBaaS(input *dbaas.DBaaS) (*dbaas.DBaaSCreateInfo, error) {
-	var result helpers.NormalizedApiResponse[dbaas.DBaaSCreateInfo]
+	var result helpers.NormalizedApiResponse[*dbaas.DBaaSCreateInfo]
 
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(input.Project.PublicCloudId)).
@@ -91,7 +91,7 @@ func (client *Client) CreateDBaaS(input *dbaas.DBaaS) (*dbaas.DBaaSCreateInfo, e
 		return nil, result.Error
 	}
 
-	return &result.Data, nil
+	return result.Data, nil
 }
 
 func (client *Client) UpdateDBaaS(input *dbaas.DBaaS) (bool, error) {
@@ -224,7 +224,7 @@ func (client *Client) CreateRestore(publicCloudId int, publicCloudProjectId int,
 	return result.Data, nil
 }
 
-//TODO: switch back to NormalizedApiResponse
+// TODO: switch back to NormalizedApiResponse
 func (client *Client) GetRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, restoreId string) (*dbaas.DBaaSRestore, error) {
 	var result helpers.NormalizedApiResponse[*dbaas.DBaaSRestore]
 

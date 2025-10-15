@@ -194,20 +194,19 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
 	dbaasObject, err := r.waitUntilActive(ctx, input, createInfos.Id)
-       if err != nil {
-               resp.Diagnostics.AddError(
-                       "Error when waiting for DBaaS to be Active",
-                       err.Error(),
-               )
-               return
-       }
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when waiting for DBaaS to be Active",
+			err.Error(),
+		)
+		return
+	}
 
-       if dbaasObject == nil {
-               return
-       }
+	if dbaasObject == nil {
+		return
+	}
 
-
-	data.fill(dbaasObject, dbaasObject.Connection)
+	data.fill(dbaasObject)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -237,7 +236,7 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	state.fill(dbaasObject, dbaasObject.Connection)
+	state.fill(dbaasObject)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -296,7 +295,7 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	state.fill(dbaasObject, dbaasObject.Connection)
+	state.fill(dbaasObject)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -373,7 +372,7 @@ func (r *dbaasResource) getPackId(data DBaasModel, diagnostic *diag.Diagnostics)
 	return pack, nil
 }
 
-func (model *DBaasModel) fill(dbaas *dbaas.DBaaS, connectionInfos *dbaas.DBaaSConnectionInfo) {
+func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
 	model.Id = types.Int64Value(int64(dbaas.Id))
 	model.Region = types.StringValue(dbaas.Region)
 	model.Type = types.StringValue(dbaas.Type)
@@ -381,12 +380,13 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS, connectionInfos *dbaas.DBaaSCo
 	model.Name = types.StringValue(dbaas.Name)
 	model.PackName = types.StringValue(dbaas.Pack.Name)
 
-	model.Host = types.StringValue(connectionInfos.Host)
-	model.Port = types.StringValue(connectionInfos.Port)
-	model.User = types.StringValue(connectionInfos.User)
-	model.Password = types.StringValue(connectionInfos.Password)
-	model.Ca = types.StringValue(connectionInfos.Ca)
+	model.Host = types.StringValue(dbaas.Connection.Host)
+	model.Port = types.StringValue(dbaas.Connection.Port)
+	model.User = types.StringValue(dbaas.Connection.User)
+	model.Password = types.StringValue(dbaas.Connection.Password)
+	model.Ca = types.StringValue(dbaas.Connection.Ca)
 }
+
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int) (*dbaas.DBaaS, error) {
 	t := time.NewTicker(5 * time.Second)
 	for {
