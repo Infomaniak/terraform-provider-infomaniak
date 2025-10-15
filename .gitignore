@@ -1,3 +1,4 @@
 .tests
 .idea
 .DS_Store
+terraform.log
