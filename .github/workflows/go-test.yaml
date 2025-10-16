@@ -19,9 +19,23 @@ jobs:
 
     - name: Download dependencies
       run: go mod download
+    
+    - name: Setup dev terraform
+      run: |
+        go env -w GOPATH=$HOME/go
+        mkdir -p $HOME/.terraform.d/plugins/
+        echo 'provider_installation {
+          dev_overrides {
+            "registry.terraform.io/Infomaniak/infomaniak" = "'$HOME'/go/bin"
+          }
+          direct {}
+        }' > $HOME/.terraformrc
 
-    - name: Run acceptance tests with Cobertura reports
-      run: make testacc
+    - name: Install provider
+      run: make install
+
+    - name: Run acceptance unit tests and standard tests
+      run: make testacc-unit
     
     - name: Generate global coverage
       run: make global-coverage

@@ -24,6 +24,9 @@ resource "infomaniak_kaas" "kluster" {
 }
 
 resource "infomaniak_kaas_instance_pool" "instance_pool" {
+  depends_on = [
+    infomaniak_kaas.kluster
+  ]
   public_cloud_id  = infomaniak_kaas.kluster.public_cloud_id
   public_cloud_project_id  = infomaniak_kaas.kluster.public_cloud_project_id
   kaas_id = infomaniak_kaas.kluster.id
@@ -32,10 +35,14 @@ resource "infomaniak_kaas_instance_pool" "instance_pool" {
   availability_zone = "dc3-a-04"
   flavor_name = "test"
   min_instances   = 3
-  #max_instances   = 6
+  max_instances   = 6
 }
 
 data "infomaniak_kaas_instance_pool" "instance_pool" {
+  depends_on = [
+    infomaniak_kaas_instance_pool.instance_pool,
+    infomaniak_kaas.kluster
+  ]
   public_cloud_id  = infomaniak_kaas.kluster.public_cloud_id
   public_cloud_project_id = infomaniak_kaas_instance_pool.instance_pool.public_cloud_project_id
   kaas_id = infomaniak_kaas_instance_pool.instance_pool.kaas_id

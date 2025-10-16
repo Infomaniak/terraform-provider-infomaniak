@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"os"
 	"terraform-provider-infomaniak/internal/apis"
 )
 
@@ -11,7 +12,8 @@ func GetApiClient(providerData any) (*apis.Client, error) {
 		return nil, fmt.Errorf("expected *provider.IkProviderData, got: %T", providerData)
 	}
 
-	if data.Version.ValueString() == "dev" {
+	mocked := os.Getenv("MOCKED")
+	if data.Version.ValueString() == "dev" && mocked == "true" {
 		return apis.NewMockClient(), nil
 	}
 

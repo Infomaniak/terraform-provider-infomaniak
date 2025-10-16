@@ -13,9 +13,9 @@ prepare-logs:
 prepare-reports:
 	@mkdir -p $(REPORT_DIR)
 
-testacc: prepare-go prepare-logs prepare-reports
+testacc-unit: prepare-go prepare-logs prepare-reports
 	@echo "=== Running acceptance tests ==="
-	go test -v -coverprofile=$(REPORT_DIR)/acc_coverage.out -json ./... > $(REPORT_DIR)/test_results.json;
+	MOCKED=true go test -v -coverprofile=$(REPORT_DIR)/acc_coverage.out -json ./... > $(REPORT_DIR)/test_results.json;
 	@echo "=== Generating reports ==="
 	@if [ -f $(REPORT_DIR)/acc_coverage.out ]; then \
 		go tool cover -func=$(REPORT_DIR)/acc_coverage.out > $(REPORT_DIR)/coverage_summary.txt; \
@@ -49,4 +49,7 @@ cobertura: prepare-go prepare-reports
 		echo "No coverage data found"; \
 	fi
 
-.PHONY: prepare-go prepare-logs prepare-reports testacc global-coverage cobertura
+install:
+	@go install
+
+.PHONY: prepare-go prepare-logs prepare-reports testacc global-coverage cobertura install

@@ -32,7 +32,7 @@ resource "infomaniak_kaas_instance_pool" "instance_pool" {
   availability_zone = "dc3-a-04"
   flavor_name = "test"
   min_instances   = 3
-  #max_instances   = 6
+  max_instances   = 6
 }
 
 data "infomaniak_kaas_instance_pool" "instance_pool" {
