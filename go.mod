@@ -1,8 +1,6 @@
 module terraform-provider-infomaniak
 
-go 1.23.0
-
-toolchain go1.23.4
+go 1.25
 
 require (
 	github.com/hashicorp/terraform-plugin-framework v1.14.1
