@@ -12,7 +12,7 @@ func GetApiClient(providerData any) (*apis.Client, error) {
 		return nil, fmt.Errorf("expected *provider.IkProviderData, got: %T", providerData)
 	}
 
-	mocked := os.Getenv("MOCKED")
+	mocked := os.Getenv("TF_TESTS_MOCKED")
 	if data.Version.ValueString() == "dev" && mocked == "true" {
 		return apis.NewMockClient(), nil
 	}

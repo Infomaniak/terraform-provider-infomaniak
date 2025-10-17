@@ -29,7 +29,7 @@ if [[ -f "$COV_ACCEPTANCE_MOCKED" ]]; then
 
     awk '/^total:/ {gsub(/%/, "", $3); print $3}' "$REPORT_DIR/acceptance/coverage_summary.txt" > "$REPORT_DIR/acceptance/global_coverage.txt"
     ACC_COVERAGE=$(cat "$REPORT_DIR/acceptance/global_coverage.txt")
-    echo "Global coverage acceptance: ${ACC_COVERAGE}%"
+    echo "Global coverage: ${ACC_COVERAGE}%"
 else
     echo "0" > "$REPORT_DIR/acceptance/global_coverage.txt"
     echo "No coverage data found"

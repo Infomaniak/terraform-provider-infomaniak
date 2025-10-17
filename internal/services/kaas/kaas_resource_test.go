@@ -68,8 +68,8 @@ func TestKaasResource_Schema(t *testing.T) {
 	}
 
 	for name, tc := range testCases {
+		tc.IsUnitTest = true
 		t.Run(name, func(t *testing.T) {
-			tc.IsUnitTest = true
 			resource.Test(t, tc)
 		})
 	}
@@ -129,8 +129,8 @@ func TestKaasResource_Plan(t *testing.T) {
 	}
 
 	for name, tc := range testCases {
+		tc.IsUnitTest = true
 		t.Run(name, func(t *testing.T) {
-			tc.IsUnitTest = true
 			resource.Test(t, tc)
 		})
 	}
@@ -168,7 +168,7 @@ func TestKaasResource_Import(t *testing.T) {
 	resourcePublicCloudProjectId = kaasObject.Project.ProjectId
 
 	resource.Test(t, resource.TestCase{
-		IsUnitTest: true,
+		IsUnitTest:               true,
 		ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
