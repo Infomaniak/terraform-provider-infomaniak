@@ -224,7 +224,6 @@ func (client *Client) CreateRestore(publicCloudId int, publicCloudProjectId int,
 	return result.Data, nil
 }
 
-// TODO: switch back to NormalizedApiResponse
 func (client *Client) GetRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, restoreId string) (*dbaas.DBaaSRestore, error) {
 	var result helpers.NormalizedApiResponse[*dbaas.DBaaSRestore]
 
