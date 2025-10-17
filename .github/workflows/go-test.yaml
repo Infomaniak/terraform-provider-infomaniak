@@ -35,7 +35,10 @@ jobs:
       run: make install
 
     - name: Run acceptance unit tests and standard tests
-      run: make testacc-unit
+      run: make test-unit
+
+    - name: Generate reports
+      run: make generate-reports
     
     - name: Generate global coverage
       run: make global-coverage
