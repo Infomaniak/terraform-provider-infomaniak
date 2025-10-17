@@ -10,8 +10,6 @@ import (
 )
 
 func TestKaasInstancePoolDatasource_Schema(t *testing.T) {
-	t.Parallel()
-
 	testCases := map[string]resource.TestCase{
 		"data_source.kaas_instance_pool.good": {
 			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
@@ -23,7 +21,7 @@ func TestKaasInstancePoolDatasource_Schema(t *testing.T) {
 						resource.TestCheckResourceAttr("data.infomaniak_kaas_instance_pool.instance_pool", "name", "coucou"),
 						resource.TestCheckResourceAttr("data.infomaniak_kaas_instance_pool.instance_pool", "flavor_name", "test"),
 						resource.TestCheckResourceAttr("data.infomaniak_kaas_instance_pool.instance_pool", "min_instances", "3"),
-						// resource.TestCheckResourceAttr("data.infomaniak_kaas_instance_pool.instance_pool", "max_instances", "6"),
+						resource.TestCheckResourceAttr("data.infomaniak_kaas_instance_pool.instance_pool", "max_instances", "6"),
 					),
 				},
 			},
@@ -64,15 +62,15 @@ func TestKaasInstancePoolDatasource_Schema(t *testing.T) {
 				},
 			},
 		},
-		// "data_source.kaas_instance_pool.cant_specify_max_instances": {
-		// 	ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
-		// 	Steps: []resource.TestStep{
-		// 		{
-		// 			Config:      test.MustGetTestFile("schema", "data_source_kaas_instance_pool_cant_specify_max_instances.tf"),
-		// 			ExpectError: regexp.MustCompile(`[0-9]+:( )*max_instances( )*=`),
-		// 		},
-		// 	},
-		// },
+		"data_source.kaas_instance_pool.cant_specify_max_instances": {
+			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
+			Steps: []resource.TestStep{
+				{
+					Config:      test.MustGetTestFile("schema", "data_source_kaas_instance_pool_cant_specify_max_instances.tf"),
+					ExpectError: regexp.MustCompile(`[0-9]+:( )*max_instances( )*=`),
+				},
+			},
+		},
 		"data_source.kaas_instance_pool.cant_specify_min_instances": {
 			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 			Steps: []resource.TestStep{
@@ -94,6 +92,7 @@ func TestKaasInstancePoolDatasource_Schema(t *testing.T) {
 	}
 
 	for name, tc := range testCases {
+		tc.IsUnitTest = true
 		t.Run(name, func(t *testing.T) {
 			resource.Test(t, tc)
 		})

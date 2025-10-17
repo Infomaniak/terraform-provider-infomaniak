@@ -14,7 +14,6 @@ import (
 )
 
 func TestKaasResource_Schema(t *testing.T) {
-	t.Parallel()
 
 	testCases := map[string]resource.TestCase{
 		"resource.kaas.good": {
@@ -69,6 +68,7 @@ func TestKaasResource_Schema(t *testing.T) {
 	}
 
 	for name, tc := range testCases {
+		tc.IsUnitTest = true
 		t.Run(name, func(t *testing.T) {
 			resource.Test(t, tc)
 		})
@@ -76,7 +76,6 @@ func TestKaasResource_Schema(t *testing.T) {
 }
 
 func TestKaasResource_Plan(t *testing.T) {
-	t.Parallel()
 
 	testCases := map[string]resource.TestCase{
 		"resource.kaas.no_changes": {
@@ -130,6 +129,7 @@ func TestKaasResource_Plan(t *testing.T) {
 	}
 
 	for name, tc := range testCases {
+		tc.IsUnitTest = true
 		t.Run(name, func(t *testing.T) {
 			resource.Test(t, tc)
 		})
@@ -168,6 +168,7 @@ func TestKaasResource_Import(t *testing.T) {
 	resourcePublicCloudProjectId = kaasObject.Project.ProjectId
 
 	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
 		ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{

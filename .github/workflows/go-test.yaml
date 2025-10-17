@@ -1,0 +1,82 @@
+name: Go Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: []
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: 'go.mod'
+
+    - name: Download dependencies
+      run: go mod download
+    
+    - name: Setup dev terraform
+      run: |
+        go env -w GOPATH=$HOME/go
+        mkdir -p $HOME/.terraform.d/plugins/
+        echo 'provider_installation {
+          dev_overrides {
+            "registry.terraform.io/Infomaniak/infomaniak" = "'$HOME'/go/bin"
+          }
+          direct {}
+        }' > $HOME/.terraformrc
+
+    - name: Install provider
+      run: make install
+
+    - name: Run acceptance unit tests and standard tests
+      run: make test-unit
+
+    - name: Generate reports
+      run: make generate-reports
+    
+    - name: Generate global coverage
+      run: make global-coverage
+  
+    - name: Generate cobertura report
+      run: make cobertura
+
+    - name: Upload test reports
+      id: artifact-upload-step
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-reports
+        path: |
+          reports/
+          !reports/*.tmp
+    
+    - name: Output artifact URL
+      run:  echo 'Artifact URL is ${{ steps.artifact-upload-step.outputs.artifact-url }}'
+
+    - name: Cobertura pull request comment unit test
+      uses: 5monkeys/cobertura-action@ee5787cc56634acddedc51f21c7947985531e6eb
+      with:
+        report_name: Pure Unit test coverage
+        path: reports/unit/cobertura.xml
+        only_changed_files: true
+        minimum_coverage: 0
+
+    - name: Cobertura pull request comment global coverage
+      uses: 5monkeys/cobertura-action@ee5787cc56634acddedc51f21c7947985531e6eb
+      with:
+        report_name: Global test coverage
+        path: reports/acceptance/cobertura.xml
+        only_changed_files: true
+        minimum_coverage: 10
+
+    - name: Comment PR
+      uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b
+      with:
+        message: |
+          📦 [Download](${{ steps.artifact-upload-step.outputs.artifact-url }}) test reports to see details
