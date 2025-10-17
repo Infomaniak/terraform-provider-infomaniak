@@ -86,8 +86,13 @@ func (d *kaasInstancePoolDataSource) Schema(ctx context.Context, _ datasource.Sc
 				Computed:    true,
 				Description: "The maximum amount of instances in the instance pool",
 			},
+			"labels": schema.MapAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+				Description: "Kubernetes node labels",
+			},
 		},
-		MarkdownDescription: "The kaas data source allows the user to manage a kaas project",
+		MarkdownDescription: "The KaaS Instance Pool data source retrieves information about a KaaS instance pool.",
 	}
 }
 
@@ -116,9 +121,12 @@ func (d *kaasInstancePoolDataSource) Read(ctx context.Context, req datasource.Re
 	data.FlavorName = types.StringValue(obj.FlavorName)
 	data.MinInstances = types.Int32Value(obj.MinInstances)
 	data.MaxInstances = types.Int32Value(obj.MaxInstances)
+	labels, diags := types.MapValueFrom(ctx, types.StringType, obj.Labels)
+	resp.Diagnostics.Append(diags...)
+	data.Labels = labels
 
 	// Set state
-	diags := resp.State.Set(ctx, &data)
+	diags = resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

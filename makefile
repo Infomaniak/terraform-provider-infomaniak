@@ -1,52 +1,29 @@
 LOG_DIRS = ./internal/services/kaas/tmp ./internal/services/dbaas/tmp
-REPORT_DIR = reports
+REPORT_DIR = $(shell pwd)/reports
+OS := $(shell uname)
+
+.PHONY: prepare-go prepare-env test-unit generate-reports global-coverage cobertura install clean
 
 prepare-go:
 	@go mod download
 
-prepare-logs:
-	@mkdir -p $(LOG_DIRS) 2>/dev/null || true
-	@for dir in $(LOG_DIRS); do \
-		touch $$dir/terraform.log; \
-	done
+prepare-env:
+	@./.scripts/setup.sh "$(LOG_DIRS)" "$(REPORT_DIR)"
 
-prepare-reports:
-	@mkdir -p $(REPORT_DIR)
+test-unit: prepare-go prepare-env
+	@./.scripts/run-tests.sh "$(REPORT_DIR)"
 
-testacc: prepare-go prepare-logs prepare-reports
-	@echo "=== Running acceptance tests ==="
-	TF_ACC=1 go test -v -coverprofile=$(REPORT_DIR)/acc_coverage.out -json ./... > $(REPORT_DIR)/test_results.json;
-	@echo "=== Generating reports ==="
-	@if [ -f $(REPORT_DIR)/acc_coverage.out ]; then \
-		go tool cover -func=$(REPORT_DIR)/acc_coverage.out > $(REPORT_DIR)/coverage_summary.txt; \
-		go tool cover -html=$(REPORT_DIR)/acc_coverage.out -o $(REPORT_DIR)/coverage.html; \
-		echo "Coverage reports generated:"; \
-		echo "  - Summary: $(REPORT_DIR)/coverage_summary.txt"; \
-		echo "  - HTML: $(REPORT_DIR)/coverage.html"; \
-	else \
-		echo "No coverage data generated"; \
-	fi
-	@if [ -f $(REPORT_DIR)/test_results.json ]; then \
-		echo "Test results: $(REPORT_DIR)/test_results.json"; \
-	fi
-	@echo "=== Test execution completed ==="
+generate-reports: prepare-go prepare-env
+	@./.scripts/generate-reports.sh "$(REPORT_DIR)" "$(OS)"
 
-global-coverage: prepare-go prepare-reports
-	@if [ -f $(REPORT_DIR)/acc_coverage.out ]; then \
-		go tool cover -func=$(REPORT_DIR)/acc_coverage.out > $(REPORT_DIR)/coverage_summary.txt; \
-		awk '/^total:/ {gsub(/%/, "", $$3); print $$3}' $(REPORT_DIR)/coverage_summary.txt > $(REPORT_DIR)/coverage_global.txt; \
-		echo "Global coverage: $$(cat $(REPORT_DIR)/coverage_global.txt)%"; \
-	else \
-		echo "0" > $(REPORT_DIR)/coverage_global.txt; \
-		echo "No coverage data found"; \
-	fi
+global-coverage: prepare-go prepare-env
+	@./.scripts/global-coverage.sh "$(REPORT_DIR)" "$(OS)"
 
-cobertura: prepare-go prepare-reports
-	@if [ -f $(REPORT_DIR)/acc_coverage.out ]; then \
-		go tool github.com/boumenot/gocover-cobertura < $(REPORT_DIR)/acc_coverage.out > $(REPORT_DIR)/cobertura.xml \
-		echo "Cobertura report generated: $(REPORT_DIR)/cobertura.xml"; \
-	else \
-		echo "No coverage data found"; \
-	fi
+cobertura: prepare-go prepare-env
+	@./.scripts/generate-cobertura-reports.sh "$(REPORT_DIR)" "$(OS)"
 
-.PHONY: prepare-go prepare-logs prepare-reports testacc global-coverage cobertura
+install:
+	@go build -cover -covermode="count" -o ${HOME}/go/bin/terraform-provider-infomaniak main.go
+
+clean:
+	@rm -rf $(REPORT_DIR)

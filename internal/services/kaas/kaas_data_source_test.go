@@ -10,8 +10,6 @@ import (
 )
 
 func TestKaasDatasource_Schema(t *testing.T) {
-	t.Parallel()
-
 	testCases := map[string]resource.TestCase{
 		"data_source.kaas.good": {
 			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),
