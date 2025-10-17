@@ -90,7 +90,7 @@ func (r *dbaasBackupResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	// CreateBackup API call logic
-	backup, err := r.client.DBaas.CreateBackup(
+	backupId, err := r.client.DBaas.CreateBackup(
 		int(data.PublicCloudId.ValueInt64()),
 		int(data.PublicCloudProjectId.ValueInt64()),
 		int(data.DBaasId.ValueInt64()),
@@ -103,14 +103,14 @@ func (r *dbaasBackupResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	data.Id = types.StringValue(backup.Id)
+	data.Id = types.StringValue(backupId)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
-	backup, err = r.waitUntilActive(ctx,
+	backup, err := r.waitUntilActive(ctx,
 		int(data.PublicCloudId.ValueInt64()),
 		int(data.PublicCloudProjectId.ValueInt64()),
 		int(data.DBaasId.ValueInt64()),
-		backup.Id,
+		backupId,
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
