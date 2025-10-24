@@ -283,6 +283,7 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, filteredIps)
 	state.AllowedCIDRs = listFilteredIps
 	resp.Diagnostics.Append(diags...)
+
 	state.fill(dbaasObject)
 
 	// Save updated data into Terraform state
@@ -342,7 +343,6 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-
 	allowedCIDRs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
 	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &allowedCIDRs, false)...)
 	ok, err := r.client.DBaas.PatchIpFilters(
@@ -361,12 +361,15 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		)
 		return
 	}
-	dbaasObject.AllowedCIDRs = allowedCIDRs
+
+	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, allowedCIDRs)
+	state.AllowedCIDRs = listFilteredIps
+	resp.Diagnostics.Append(diags...)
 
 	state.fill(dbaasObject)
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *dbaasResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
