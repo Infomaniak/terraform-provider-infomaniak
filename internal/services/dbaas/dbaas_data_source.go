@@ -3,6 +3,7 @@ package dbaas
 import (
 	"context"
 	"terraform-provider-infomaniak/internal/apis"
+	"terraform-provider-infomaniak/internal/apis/dbaas"
 	"terraform-provider-infomaniak/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -45,6 +46,38 @@ func (d *dbaasDataSource) Configure(_ context.Context, req datasource.ConfigureR
 	d.client = client
 }
 
+type DBaasDataModel struct {
+	PublicCloudId        types.Int64 `tfsdk:"public_cloud_id"`
+	PublicCloudProjectId types.Int64 `tfsdk:"public_cloud_project_id"`
+	Id                   types.Int64 `tfsdk:"id"`
+
+	Name     types.String `tfsdk:"name"`
+	PackName types.String `tfsdk:"pack_name"`
+	Region   types.String `tfsdk:"region"`
+	Type     types.String `tfsdk:"type"`
+	Version  types.String `tfsdk:"version"`
+
+	Host types.String `tfsdk:"host"`
+	Port types.String `tfsdk:"port"`
+	User types.String `tfsdk:"user"`
+	Ca   types.String `tfsdk:"ca"`
+
+	AllowedCIDRs types.List `tfsdk:"allowed_cidrs"`
+}
+
+func (data *DBaasDataModel) fill(obj *dbaas.DBaaS) {
+	data.Region = types.StringValue(obj.Region)
+	data.Name = types.StringValue(obj.Name)
+	data.PackName = types.StringValue(obj.Pack.Name)
+	data.Region = types.StringValue(obj.Region)
+	data.Type = types.StringValue(obj.Type)
+	data.Version = types.StringValue(obj.Version)
+	data.Host = types.StringValue(obj.Connection.Host)
+	data.Port = types.StringValue(obj.Connection.Port)
+	data.User = types.StringValue(obj.Connection.User)
+	data.Ca = types.StringValue(obj.Connection.Ca)
+}
+
 // Schema defines the schema for the data source.
 func (d *dbaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
@@ -81,6 +114,22 @@ func (d *dbaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest
 				Computed:            true,
 				MarkdownDescription: "The version of the database associated with the DBaaS project",
 			},
+			"host": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The host to access this database.",
+			},
+			"port": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The port to access this database.",
+			},
+			"user": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The username to access this database.",
+			},
+			"ca": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The Database CA Certificate",
+			},
 			"allowed_cidrs": schema.ListAttribute{
 				Computed:            true,
 				ElementType:         types.StringType,
@@ -93,7 +142,7 @@ func (d *dbaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest
 
 // Read refreshes the Terraform state with the latest data.
 func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data DBaasModel
+	var data DBaasDataModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
@@ -110,9 +159,7 @@ func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	data.Region = types.StringValue(obj.Region)
-	data.Version = types.StringValue(obj.Version)
-	data.Type = types.StringValue(obj.Type)
+	data.fill(obj)
 
 	filteredIps, err := d.client.DBaas.GetIpFilters(
 		int(data.PublicCloudId.ValueInt64()),
