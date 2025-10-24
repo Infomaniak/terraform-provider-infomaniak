@@ -33,7 +33,7 @@ var (
 	RecordTXT    RecordType = "TXT"
 )
 
-var RecordTypes = []RecordType{RecordA, RecordAAAA, RecordCAA, RecordCNAME, RecordDNAME, RecordDS, RecordMX, RecordSMIMEA, RecordSRV, RecordSSHFP, RecordTLSA, RecordTXT}
+var RecordTypes = []RecordType{RecordA, RecordAAAA, RecordCAA, RecordCNAME, RecordDNAME, RecordNS, RecordDS, RecordMX, RecordSMIMEA, RecordSRV, RecordSSHFP, RecordTLSA, RecordTXT}
 
 func IsValidRecordType(t RecordType) bool {
 	return slices.Contains(RecordTypes, t)
