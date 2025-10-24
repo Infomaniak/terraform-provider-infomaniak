@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -54,7 +55,7 @@ type DBaasModel struct {
 	Password types.String `tfsdk:"password"`
 	Ca       types.String `tfsdk:"ca"`
 
-	AllowedCIDRs types.List `tfsdk:"allowedCIDRs"`
+	AllowedCIDRs types.List `tfsdk:"allowed_cidrs"`
 }
 
 func (r *dbaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -148,10 +149,13 @@ func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				Computed:            true,
 				MarkdownDescription: "The Database CA Certificate",
 			},
-			"allowedCIDRs": schema.ListAttribute{
+			"allowed_cidrs": schema.ListAttribute{
 				Required:            true,
 				ElementType:         types.StringType,
 				MarkdownDescription: "Allowed to query Database IP whitelist",
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 		MarkdownDescription: "The dbaas resource allows the user to manage a dbaas project",
@@ -218,7 +222,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 	ok, err := r.client.DBaas.PatchIpFilters(
 		input.Project.PublicCloudId,
 		input.Project.ProjectId,
-		dbaasId,
+		dbaasObject.Id,
 		allowedCIDRs,
 	)
 	if !ok {
@@ -449,8 +453,6 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
 	model.User = types.StringValue(dbaas.Connection.User)
 	model.Password = types.StringValue(dbaas.Connection.Password)
 	model.Ca = types.StringValue(dbaas.Connection.Ca)
-
-	model.AllowedCIDRs, _ = types.ListValueFrom(context.TODO(), types.StringType, dbaas.AllowedCIDRs)
 }
 
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int) (*dbaas.DBaaS, error) {

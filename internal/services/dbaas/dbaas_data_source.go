@@ -81,7 +81,7 @@ func (d *dbaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest
 				Computed:            true,
 				MarkdownDescription: "The version of the database associated with the DBaaS project",
 			},
-			"allowedCIDRs": schema.ListAttribute{
+			"allowed_cidrs": schema.ListAttribute{
 				Computed:            true,
 				ElementType:         types.StringType,
 				MarkdownDescription: "Allowed to query Database IP whitelist",
