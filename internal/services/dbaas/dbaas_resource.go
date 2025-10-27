@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -38,9 +39,10 @@ type dbaasResource struct {
 }
 
 type DBaasModel struct {
-	PublicCloudId        types.Int64 `tfsdk:"public_cloud_id"`
-	PublicCloudProjectId types.Int64 `tfsdk:"public_cloud_project_id"`
-	Id                   types.Int64 `tfsdk:"id"`
+	PublicCloudId        types.Int64  `tfsdk:"public_cloud_id"`
+	PublicCloudProjectId types.Int64  `tfsdk:"public_cloud_project_id"`
+	Id                   types.Int64  `tfsdk:"id"`
+	KubernetesIdentifier types.String `tfsdk:"kube_identifier"`
 
 	Name     types.String `tfsdk:"name"`
 	PackName types.String `tfsdk:"pack_name"`
@@ -53,6 +55,8 @@ type DBaasModel struct {
 	User     types.String `tfsdk:"user"`
 	Password types.String `tfsdk:"password"`
 	Ca       types.String `tfsdk:"ca"`
+
+	AllowedCIDRs types.List `tfsdk:"allowed_cidrs"`
 }
 
 func (r *dbaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -146,6 +150,18 @@ func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				Computed:            true,
 				MarkdownDescription: "The Database CA Certificate",
 			},
+			"allowed_cidrs": schema.ListAttribute{
+				Required:            true,
+				ElementType:         types.StringType,
+				MarkdownDescription: "Allowed to query Database IP whitelist",
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"kube_identifier": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "DbaaS kubernetes name",
+			},
 		},
 		MarkdownDescription: "The dbaas resource allows the user to manage a dbaas project",
 	}
@@ -206,6 +222,26 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
+	allowedCIDRs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
+	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &allowedCIDRs, false)...)
+	ok, err := r.client.DBaas.PatchIpFilters(
+		input.Project.PublicCloudId,
+		input.Project.ProjectId,
+		dbaasObject.Id,
+		allowedCIDRs,
+	)
+	if !ok {
+		resp.Diagnostics.AddError("Unknown IP filter error", "")
+		return
+	}
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when updating IP Filters",
+			err.Error(),
+		)
+		return
+	}
+
 	data.fill(dbaasObject)
 
 	// Save data into Terraform state
@@ -235,6 +271,23 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		)
 		return
 	}
+
+	filteredIps, err := r.client.DBaas.GetIpFilters(
+		int(state.PublicCloudId.ValueInt64()),
+		int(state.PublicCloudProjectId.ValueInt64()),
+		int(state.Id.ValueInt64()),
+	)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when reading DBaaS filtered IPs",
+			err.Error(),
+		)
+		return
+	}
+
+	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, filteredIps)
+	state.AllowedCIDRs = listFilteredIps
+	resp.Diagnostics.Append(diags...)
 
 	state.fill(dbaasObject)
 
@@ -295,10 +348,33 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
+	allowedCIDRs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
+	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &allowedCIDRs, false)...)
+	ok, err := r.client.DBaas.PatchIpFilters(
+		int(state.PublicCloudId.ValueInt64()),
+		int(state.PublicCloudProjectId.ValueInt64()),
+		int(state.Id.ValueInt64()),
+		allowedCIDRs,
+	)
+	if !ok && err == nil {
+		resp.Diagnostics.AddError("Unknown IP filter error", "")
+	}
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when updating IP Filters",
+			err.Error(),
+		)
+		return
+	}
+
+	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, allowedCIDRs)
+	state.AllowedCIDRs = listFilteredIps
+	resp.Diagnostics.Append(diags...)
+
 	state.fill(dbaasObject)
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *dbaasResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -374,6 +450,7 @@ func (r *dbaasResource) getPackId(data DBaasModel, diagnostic *diag.Diagnostics)
 
 func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
 	model.Id = types.Int64Value(int64(dbaas.Id))
+	model.KubernetesIdentifier = types.StringValue(dbaas.KubernetesIdentifier)
 	model.Region = types.StringValue(dbaas.Region)
 	model.Type = types.StringValue(dbaas.Type)
 	model.Version = types.StringValue(dbaas.Version)

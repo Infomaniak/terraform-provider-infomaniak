@@ -14,4 +14,6 @@ type Api interface {
 
 	CreateRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string) (*DBaaSRestore, error)
 	GetRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, restoreId string) (*DBaaSRestore, error)
+	PatchIpFilters(publicCloudId int, publicCloudProjectId int, dbaasId int, filters []string) (bool, error)
+	GetIpFilters(publicCloudId int, publicCloudProjectId int, dbaasId int) ([]string, error)
 }
