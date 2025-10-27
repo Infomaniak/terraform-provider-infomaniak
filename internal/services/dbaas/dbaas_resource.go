@@ -39,9 +39,10 @@ type dbaasResource struct {
 }
 
 type DBaasModel struct {
-	PublicCloudId        types.Int64 `tfsdk:"public_cloud_id"`
-	PublicCloudProjectId types.Int64 `tfsdk:"public_cloud_project_id"`
-	Id                   types.Int64 `tfsdk:"id"`
+	PublicCloudId        types.Int64  `tfsdk:"public_cloud_id"`
+	PublicCloudProjectId types.Int64  `tfsdk:"public_cloud_project_id"`
+	Id                   types.Int64  `tfsdk:"id"`
+	KubernetesIdentifier types.String `tfsdk:"kube_identifier"`
 
 	Name     types.String `tfsdk:"name"`
 	PackName types.String `tfsdk:"pack_name"`
@@ -156,6 +157,10 @@ func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, 
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.UseStateForUnknown(),
 				},
+			},
+			"kube_identifier": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "DbaaS kubernetes name",
 			},
 		},
 		MarkdownDescription: "The dbaas resource allows the user to manage a dbaas project",
@@ -445,6 +450,7 @@ func (r *dbaasResource) getPackId(data DBaasModel, diagnostic *diag.Diagnostics)
 
 func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
 	model.Id = types.Int64Value(int64(dbaas.Id))
+	model.KubernetesIdentifier = types.StringValue(dbaas.KubernetesIdentifier)
 	model.Region = types.StringValue(dbaas.Region)
 	model.Type = types.StringValue(dbaas.Type)
 	model.Version = types.StringValue(dbaas.Version)

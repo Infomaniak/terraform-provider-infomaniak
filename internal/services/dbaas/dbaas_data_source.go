@@ -47,9 +47,10 @@ func (d *dbaasDataSource) Configure(_ context.Context, req datasource.ConfigureR
 }
 
 type DBaasDataModel struct {
-	PublicCloudId        types.Int64 `tfsdk:"public_cloud_id"`
-	PublicCloudProjectId types.Int64 `tfsdk:"public_cloud_project_id"`
-	Id                   types.Int64 `tfsdk:"id"`
+	PublicCloudId        types.Int64  `tfsdk:"public_cloud_id"`
+	PublicCloudProjectId types.Int64  `tfsdk:"public_cloud_project_id"`
+	Id                   types.Int64  `tfsdk:"id"`
+	KubernetesIdentifier types.String `tfsdk:"kube_identifier"`
 
 	Name     types.String `tfsdk:"name"`
 	PackName types.String `tfsdk:"pack_name"`
@@ -76,6 +77,7 @@ func (data *DBaasDataModel) fill(obj *dbaas.DBaaS) {
 	data.Port = types.StringValue(obj.Connection.Port)
 	data.User = types.StringValue(obj.Connection.User)
 	data.Ca = types.StringValue(obj.Connection.Ca)
+	data.KubernetesIdentifier = types.StringValue(obj.KubernetesIdentifier)
 }
 
 // Schema defines the schema for the data source.
@@ -134,6 +136,10 @@ func (d *dbaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest
 				Computed:            true,
 				ElementType:         types.StringType,
 				MarkdownDescription: "Allowed to query Database IP whitelist",
+			},
+			"kube_identifier": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "DbaaS kubernetes name",
 			},
 		},
 		MarkdownDescription: "The dbaas data source allows the user to manage a dbaas project",

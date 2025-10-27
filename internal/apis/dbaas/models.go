@@ -18,11 +18,12 @@ type DBaaS struct {
 	Pack       *DBaaSPack           `json:"pack,omitempty"`
 	Connection *DBaaSConnectionInfo `json:"connection,omitempty"`
 
-	Type    string `json:"type,omitempty"`
-	Version string `json:"version,omitempty"`
-	Name    string `json:"name,omitempty"`
-	Region  string `json:"region,omitempty"`
-	Status  string `json:"status,omitempty"`
+	Type                 string `json:"type,omitempty"`
+	Version              string `json:"version,omitempty"`
+	Name                 string `json:"name,omitempty"`
+	KubernetesIdentifier string `json:"kube_identifier,omitempty"`
+	Region string `json:"region,omitempty"`
+	Status string `json:"status,omitempty"`
 
 	AllowedCIDRs []string
 }
