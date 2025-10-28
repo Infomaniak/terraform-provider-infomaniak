@@ -8,12 +8,11 @@ type Api interface {
 	UpdateDBaaS(input *DBaaS) (bool, error)
 	DeleteDBaaS(publicCloudId int, publicCloudProjectId int, DBaaSId int) (bool, error)
 
-	CreateBackup(publicCloudId int, publicCloudProjectId int, dbaasId int) (string, error)
-	GetBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string) (*DBaaSBackup, error)
-	DeleteBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string) (bool, error)
-
-	CreateRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string) (*DBaaSRestore, error)
-	GetRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, restoreId string) (*DBaaSRestore, error)
 	PatchIpFilters(publicCloudId int, publicCloudProjectId int, dbaasId int, filters []string) (bool, error)
 	GetIpFilters(publicCloudId int, publicCloudProjectId int, dbaasId int) ([]string, error)
+
+	GetDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int) ([]DBaasBackupSchedule, error)
+
+	UpdateDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, backupSchedules *DBaasBackupSchedule) (bool, error)
+	DeleteDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int) (bool, error)
 }

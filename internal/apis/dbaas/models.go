@@ -22,8 +22,8 @@ type DBaaS struct {
 	Version              string `json:"version,omitempty"`
 	Name                 string `json:"name,omitempty"`
 	KubernetesIdentifier string `json:"kube_identifier,omitempty"`
-	Region string `json:"region,omitempty"`
-	Status string `json:"status,omitempty"`
+	Region               string `json:"region,omitempty"`
+	Status               string `json:"status,omitempty"`
 
 	AllowedCIDRs []string
 }
@@ -53,6 +53,15 @@ func (d *DBaaS) UnmarshalJSON(data []byte) error {
 		}
 	}
 	return nil
+}
+
+type DBaasBackupSchedule struct {
+	AddDefaultSchedule *bool `json:"add_default_schedule,omitempty"`
+
+	Name          *string `json:"name,omitempty"`
+	Time          *string `json:"time,omitempty"`
+	Keep          *int32  `json:"keep,omitempty"`
+	IsPitrEnabled *bool   `json:"is_pitr_enabled,omitempty"`
 }
 
 type DBaaSCreateInfo struct {
