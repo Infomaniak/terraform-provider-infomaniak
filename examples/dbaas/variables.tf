@@ -48,3 +48,21 @@ variable "allowed_cidrs" {
     "2345:425:2CA1:0000:0000:567:5673:23b5/64",
   ]
 }
+
+variable "time" {
+  description = "Backup daily hours in UTC"
+  type = string
+  default = "12:00"
+}
+
+variable "keep" {
+  description = "Number of backups to keep"
+  type = number
+  default = 5
+}
+
+variable "is_pitr_enabled" {
+  description = "activates / deactivate point in time recovery"
+  type = bool
+  default = true
+}
