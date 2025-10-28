@@ -74,7 +74,7 @@ type PricingModel struct {
 
 // Schema defines the schema for the data source.
 func (d *dbaasPacksDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	princingObject := schema.SingleNestedAttribute{
+	pricingObject := schema.SingleNestedAttribute{
 		Computed: true,
 		Attributes: map[string]schema.Attribute{
 			"hour_excl_tax": schema.Float64Attribute{
@@ -121,8 +121,8 @@ func (d *dbaasPacksDataSource) Schema(ctx context.Context, _ datasource.SchemaRe
 						"rates": schema.SingleNestedAttribute{
 							Computed: true,
 							Attributes: map[string]schema.Attribute{
-								"chf": princingObject,
-								"eur": princingObject,
+								"chf": pricingObject,
+								"eur": pricingObject,
 							},
 						},
 					},
@@ -141,7 +141,7 @@ func (d *dbaasPacksDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	packs, err := d.client.DBaas.GetDbaasPacks(data.Type.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Unable to find DBaaS",
+			"Unable to find DBaaS packs",
 			err.Error(),
 		)
 		return

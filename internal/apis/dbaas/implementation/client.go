@@ -292,7 +292,6 @@ func (client *Client) GetDbaasPacks(dbType string) ([]dbaas.Pack, error) {
 		}).
 		SetResult(&result).
 		SetError(&result).
-		SetDebug(true).
 		Get(EndpointDbaasDataPacks)
 	if err != nil {
 		return nil, err

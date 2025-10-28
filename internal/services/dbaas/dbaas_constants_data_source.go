@@ -90,7 +90,7 @@ func (d *dbaasConstsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	regions, err := d.client.DBaas.GetDbaasRegions()
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Unable to find DBaaS",
+			"Unable to find DBaaS regions",
 			err.Error(),
 		)
 		return
@@ -103,7 +103,7 @@ func (d *dbaasConstsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	dbaasTypes, err := d.client.DBaas.GetDbaasTypes()
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Unable to find DBaaS",
+			"Unable to find DBaaS types",
 			err.Error(),
 		)
 		return
