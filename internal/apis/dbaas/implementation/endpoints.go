@@ -14,6 +14,10 @@ var (
 	EndpointDatabaseRestores = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas/{dbaas_id}/restores"
 	EndpointDatabaseRestore  = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas/{dbaas_id}/restores/{restore_id}"
 
-	EndpointDatabaseIpFilter = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas/{dbaas_id}/ip_filters"
+	EndpointDatabaseIpFilter        = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas/{dbaas_id}/ip_filters"
 	EndpointDatabaseBackupSchedules = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas/{dbaas_id}/backup_schedules"
+
+	EndpointDbaasDataRegion = "/1/public_clouds/dbaas/regions"
+	EndpointDbaasDataPacks = "/1/public_clouds/dbaas/packs"
+	EndpointDbaasDataTypes = "/1/public_clouds/dbaas/types"
 )
