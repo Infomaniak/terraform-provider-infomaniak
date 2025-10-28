@@ -1,4 +1,3 @@
-
 ---
 page_title: "infomaniak_dbaas_backup_schedule"
 subcategory: "DBaaS"
@@ -43,14 +42,14 @@ resource "infomaniak_dbaas_backup_schedule" "db-0-backup-0" {
 
 - `public_cloud_id` (Integer) The id of the Public Cloud where DBaaS is installed.
 - `public_cloud_project_id` (Integer) The id of the public cloud project where DBaaS is installed.
-- `dbaas_id` (Integer) Id og the DBaaS.
+- `dbaas_id` (Integer) Id of the DBaaS.
 
 ### Optional
 
 - `add_default_schedule` (Boolean) If you want the default backup schedule.
 - `time` (Date) Backup hour in UTC format.
 - `keep` (Integer) The number of backups to keep.
-- `is_pitr_enabled` (Integer) Enable / disable point in time recovery. 
+- `is_pitr_enabled` (Boolean) Enable / disable point in time recovery. 
 
 ### Read-Only
 
