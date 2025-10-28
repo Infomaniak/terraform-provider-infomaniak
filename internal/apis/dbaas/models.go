@@ -11,6 +11,33 @@ type DBaaSPack struct {
 	Name string `json:"name,omitempty"`
 }
 
+type DbaasType struct {
+	Name     string   `json:"name,omitempty"`
+	Versions []string `json:"versions,omitempty"`
+}
+
+type Pack struct {
+	ID        int32  `json:"id,omitempty"`
+	Type      string `json:"type,omitempty"`
+	Group     string `json:"group,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Instances int32  `json:"instances,omitempty"`
+	CPU       int32  `json:"cpu,omitempty"`
+	RAM       int32  `json:"ram,omitempty"`
+	Storage   int64  `json:"storage,omitempty"`
+	Rates     Rates  `json:"rates"`
+}
+
+type Rates struct {
+	CHF Pricing `json:"CHF"`
+	EUR Pricing `json:"EUR"`
+}
+
+type Pricing struct {
+	HourExclTax float64 `json:"hour_excl_tax,omitempty"`
+	HourInclTax float64 `json:"hour_incl_tax,omitempty"`
+}
+
 type DBaaS struct {
 	Id         int                  `json:"id,omitempty"`
 	Project    DBaaSProject         `json:"project,omitzero"`

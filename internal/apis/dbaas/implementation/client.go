@@ -245,3 +245,62 @@ func (client *Client) DeleteDBaasScheduleBackup(publicCloudId int, publicCloudPr
 
 	return result.Data, nil
 }
+
+func (client *Client) GetDbaasRegions() ([]string, error) {
+	var result helpers.NormalizedApiResponse[[]string]
+
+	resp, err := client.resty.R().
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointDbaasDataRegion)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) GetDbaasTypes() ([]dbaas.DbaasType, error) {
+	var result helpers.NormalizedApiResponse[[]dbaas.DbaasType]
+
+	resp, err := client.resty.R().
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointDbaasDataTypes)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) GetDbaasPacks(dbType string) ([]dbaas.Pack, error) {
+	var result helpers.NormalizedApiResponse[[]dbaas.Pack]
+
+	resp, err := client.resty.R().
+		SetQueryParams(map[string]string{
+			"type":     dbType,
+			"per_page": "1000",
+		}).
+		SetResult(&result).
+		SetError(&result).
+		SetDebug(true).
+		Get(EndpointDbaasDataPacks)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	return result.Data, nil
+}

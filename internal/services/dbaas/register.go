@@ -7,4 +7,6 @@ func Register() {
 	registry.RegisterResource(NewDBaasBackupScheduleResource)
 
 	registry.RegisterDataSource(NewDBaasDataSource)
+	registry.RegisterDataSource(NewDBaasPacksDataSource)
+	registry.RegisterDataSource(NewDBaasConstsDataSource)
 }

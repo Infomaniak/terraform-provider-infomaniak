@@ -15,4 +15,8 @@ type Api interface {
 
 	UpdateDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, backupSchedules *DBaasBackupSchedule) (bool, error)
 	DeleteDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int) (bool, error)
+
+	GetDbaasRegions() ([]string, error)
+	GetDbaasTypes() ([]DbaasType, error)
+	GetDbaasPacks(dbType string) ([]Pack, error)
 }
