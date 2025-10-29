@@ -11,6 +11,33 @@ type DBaaSPack struct {
 	Name string `json:"name,omitempty"`
 }
 
+type DbaasType struct {
+	Name     string   `json:"name,omitempty"`
+	Versions []string `json:"versions,omitempty"`
+}
+
+type Pack struct {
+	ID        int32  `json:"id,omitempty"`
+	Type      string `json:"type,omitempty"`
+	Group     string `json:"group,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Instances int32  `json:"instances,omitempty"`
+	CPU       int32  `json:"cpu,omitempty"`
+	RAM       int32  `json:"ram,omitempty"`
+	Storage   int64  `json:"storage,omitempty"`
+	Rates     Rates  `json:"rates"`
+}
+
+type Rates struct {
+	CHF Pricing `json:"CHF"`
+	EUR Pricing `json:"EUR"`
+}
+
+type Pricing struct {
+	HourExclTax float64 `json:"hour_excl_tax,omitempty"`
+	HourInclTax float64 `json:"hour_incl_tax,omitempty"`
+}
+
 type DBaaS struct {
 	Id         int                  `json:"id,omitempty"`
 	Project    DBaaSProject         `json:"project,omitzero"`
@@ -22,8 +49,8 @@ type DBaaS struct {
 	Version              string `json:"version,omitempty"`
 	Name                 string `json:"name,omitempty"`
 	KubernetesIdentifier string `json:"kube_identifier,omitempty"`
-	Region string `json:"region,omitempty"`
-	Status string `json:"status,omitempty"`
+	Region               string `json:"region,omitempty"`
+	Status               string `json:"status,omitempty"`
 
 	AllowedCIDRs []string
 }
@@ -53,6 +80,15 @@ func (d *DBaaS) UnmarshalJSON(data []byte) error {
 		}
 	}
 	return nil
+}
+
+type DBaasBackupSchedule struct {
+	AddDefaultSchedule *bool `json:"add_default_schedule,omitempty"`
+
+	Name          *string `json:"name,omitempty"`
+	Time          *string `json:"time,omitempty"`
+	Keep          *int32  `json:"keep,omitempty"`
+	IsPitrEnabled *bool   `json:"is_pitr_enabled,omitempty"`
 }
 
 type DBaaSCreateInfo struct {

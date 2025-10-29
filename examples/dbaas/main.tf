@@ -26,15 +26,12 @@ resource "infomaniak_dbaas" "db-0" {
   allowedCIDRs = var.allowed_cidrs
 }
 
-resource "infomaniak_dbaas_backup" "db-0-backup-0" {
-  public_cloud_id         = var.infomaniak.cloud_id
-  public_cloud_project_id = var.infomaniak.project_id
+resource "infomaniak_dbaas_backup_schedule" "db-0-backup-0" {
+  public_cloud_id         = infomaniak_dbaas.db-0.public_cloud_id
+  public_cloud_project_id = infomaniak_dbaas.db-0.public_cloud_project_id
   dbaas_id = infomaniak_dbaas.db-0.id
-}
 
-resource "infomaniak_dbaas_restore" "db-0-restore-0" {
-  public_cloud_id         = var.infomaniak.cloud_id
-  public_cloud_project_id = var.infomaniak.project_id
-  dbaas_id = infomaniak_dbaas.db-0.id
-  backup_id = infomaniak_dbaas_backup.db-0-backup-0.id
+  time = var.time
+  keep = var.keep
+  is_pitr_enabled = var.is_pitr_enabled
 }
