@@ -1,6 +1,10 @@
 package dbaas
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+)
 
 type DBaaSPack struct {
 	Id   int    `json:"id,omitempty"`
@@ -8,16 +12,50 @@ type DBaaSPack struct {
 }
 
 type DBaaS struct {
-	Id      int          `json:"id,omitempty"`
-	Project DBaaSProject `json:"project,omitzero"`
-	PackId  int          `json:"pack_id,omitempty"`
-	Pack    *DBaaSPack   `json:"pack,omitempty"`
+	Id         int                  `json:"id,omitempty"`
+	Project    DBaaSProject         `json:"project,omitzero"`
+	PackId     int                  `json:"pack_id,omitempty"`
+	Pack       *DBaaSPack           `json:"pack,omitempty"`
+	Connection *DBaaSConnectionInfo `json:"connection,omitempty"`
 
 	Type    string `json:"type,omitempty"`
 	Version string `json:"version,omitempty"`
 	Name    string `json:"name,omitempty"`
 	Region  string `json:"region,omitempty"`
 	Status  string `json:"status,omitempty"`
+}
+
+// avoid crashes when the backend returns [] instead of null when connection is not yet avaialble
+func (d *DBaaS) UnmarshalJSON(data []byte) error {
+	type Alias DBaaS
+	aux := &struct {
+		Connection json.RawMessage `json:"connection,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(d),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	if len(aux.Connection) > 0 {
+		if strings.TrimSpace(string(aux.Connection)) == "[]" {
+			d.Connection = nil
+		} else {
+			d.Connection = &DBaaSConnectionInfo{}
+			if err := json.Unmarshal(aux.Connection, d.Connection); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type DBaaSCreateInfo struct {
+	Id             int    `json:"id"`
+	RootPassword   string `json:"root_password"`
+	KubeIdentifier string `json:"kube_identifier"`
 }
 
 type DBaaSConnectionInfo struct {
@@ -29,13 +67,19 @@ type DBaaSConnectionInfo struct {
 }
 
 type DBaaSBackup struct {
-	Id     string `json:"id,omitempty"`
-	Status string `json:"status,omitempty"`
+	Id          string `json:"id,omitempty"`
+	Location    string `json:"location,omitempty"`
+	CreatedAt   uint64 `json:"created_at,omitempty"`
+	CompletedAt uint64 `json:"completed_at,omitempty"`
+	Status      string `json:"status,omitempty"`
 }
 
 type DBaaSRestore struct {
-	Id     string `json:"id,omitempty"`
-	Status string `json:"status,omitempty"`
+	Id           string           `json:"id,omitempty"`
+	BackupSource string           `json:"backup_source,omitempty"`
+	CreatedAt    uint64           `json:"created_at,omitempty"`
+	Status       string           `json:"status,omitempty"`
+	NewService   *DBaaSCreateInfo `json:"new_service,omitempty"`
 }
 
 func (dbaas *DBaaS) Key() string {

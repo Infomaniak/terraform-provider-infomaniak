@@ -58,7 +58,7 @@ func (client *Client) GetDBaaS(publicCloudId int, publicCloudProjectId int, dbaa
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
-		SetQueryParam("with", "packs,projects,tags").
+		SetQueryParam("with", "packs,projects,tags,connection").
 		SetResult(&result).
 		SetError(&result).
 		Get(EndpointDatabase)
@@ -73,8 +73,8 @@ func (client *Client) GetDBaaS(publicCloudId int, publicCloudProjectId int, dbaa
 	return result.Data, nil
 }
 
-func (client *Client) CreateDBaaS(input *dbaas.DBaaS) (int, error) {
-	var result helpers.NormalizedApiResponse[int]
+func (client *Client) CreateDBaaS(input *dbaas.DBaaS) (*dbaas.DBaaSCreateInfo, error) {
+	var result helpers.NormalizedApiResponse[*dbaas.DBaaSCreateInfo]
 
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(input.Project.PublicCloudId)).
@@ -84,11 +84,11 @@ func (client *Client) CreateDBaaS(input *dbaas.DBaaS) (int, error) {
 		SetError(&result).
 		Post(EndpointDatabases)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	if resp.IsError() {
-		return 0, result.Error
+		return nil, result.Error
 	}
 
 	return result.Data, nil
@@ -137,29 +137,8 @@ func (client *Client) DeleteDBaaS(publicCloudId int, publicCloudProjectId int, d
 	return result.Data, nil
 }
 
-func (client *Client) GetPassword(publicCloudId int, publicCloudProjectId int, dbaasId int) (*dbaas.DBaaSConnectionInfo, error) {
-	var result helpers.NormalizedApiResponse[*dbaas.DBaaSConnectionInfo]
-
-	resp, err := client.resty.R().
-		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
-		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
-		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
-		SetResult(&result).
-		SetError(&result).
-		Get(EndpointDatabasePassword)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.IsError() {
-		return nil, result.Error
-	}
-
-	return result.Data, nil
-}
-
-func (client *Client) CreateBackup(publicCloudId int, publicCloudProjectId int, dbaasId int) (*dbaas.DBaaSBackup, error) {
-	var result helpers.NormalizedApiResponse[*dbaas.DBaaSBackup]
+func (client *Client) CreateBackup(publicCloudId int, publicCloudProjectId int, dbaasId int) (string, error) {
+	var result helpers.NormalizedApiResponse[string]
 
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
@@ -169,11 +148,11 @@ func (client *Client) CreateBackup(publicCloudId int, publicCloudProjectId int, 
 		SetError(&result).
 		Post(EndpointDatabaseBackups)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	if resp.IsError() {
-		return nil, result.Error
+		return "", result.Error
 	}
 
 	return result.Data, nil
