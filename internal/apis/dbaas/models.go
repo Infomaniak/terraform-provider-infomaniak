@@ -7,7 +7,7 @@ import (
 )
 
 type DBaaSPack struct {
-	Id   int    `json:"id,omitempty"`
+	Id   int64  `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
 }
 
@@ -17,13 +17,13 @@ type DbaasType struct {
 }
 
 type Pack struct {
-	ID        int32  `json:"id,omitempty"`
+	ID        int64  `json:"id,omitempty"`
 	Type      string `json:"type,omitempty"`
 	Group     string `json:"group,omitempty"`
 	Name      string `json:"name,omitempty"`
-	Instances int32  `json:"instances,omitempty"`
-	CPU       int32  `json:"cpu,omitempty"`
-	RAM       int32  `json:"ram,omitempty"`
+	Instances int64  `json:"instances,omitempty"`
+	CPU       int64  `json:"cpu,omitempty"`
+	RAM       int64  `json:"ram,omitempty"`
 	Storage   int64  `json:"storage,omitempty"`
 	Rates     Rates  `json:"rates"`
 }
@@ -39,9 +39,9 @@ type Pricing struct {
 }
 
 type DBaaS struct {
-	Id         int                  `json:"id,omitempty"`
+	Id         int64                `json:"id,omitempty"`
 	Project    DBaaSProject         `json:"project,omitzero"`
-	PackId     int                  `json:"pack_id,omitempty"`
+	PackId     int64                `json:"pack_id,omitempty"`
 	Pack       *DBaaSPack           `json:"pack,omitempty"`
 	Connection *DBaaSConnectionInfo `json:"connection,omitempty"`
 
@@ -88,7 +88,7 @@ type DBaasBackupSchedule struct {
 	Id            *int64  `json:"id,omitempty"`
 	Name          *string `json:"name,omitempty"`
 	Time          *string `json:"time,omitempty"`
-	Keep          *int32  `json:"keep,omitempty"`
+	Keep          *int64  `json:"keep,omitempty"`
 	IsPitrEnabled *bool   `json:"is_pitr_enabled,omitempty"`
 }
 
@@ -97,7 +97,7 @@ type DBaasBackupScheduleCreateInfo struct {
 }
 
 type DBaaSCreateInfo struct {
-	Id             int    `json:"id"`
+	Id             int64  `json:"id"`
 	RootPassword   string `json:"root_password"`
 	KubeIdentifier string `json:"kube_identifier"`
 }
@@ -131,6 +131,6 @@ func (dbaas *DBaaS) Key() string {
 }
 
 type DBaaSProject struct {
-	PublicCloudId int `json:"public_cloud_id,omitempty"`
-	ProjectId     int `json:"id,omitempty"`
+	PublicCloudId int64 `json:"public_cloud_id,omitempty"`
+	ProjectId     int64 `json:"id,omitempty"`
 }

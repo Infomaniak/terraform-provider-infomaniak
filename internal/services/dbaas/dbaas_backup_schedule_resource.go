@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -44,14 +43,14 @@ type DBaasBackupScheduleModel struct {
 	Name               types.String `tfsdk:"name"`
 	AddDefaultSchedule types.Bool   `tfsdk:"add_default_schedule"`
 	Time               types.String `tfsdk:"time"`
-	Keep               types.Int32  `tfsdk:"keep"`
+	Keep               types.Int64  `tfsdk:"keep"`
 	IsPitrEnabled      types.Bool   `tfsdk:"is_pitr_enabled"`
 }
 
 func (model *DBaasBackupScheduleModel) fill(backupSchedule *dbaas.DBaasBackupSchedule) {
 	model.AddDefaultSchedule = types.BoolPointerValue(backupSchedule.AddDefaultSchedule)
 	model.Time = types.StringPointerValue(backupSchedule.Time)
-	model.Keep = types.Int32PointerValue(backupSchedule.Keep)
+	model.Keep = types.Int64PointerValue(backupSchedule.Keep)
 	model.IsPitrEnabled = types.BoolPointerValue(backupSchedule.IsPitrEnabled)
 	model.Name = types.StringPointerValue(backupSchedule.Name)
 	model.Id = types.Int64PointerValue(backupSchedule.Id)
@@ -133,11 +132,11 @@ func (r *dbaasBackupScheduleResource) Schema(ctx context.Context, req resource.S
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"keep": schema.Int32Attribute{
+			"keep": schema.Int64Attribute{
 				Optional:            true,
 				MarkdownDescription: "The number of backups to keep for the schedule",
-				PlanModifiers: []planmodifier.Int32{
-					int32planmodifier.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
 				},
 			},
 			"is_pitr_enabled": schema.BoolAttribute{
@@ -164,14 +163,14 @@ func (r *dbaasBackupScheduleResource) Create(ctx context.Context, req resource.C
 	input := &dbaas.DBaasBackupSchedule{
 		AddDefaultSchedule: data.AddDefaultSchedule.ValueBoolPointer(),
 		Time:               data.Time.ValueStringPointer(),
-		Keep:               data.Keep.ValueInt32Pointer(),
+		Keep:               data.Keep.ValueInt64Pointer(),
 		IsPitrEnabled:      data.IsPitrEnabled.ValueBoolPointer(),
 	}
 
 	created, err := r.client.DBaas.CreateDBaasScheduleBackup(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(data.DbaasId.ValueInt64()),
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.DbaasId.ValueInt64(),
 		input,
 	)
 	if err != nil {
@@ -185,10 +184,10 @@ func (r *dbaasBackupScheduleResource) Create(ctx context.Context, req resource.C
 	data.Id = types.Int64Value(created.Id)
 
 	scheduleBackup, err := r.client.DBaas.GetDBaasScheduleBackup(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(data.DbaasId.ValueInt64()),
-		int(data.Id.ValueInt64()),
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.DbaasId.ValueInt64(),
+		data.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -218,15 +217,15 @@ func (r *dbaasBackupScheduleResource) Update(ctx context.Context, req resource.U
 	input := &dbaas.DBaasBackupSchedule{
 		AddDefaultSchedule: data.AddDefaultSchedule.ValueBoolPointer(),
 		Time:               data.Time.ValueStringPointer(),
-		Keep:               data.Keep.ValueInt32Pointer(),
+		Keep:               data.Keep.ValueInt64Pointer(),
 		IsPitrEnabled:      data.IsPitrEnabled.ValueBoolPointer(),
 	}
 
 	ok, err := r.client.DBaas.UpdateDBaasScheduleBackup(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(data.DbaasId.ValueInt64()),
-		int(data.Id.ValueInt64()),
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.DbaasId.ValueInt64(),
+		data.Id.ValueInt64(),
 		input,
 	)
 	if !ok && err == nil {
@@ -241,10 +240,10 @@ func (r *dbaasBackupScheduleResource) Update(ctx context.Context, req resource.U
 	}
 
 	scheduleBackup, err := r.client.DBaas.GetDBaasScheduleBackup(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(data.DbaasId.ValueInt64()),
-		int(data.Id.ValueInt64()),
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.DbaasId.ValueInt64(),
+		data.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -270,10 +269,10 @@ func (r *dbaasBackupScheduleResource) Read(ctx context.Context, req resource.Rea
 	}
 
 	scheduleBackup, err := r.client.DBaas.GetDBaasScheduleBackup(
-		int(state.PublicCloudId.ValueInt64()),
-		int(state.PublicCloudProjectId.ValueInt64()),
-		int(state.DbaasId.ValueInt64()),
-		int(state.Id.ValueInt64()),
+		state.PublicCloudId.ValueInt64(),
+		state.PublicCloudProjectId.ValueInt64(),
+		state.DbaasId.ValueInt64(),
+		state.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -300,10 +299,10 @@ func (r *dbaasBackupScheduleResource) Delete(ctx context.Context, req resource.D
 
 	// DeleteDBaas API call logic
 	_, err := r.client.DBaas.DeleteDBaasScheduleBackup(
-		int(state.PublicCloudId.ValueInt64()),
-		int(state.PublicCloudProjectId.ValueInt64()),
-		int(state.DbaasId.ValueInt64()),
-		int(state.Id.ValueInt64()),
+		state.PublicCloudId.ValueInt64(),
+		state.PublicCloudProjectId.ValueInt64(),
+		state.DbaasId.ValueInt64(),
+		state.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(

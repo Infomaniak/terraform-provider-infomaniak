@@ -10,9 +10,9 @@ import (
 )
 
 type ImportIds struct {
-	PublicCloudId        int
-	PublicCloudProjectId int
-	DbaasId              int
+	PublicCloudId        int64
+	PublicCloudProjectId int64
+	DbaasId              int64
 	Id                   string
 }
 
@@ -38,9 +38,9 @@ func parseBackupRestoreImport(req resource.ImportStateRequest) (*ImportIds, erro
 	}
 
 	return &ImportIds{
-		PublicCloudId:        int(publicCloudId),
-		PublicCloudProjectId: int(publicCloudProjectId),
-		DbaasId:              int(dbaasId),
+		PublicCloudId:        publicCloudId,
+		PublicCloudProjectId: publicCloudProjectId,
+		DbaasId:              dbaasId,
 		Id:                   id,
 	}, nil
 }
