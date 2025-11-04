@@ -7,7 +7,8 @@ description: |-
 
 # infomaniak_dbaas_backup_schedule
 
-The DBaas backup schedule resource allows the user to manage a specific DBaas backups schedules
+The DBaas backup schedule resource allows the user to manage a specific DBaas backups schedules.  
+You can only create one and only one backup schedule for the moment.
 
 To get your `public_cloud_id`:
 ```sh
@@ -53,4 +54,5 @@ resource "infomaniak_dbaas_backup_schedule" "db-0-backup-0" {
 
 ### Read-Only
 
+- `id` (Integer) The identifier of the scheduled backup.
 - `name` (String) The backup schedule generated name.

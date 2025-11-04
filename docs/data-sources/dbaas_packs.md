@@ -27,7 +27,7 @@ data "infomaniak_dbaas_packs" "db-packs-data" {
 
 - `packs` (List of Object) Available DBaaS pre-configured packages with their specifications and pricing.
   - `id` (Number) Unique identifier for the package.
-  - `type` (String) Database engine type (e.g., "mysql", "postgresql").
+  - `type` (String) Database engine type (e.g., "mysql", ...).
   - `group` (String) Package group category (e.g., "essential", "business", "enterprise").
   - `name` (String) Package name identifier (e.g., "essential-db-4", "business-db-16").
   - `instances` (Number) Number of database instances included in the package.
