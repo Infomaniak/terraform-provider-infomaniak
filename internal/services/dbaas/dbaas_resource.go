@@ -186,8 +186,8 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	input := &dbaas.DBaaS{
 		Project: dbaas.DBaaSProject{
-			PublicCloudId: int(data.PublicCloudId.ValueInt64()),
-			ProjectId:     int(data.PublicCloudProjectId.ValueInt64()),
+			PublicCloudId: data.PublicCloudId.ValueInt64(),
+			ProjectId:     data.PublicCloudProjectId.ValueInt64(),
 		},
 		Region:  data.Region.ValueString(),
 		Version: data.Version.ValueString(),
@@ -206,7 +206,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	data.Id = types.Int64Value(int64(createInfos.Id))
+	data.Id = types.Int64Value(createInfos.Id)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
 	dbaasObject, err := r.waitUntilActive(ctx, input, createInfos.Id)
@@ -263,9 +263,9 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 
 	// Read API call logic
 	dbaasObject, err := r.client.DBaas.GetDBaaS(
-		int(state.PublicCloudId.ValueInt64()),
-		int(state.PublicCloudProjectId.ValueInt64()),
-		int(state.Id.ValueInt64()),
+		state.PublicCloudId.ValueInt64(),
+		state.PublicCloudProjectId.ValueInt64(),
+		state.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -276,9 +276,9 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	}
 
 	filteredIps, err := r.client.DBaas.GetIpFilters(
-		int(state.PublicCloudId.ValueInt64()),
-		int(state.PublicCloudProjectId.ValueInt64()),
-		int(state.Id.ValueInt64()),
+		state.PublicCloudId.ValueInt64(),
+		state.PublicCloudProjectId.ValueInt64(),
+		state.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -318,10 +318,10 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	// Update API call logic
 	input := &dbaas.DBaaS{
 		Project: dbaas.DBaaSProject{
-			PublicCloudId: int(data.PublicCloudId.ValueInt64()),
-			ProjectId:     int(data.PublicCloudProjectId.ValueInt64()),
+			PublicCloudId: data.PublicCloudId.ValueInt64(),
+			ProjectId:     data.PublicCloudProjectId.ValueInt64(),
 		},
-		Id:      int(state.Id.ValueInt64()),
+		Id:      state.Id.ValueInt64(),
 		Name:    data.Name.ValueString(),
 		PackId:  chosenPackState.Id,
 		Region:  state.Region.ValueString(),
@@ -357,9 +357,9 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		IpFilters: cidrs,
 	}
 	ok, err := r.client.DBaas.PatchIpFilters(
-		int(state.PublicCloudId.ValueInt64()),
-		int(state.PublicCloudProjectId.ValueInt64()),
-		int(state.Id.ValueInt64()),
+		state.PublicCloudId.ValueInt64(),
+		state.PublicCloudProjectId.ValueInt64(),
+		state.Id.ValueInt64(),
 		allowedCIDRs,
 	)
 	if !ok && err == nil {
@@ -395,9 +395,9 @@ func (r *dbaasResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 
 	// DeleteDBaas API call logic
 	_, err := r.client.DBaas.DeleteDBaaS(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(data.Id.ValueInt64()),
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -455,7 +455,7 @@ func (r *dbaasResource) getPackId(data DBaasModel, diagnostic *diag.Diagnostics)
 }
 
 func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
-	model.Id = types.Int64Value(int64(dbaas.Id))
+	model.Id = types.Int64Value(dbaas.Id)
 	model.KubernetesIdentifier = types.StringValue(dbaas.KubernetesIdentifier)
 	model.Region = types.StringValue(dbaas.Region)
 	model.Type = types.StringValue(dbaas.Type)
@@ -470,7 +470,7 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
 	model.Ca = types.StringValue(dbaas.Connection.Ca)
 }
 
-func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int) (*dbaas.DBaaS, error) {
+func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int64) (*dbaas.DBaaS, error) {
 	t := time.NewTicker(5 * time.Second)
 	for {
 		select {

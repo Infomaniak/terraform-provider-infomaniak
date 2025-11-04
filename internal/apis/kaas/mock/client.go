@@ -35,7 +35,7 @@ func (c *Client) GetPacks() ([]*kaas.KaasPack, error) {
 	}, nil
 }
 
-func (c *Client) MustGetPackFromId(id int) *kaas.KaasPack {
+func (c *Client) MustGetPackFromId(id int64) *kaas.KaasPack {
 	packs, _ := c.GetPacks()
 	for _, pack := range packs {
 		if pack.Id == id {
@@ -50,7 +50,7 @@ func (c *Client) GetVersions() ([]string, error) {
 	return []string{"1.29", "1.30", "1.31"}, nil
 }
 
-func (c *Client) GetKaas(publicCloudId int, publicCloudProjectId int, kaasId int) (*kaas.Kaas, error) {
+func (c *Client) GetKaas(publicCloudId int64, publicCloudProjectId int64, kaasId int64) (*kaas.Kaas, error) {
 	key := fmt.Sprintf("%d-%d-%d", publicCloudId, publicCloudProjectId, kaasId)
 	obj, err := getFromCache[*kaas.Kaas](key)
 	if err != nil {
@@ -62,11 +62,11 @@ func (c *Client) GetKaas(publicCloudId int, publicCloudProjectId int, kaasId int
 	return obj, nil
 }
 
-func (client *Client) GetKubeconfig(publicCloudId int, publicCloudProjectId int, kaasId int) (string, error) {
+func (client *Client) GetKubeconfig(publicCloudId int64, publicCloudProjectId int64, kaasId int64) (string, error) {
 	return genKubeconfig(), nil
 }
 
-func (c *Client) CreateKaas(input *kaas.Kaas) (int, error) {
+func (c *Client) CreateKaas(input *kaas.Kaas) (int64, error) {
 	// Checks
 	if input.Project.PublicCloudId == 0 {
 		return 0, fmt.Errorf("kaas is missing public cloud project id")
@@ -120,7 +120,7 @@ func (c *Client) UpdateKaas(input *kaas.Kaas) (bool, error) {
 	return true, updateCache(&obj)
 }
 
-func (c *Client) DeleteKaas(publicCloudId int, publicCloudProjectId int, kaasId int) (bool, error) {
+func (c *Client) DeleteKaas(publicCloudId int64, publicCloudProjectId int64, kaasId int64) (bool, error) {
 	var obj = kaas.Kaas{
 		Project: kaas.KaasProject{
 			PublicCloudId: publicCloudId,
@@ -132,7 +132,7 @@ func (c *Client) DeleteKaas(publicCloudId int, publicCloudProjectId int, kaasId 
 	return true, removeFromCache(&obj)
 }
 
-func (c *Client) GetInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) (*kaas.InstancePool, error) {
+func (c *Client) GetInstancePool(publicCloudId int64, publicCloudProjectId int64, kaasId int64, instancePoolId int64) (*kaas.InstancePool, error) {
 	_, err := c.GetKaas(publicCloudId, publicCloudProjectId, kaasId)
 	if err != nil {
 		return nil, err
@@ -149,7 +149,7 @@ func (c *Client) GetInstancePool(publicCloudId int, publicCloudProjectId int, ka
 	return obj, nil
 }
 
-func (c *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId int, input *kaas.InstancePool) (int, error) {
+func (c *Client) CreateInstancePool(publicCloudId int64, publicCloudProjectId int64, input *kaas.InstancePool) (int64, error) {
 	// Checks
 	if publicCloudId == 0 {
 		return 0, fmt.Errorf("instance pool is missing public cloud id")
@@ -206,7 +206,7 @@ func (c *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId int,
 	return obj.Id, addToCache(&obj)
 }
 
-func (c *Client) UpdateInstancePool(publicCloudId int, publicCloudProjectId int, input *kaas.InstancePool) (bool, error) {
+func (c *Client) UpdateInstancePool(publicCloudId int64, publicCloudProjectId int64, input *kaas.InstancePool) (bool, error) {
 	// Checks
 	if publicCloudId == 0 {
 		return false, fmt.Errorf("instance pool is missing public cloud id")
@@ -262,7 +262,7 @@ func (c *Client) UpdateInstancePool(publicCloudId int, publicCloudProjectId int,
 	return true, updateCache(&obj)
 }
 
-func (c *Client) DeleteInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) (bool, error) {
+func (c *Client) DeleteInstancePool(publicCloudId int64, publicCloudProjectId int64, kaasId int64, instancePoolId int64) (bool, error) {
 	_, err := c.GetKaas(publicCloudId, publicCloudProjectId, kaasId)
 	if err != nil {
 		return false, err
@@ -276,9 +276,9 @@ func (c *Client) DeleteInstancePool(publicCloudId int, publicCloudProjectId int,
 	return true, removeFromCache(&obj)
 }
 
-func (c *Client) GetApiserverParams(publicCloudId int, projectId int, kaasId int) (*kaas.Apiserver, error) {
+func (c *Client) GetApiserverParams(publicCloudId int64, projectId int64, kaasId int64) (*kaas.Apiserver, error) {
 	return nil, nil
 }
-func (c *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int, projectId int, kaasId int) (bool, error) {
+func (c *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int64, projectId int64, kaasId int64) (bool, error) {
 	return true, nil
 }

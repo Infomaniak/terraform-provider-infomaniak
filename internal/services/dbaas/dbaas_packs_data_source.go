@@ -51,13 +51,13 @@ type DBaasConstantsDataModel struct {
 }
 
 type DBaasPacksModel struct {
-	ID        types.Int32  `tfsdk:"id"`
+	ID        types.Int64  `tfsdk:"id"`
 	Type      types.String `tfsdk:"type"`
 	Group     types.String `tfsdk:"group"`
 	Name      types.String `tfsdk:"name"`
-	Instances types.Int32  `tfsdk:"instances"`
-	CPU       types.Int32  `tfsdk:"cpu"`
-	RAM       types.Int32  `tfsdk:"ram"`
+	Instances types.Int64  `tfsdk:"instances"`
+	CPU       types.Int64  `tfsdk:"cpu"`
+	RAM       types.Int64  `tfsdk:"ram"`
 	Storage   types.Int64  `tfsdk:"storage"`
 	Rates     RatesModel   `tfsdk:"rates"`
 }
@@ -94,7 +94,7 @@ func (d *dbaasPacksDataSource) Schema(ctx context.Context, _ datasource.SchemaRe
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.Int32Attribute{
+						"id": schema.Int64Attribute{
 							Computed: true,
 						},
 						"type": schema.StringAttribute{
@@ -106,13 +106,13 @@ func (d *dbaasPacksDataSource) Schema(ctx context.Context, _ datasource.SchemaRe
 						"name": schema.StringAttribute{
 							Computed: true,
 						},
-						"instances": schema.Int32Attribute{
+						"instances": schema.Int64Attribute{
 							Computed: true,
 						},
-						"cpu": schema.Int32Attribute{
+						"cpu": schema.Int64Attribute{
 							Computed: true,
 						},
-						"ram": schema.Int32Attribute{
+						"ram": schema.Int64Attribute{
 							Computed: true,
 						},
 						"storage": schema.Int64Attribute{
@@ -150,13 +150,13 @@ func (d *dbaasPacksDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	var tfPacks []DBaasPacksModel
 	for _, pack := range packs {
 		tfPacks = append(tfPacks, DBaasPacksModel{
-			ID:        types.Int32Value(pack.ID),
+			ID:        types.Int64Value(pack.ID),
 			Type:      types.StringValue(pack.Type),
 			Group:     types.StringValue(pack.Group),
 			Name:      types.StringValue(pack.Name),
-			Instances: types.Int32Value(pack.Instances),
-			CPU:       types.Int32Value(pack.CPU),
-			RAM:       types.Int32Value(pack.RAM),
+			Instances: types.Int64Value(pack.Instances),
+			CPU:       types.Int64Value(pack.CPU),
+			RAM:       types.Int64Value(pack.RAM),
 			Storage:   types.Int64Value(pack.Storage),
 			Rates: RatesModel{
 				CHF: PricingModel{

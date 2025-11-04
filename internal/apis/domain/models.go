@@ -3,7 +3,7 @@ package domain
 import "slices"
 
 type Zone struct {
-	ID             int        `json:"id,omitempty"`
+	ID             int64      `json:"id,omitempty"`
 	FQDN           string     `json:"fqdn,omitempty"`
 	DNSSEC         ZoneDNSSEC `json:"dnssec,omitempty"`
 	Nameservers    []string   `json:"nameservers,omitempty"`
@@ -40,13 +40,13 @@ func IsValidRecordType(t RecordType) bool {
 }
 
 type Record struct {
-	ID        int        `json:"id,omitempty"`
+	ID        int64      `json:"id,omitempty"`
 	Source    string     `json:"source,omitempty"`
 	SourceIDN *string    `json:"source_idn,omitempty"`
 	Type      RecordType `json:"type,omitempty"`
-	TTL       int        `json:"ttl,omitempty"`
+	TTL       int64      `json:"ttl,omitempty"`
 	Target    string     `json:"target,omitempty"`
-	DynDNSID  int        `json:"dyndns_id,omitempty"`
+	DynDNSID  int64      `json:"dyndns_id,omitempty"`
 	// Description string     `json:"description,omitempty"`
 }
 
