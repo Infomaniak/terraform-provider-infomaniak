@@ -11,12 +11,12 @@ type Api interface {
 	PatchIpFilters(publicCloudId int, publicCloudProjectId int, dbaasId int, filters []string) (bool, error)
 	GetIpFilters(publicCloudId int, publicCloudProjectId int, dbaasId int) ([]string, error)
 
-	GetDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int) ([]DBaasBackupSchedule, error)
-
-	UpdateDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, backupSchedules *DBaasBackupSchedule) (bool, error)
-	DeleteDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int) (bool, error)
+	GetDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, id int) (*DBaasBackupSchedule, error)
+	CreateDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, backupSchedules *DBaasBackupSchedule) (*DBaasBackupScheduleCreateInfo, error)
+	UpdateDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, id int, backupSchedules *DBaasBackupSchedule) (bool, error)
+	DeleteDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, id int) (bool, error)
 
 	GetDbaasRegions() ([]string, error)
-	GetDbaasTypes() ([]DbaasType, error)
-	GetDbaasPacks(dbType string) ([]Pack, error)
+	GetDbaasTypes() ([]*DbaasType, error)
+	GetDbaasPacks(dbType string) ([]*Pack, error)
 }

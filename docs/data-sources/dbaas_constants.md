@@ -22,4 +22,4 @@ data "infomaniak_dbaas_constants" "db-consts-data" {}
 - `regions` (List of String) Available DBaaS regions.
 - `types` (List of Object) Available DBaaS
   - `name` (String) Database engine name
-  - 'versions' (List of String) Available versions for `name` Database engine
+  - `versions` (List of String) Available versions for `name` Database engine

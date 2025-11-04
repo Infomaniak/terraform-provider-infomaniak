@@ -40,6 +40,7 @@ type DBaasBackupScheduleModel struct {
 	PublicCloudProjectId types.Int64 `tfsdk:"public_cloud_project_id"`
 	DbaasId              types.Int64 `tfsdk:"dbaas_id"`
 
+	Id                 types.Int64  `tfsdk:"id"`
 	Name               types.String `tfsdk:"name"`
 	AddDefaultSchedule types.Bool   `tfsdk:"add_default_schedule"`
 	Time               types.String `tfsdk:"time"`
@@ -53,6 +54,7 @@ func (model *DBaasBackupScheduleModel) fill(backupSchedule *dbaas.DBaasBackupSch
 	model.Keep = types.Int32PointerValue(backupSchedule.Keep)
 	model.IsPitrEnabled = types.BoolPointerValue(backupSchedule.IsPitrEnabled)
 	model.Name = types.StringPointerValue(backupSchedule.Name)
+	model.Id = types.Int64PointerValue(backupSchedule.Id)
 }
 
 func (r *dbaasBackupScheduleResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -101,6 +103,13 @@ func (r *dbaasBackupScheduleResource) Schema(ctx context.Context, req resource.S
 				MarkdownDescription: "The id of the dbaas",
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
+				},
+			},
+			"id": schema.Int64Attribute{
+				Computed:            true,
+				MarkdownDescription: "BackupSchedule identifier",
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -159,29 +168,29 @@ func (r *dbaasBackupScheduleResource) Create(ctx context.Context, req resource.C
 		IsPitrEnabled:      data.IsPitrEnabled.ValueBoolPointer(),
 	}
 
-	ok, err := r.client.DBaas.UpdateDBaasScheduleBackup(
+	created, err := r.client.DBaas.CreateDBaasScheduleBackup(
 		int(data.PublicCloudId.ValueInt64()),
 		int(data.PublicCloudProjectId.ValueInt64()),
 		int(data.DbaasId.ValueInt64()),
 		input,
 	)
-	if !ok && err == nil {
-		resp.Diagnostics.AddError("Unknown Backup Schedule error", "")
-	}
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error when updating Backup Schedule",
+			"Error when creating Backup Schedule",
 			err.Error(),
 		)
 		return
 	}
 
-	scheduleBackups, err := r.client.DBaas.GetDBaasScheduleBackup(
+	data.Id = types.Int64Value(created.Id)
+
+	scheduleBackup, err := r.client.DBaas.GetDBaasScheduleBackup(
 		int(data.PublicCloudId.ValueInt64()),
 		int(data.PublicCloudProjectId.ValueInt64()),
 		int(data.DbaasId.ValueInt64()),
+		int(data.Id.ValueInt64()),
 	)
-	if err != nil || len(scheduleBackups) == 0 {
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error when getting Backup Schedule",
 			err.Error(),
@@ -189,9 +198,7 @@ func (r *dbaasBackupScheduleResource) Create(ctx context.Context, req resource.C
 		return
 	}
 
-	if len(scheduleBackups) > 0 {
-		data.fill(&scheduleBackups[0])
-	}
+	data.fill(scheduleBackup)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -219,6 +226,7 @@ func (r *dbaasBackupScheduleResource) Update(ctx context.Context, req resource.U
 		int(data.PublicCloudId.ValueInt64()),
 		int(data.PublicCloudProjectId.ValueInt64()),
 		int(data.DbaasId.ValueInt64()),
+		int(data.Id.ValueInt64()),
 		input,
 	)
 	if !ok && err == nil {
@@ -232,12 +240,13 @@ func (r *dbaasBackupScheduleResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	scheduleBackups, err := r.client.DBaas.GetDBaasScheduleBackup(
+	scheduleBackup, err := r.client.DBaas.GetDBaasScheduleBackup(
 		int(data.PublicCloudId.ValueInt64()),
 		int(data.PublicCloudProjectId.ValueInt64()),
 		int(data.DbaasId.ValueInt64()),
+		int(data.Id.ValueInt64()),
 	)
-	if err != nil || len(scheduleBackups) == 0 {
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error when getting Backup Schedule",
 			err.Error(),
@@ -245,9 +254,7 @@ func (r *dbaasBackupScheduleResource) Update(ctx context.Context, req resource.U
 		return
 	}
 
-	if len(scheduleBackups) > 0 {
-		state.fill(&scheduleBackups[0])
-	}
+	state.fill(scheduleBackup)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -262,10 +269,11 @@ func (r *dbaasBackupScheduleResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	scheduleBackups, err := r.client.DBaas.GetDBaasScheduleBackup(
+	scheduleBackup, err := r.client.DBaas.GetDBaasScheduleBackup(
 		int(state.PublicCloudId.ValueInt64()),
 		int(state.PublicCloudProjectId.ValueInt64()),
 		int(state.DbaasId.ValueInt64()),
+		int(state.Id.ValueInt64()),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -275,9 +283,7 @@ func (r *dbaasBackupScheduleResource) Read(ctx context.Context, req resource.Rea
 		return
 	}
 
-	if len(scheduleBackups) > 0 {
-		state.fill(&scheduleBackups[0])
-	}
+	state.fill(scheduleBackup)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -297,10 +303,11 @@ func (r *dbaasBackupScheduleResource) Delete(ctx context.Context, req resource.D
 		int(state.PublicCloudId.ValueInt64()),
 		int(state.PublicCloudProjectId.ValueInt64()),
 		int(state.DbaasId.ValueInt64()),
+		int(state.Id.ValueInt64()),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error when deleting DBaaS",
+			"Error when deleting DBaaS backup schedule",
 			err.Error(),
 		)
 		return
@@ -312,7 +319,7 @@ func (r *dbaasBackupScheduleResource) Delete(ctx context.Context, req resource.D
 func (r *dbaasBackupScheduleResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	idParts := strings.Split(req.ID, ",")
 
-	if len(idParts) != 3 || idParts[0] == "" || idParts[1] == "" || idParts[2] == "" {
+	if len(idParts) != 4 || idParts[0] == "" || idParts[1] == "" || idParts[2] == "" || idParts[3] == "" {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
 			fmt.Sprintf("Expected import identifier with format: public_cloud_id,public_cloud_project_id,id. Got: %q", req.ID),
@@ -328,11 +335,13 @@ func (r *dbaasBackupScheduleResource) ImportState(ctx context.Context, req resou
 	errorList = errors.Join(errorList, err)
 	dbaasId, err := strconv.ParseInt(idParts[2], 10, 64)
 	errorList = errors.Join(errorList, err)
+	id, err := strconv.ParseInt(idParts[3], 10, 64)
+	errorList = errors.Join(errorList, err)
 
 	if errorList != nil {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("Expected import identifier with format: public_cloud_id,public_cloud_project_id,id. Got: %q", req.ID),
+			fmt.Sprintf("Expected import identifier with format: public_cloud_id,public_cloud_project_id,dbaas_id,id. Got: %q", req.ID),
 		)
 		return
 	}
@@ -340,4 +349,5 @@ func (r *dbaasBackupScheduleResource) ImportState(ctx context.Context, req resou
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_id"), publicCloudId)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_project_id"), publicCloudProjectId)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("dbaas_id"), dbaasId)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
