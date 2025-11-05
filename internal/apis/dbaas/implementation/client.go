@@ -182,8 +182,8 @@ func (client *Client) GetIpFilters(publicCloudId int64, publicCloudProjectId int
 	return result.Data, nil
 }
 
-func (client *Client) CreateDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, backupSchedules *dbaas.DBaasBackupSchedule) (*dbaas.DBaasBackupScheduleCreateInfo, error) {
-	var result helpers.NormalizedApiResponse[*dbaas.DBaasBackupScheduleCreateInfo]
+func (client *Client) CreateDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, backupSchedules *dbaas.DBaasBackupSchedule) (int64, error) {
+	var result helpers.NormalizedApiResponse[int64]
 
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
@@ -194,11 +194,11 @@ func (client *Client) CreateDBaasScheduleBackup(publicCloudId int64, publicCloud
 		SetError(&result).
 		Post(EndpointDatabaseBackupSchedules)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	if resp.IsError() {
-		return nil, result.Error
+		return 0, result.Error
 	}
 
 	return result.Data, nil

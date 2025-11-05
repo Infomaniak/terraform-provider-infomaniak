@@ -12,7 +12,7 @@ type Api interface {
 	GetIpFilters(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) ([]string, error)
 
 	GetDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, id int64) (*DBaasBackupSchedule, error)
-	CreateDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, backupSchedules *DBaasBackupSchedule) (*DBaasBackupScheduleCreateInfo, error)
+	CreateDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, backupSchedules *DBaasBackupSchedule) (int64, error)
 	UpdateDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, id int64, backupSchedules *DBaasBackupSchedule) (bool, error)
 	DeleteDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, id int64) (bool, error)
 

@@ -87,13 +87,9 @@ type DBaasBackupSchedule struct {
 
 	Id            *int64  `json:"id,omitempty"`
 	Name          *string `json:"name,omitempty"`
-	Time          *string `json:"time,omitempty"`
-	Keep          *int64  `json:"keep,omitempty"`
+	ScheduledAt   *string `json:"scheduled_at,omitempty"`
+	Retention     *int64  `json:"retention,omitempty"`
 	IsPitrEnabled *bool   `json:"is_pitr_enabled,omitempty"`
-}
-
-type DBaasBackupScheduleCreateInfo struct {
-	Id int64 `json:"id"`
 }
 
 type DBaaSCreateInfo struct {

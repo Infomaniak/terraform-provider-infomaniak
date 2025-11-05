@@ -49,13 +49,13 @@ variable "allowed_cidrs" {
   ]
 }
 
-variable "time" {
+variable "scheduled_at" {
   description = "Backup daily hours in UTC"
   type = string
   default = "12:00"
 }
 
-variable "keep" {
+variable "retention" {
   description = "Number of backups to keep"
   type = number
   default = 5
