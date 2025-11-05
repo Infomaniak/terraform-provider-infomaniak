@@ -4,23 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 	"strconv"
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
 	"terraform-provider-infomaniak/internal/provider"
-	"terraform-provider-infomaniak/internal/services/scopes"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -84,89 +78,7 @@ func (r *dbaasResource) Configure(ctx context.Context, req resource.ConfigureReq
 }
 
 func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"pack_name": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The name of the pack associated to the DBaaS project",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"type": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The type of database associated with the DBaaS being installed",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"version": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The version of database associated with the DBaaS being installed",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"name": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The name of the DBaaS project",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"id": schema.Int64Attribute{
-				Computed:            true,
-				MarkdownDescription: "A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.",
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
-				},
-			},
-			"region": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The region where the DBaaS will reside.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"host": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "The host to access this database.",
-			},
-			"port": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "The port to access this database.",
-			},
-			"user": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "The username to access this database.",
-			},
-			"password": schema.StringAttribute{
-				Computed:            true,
-				Sensitive:           true,
-				MarkdownDescription: "The password to access this database.",
-			},
-			"ca": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "The Database CA Certificate",
-			},
-			"allowed_cidrs": schema.ListAttribute{
-				Required:            true,
-				ElementType:         types.StringType,
-				MarkdownDescription: "Allowed to query Database IP whitelist",
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"kube_identifier": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "DbaaS kubernetes name",
-			},
-		},
-		MarkdownDescription: "The dbaas resource allows the user to manage a dbaas project",
-	}
-
-	maps.Copy(resp.Schema.Attributes, scopes.PublicCloud.Build())
+	resp.Schema = getDbaasResourceSchema()
 }
 
 func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

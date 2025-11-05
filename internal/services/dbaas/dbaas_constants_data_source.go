@@ -6,7 +6,6 @@ import (
 	"terraform-provider-infomaniak/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -57,28 +56,7 @@ type DBaasTypes struct {
 
 // Schema defines the schema for the data source.
 func (d *dbaasConstsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"types": schema.ListNestedAttribute{
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							Computed: true,
-						},
-						"versions": schema.ListAttribute{
-							Computed:    true,
-							ElementType: types.StringType,
-						},
-					},
-				},
-				Computed: true,
-			},
-			"regions": schema.ListAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-			},
-		},
-	}
+	resp.Schema = getDbaasConstantsDataSourceSchema()
 }
 
 // Read refreshes the Terraform state with the latest data.

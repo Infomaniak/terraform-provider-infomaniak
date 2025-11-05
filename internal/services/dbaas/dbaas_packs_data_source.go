@@ -6,7 +6,6 @@ import (
 	"terraform-provider-infomaniak/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -74,62 +73,7 @@ type PricingModel struct {
 
 // Schema defines the schema for the data source.
 func (d *dbaasPacksDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	pricingObject := schema.SingleNestedAttribute{
-		Computed: true,
-		Attributes: map[string]schema.Attribute{
-			"hour_excl_tax": schema.Float64Attribute{
-				Computed: true,
-			},
-			"hour_incl_tax": schema.Float64Attribute{
-				Computed: true,
-			},
-		},
-	}
-	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"type": schema.StringAttribute{
-				Required: true,
-			},
-			"packs": schema.ListNestedAttribute{
-				Computed: true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.Int64Attribute{
-							Computed: true,
-						},
-						"type": schema.StringAttribute{
-							Computed: true,
-						},
-						"group": schema.StringAttribute{
-							Computed: true,
-						},
-						"name": schema.StringAttribute{
-							Computed: true,
-						},
-						"instances": schema.Int64Attribute{
-							Computed: true,
-						},
-						"cpu": schema.Int64Attribute{
-							Computed: true,
-						},
-						"ram": schema.Int64Attribute{
-							Computed: true,
-						},
-						"storage": schema.Int64Attribute{
-							Computed: true,
-						},
-						"rates": schema.SingleNestedAttribute{
-							Computed: true,
-							Attributes: map[string]schema.Attribute{
-								"chf": pricingObject,
-								"eur": pricingObject,
-							},
-						},
-					},
-				},
-			},
-		},
-	}
+	resp.Schema = getDbaasPacksDataSourceSchema()
 }
 
 // Read refreshes the Terraform state with the latest data.
