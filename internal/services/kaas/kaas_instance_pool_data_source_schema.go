@@ -10,7 +10,7 @@ func getKaasInstancePoolDataSourceSchema() schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"public_cloud_id": schema.Int64Attribute{
 				Required:    true,
-				Description: "The id of the public cloud project where KaaS is installed",
+				Description: "The id of the public cloud where KaaS is installed",
 			},
 			"public_cloud_project_id": schema.Int64Attribute{
 				Required:    true,
@@ -22,7 +22,7 @@ func getKaasInstancePoolDataSourceSchema() schema.Schema {
 			},
 			"id": schema.Int64Attribute{
 				Required:    true,
-				Description: "A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.",
+				Description: "The unique identifier for the instance pool.",
 			},
 			"name": schema.StringAttribute{
 				Computed:    true,

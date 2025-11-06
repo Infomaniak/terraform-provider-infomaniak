@@ -28,7 +28,7 @@ func getDbaasResourceSchema() schema.Schema {
 			},
 			"id": schema.Int64Attribute{
 				Computed:            true,
-				MarkdownDescription: "A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.",
+				MarkdownDescription: "The unique identifier for the DBaaS instance.",
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.UseStateForUnknown(),
 				},

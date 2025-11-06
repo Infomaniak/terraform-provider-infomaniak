@@ -38,8 +38,8 @@ func getKaasInstancePoolResourceSchema() schema.Schema {
 			},
 			"id": schema.Int64Attribute{
 				Computed:            true,
-				Description:         "A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.",
-				MarkdownDescription: "A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.",
+				Description:         "A computed value representing the unique identifier for the instance pool. Mandatory for acceptance testing.",
+				MarkdownDescription: "A computed value representing the unique identifier for the instance pool. Mandatory for acceptance testing.",
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.UseStateForUnknown(),
 				},
