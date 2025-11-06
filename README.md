@@ -1,3 +1,5 @@
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Infomaniak_terraform-provider-infomaniak&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Infomaniak_terraform-provider-infomaniak)
+
 # Infomaniak Terraform Provider
 
 The Infomaniak Provider allows Terraform to manage Infomaniak's resources.
