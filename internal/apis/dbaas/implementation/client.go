@@ -51,7 +51,7 @@ func (client *Client) FindPack(dbType string, name string) (*dbaas.DBaaSPack, er
 	return data[0], nil
 }
 
-func (client *Client) GetDBaaS(publicCloudId int, publicCloudProjectId int, dbaasId int) (*dbaas.DBaaS, error) {
+func (client *Client) GetDBaaS(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) (*dbaas.DBaaS, error) {
 	var result helpers.NormalizedApiResponse[*dbaas.DBaaS]
 
 	resp, err := client.resty.R().
@@ -116,7 +116,7 @@ func (client *Client) UpdateDBaaS(input *dbaas.DBaaS) (bool, error) {
 	return result.Data, nil
 }
 
-func (client *Client) DeleteDBaaS(publicCloudId int, publicCloudProjectId int, dbaasId int) (bool, error) {
+func (client *Client) DeleteDBaaS(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().
@@ -137,125 +137,14 @@ func (client *Client) DeleteDBaaS(publicCloudId int, publicCloudProjectId int, d
 	return result.Data, nil
 }
 
-func (client *Client) CreateBackup(publicCloudId int, publicCloudProjectId int, dbaasId int) (string, error) {
-	var result helpers.NormalizedApiResponse[string]
-
-	resp, err := client.resty.R().
-		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
-		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
-		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
-		SetResult(&result).
-		SetError(&result).
-		Post(EndpointDatabaseBackups)
-	if err != nil {
-		return "", err
-	}
-
-	if resp.IsError() {
-		return "", result.Error
-	}
-
-	return result.Data, nil
-}
-
-func (client *Client) GetBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string) (*dbaas.DBaaSBackup, error) {
-	var result helpers.NormalizedApiResponse[*dbaas.DBaaSBackup]
-
-	resp, err := client.resty.R().
-		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
-		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
-		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
-		SetPathParam("backup_id", fmt.Sprint(backupId)).
-		SetResult(&result).
-		SetError(&result).
-		Get(EndpointDatabaseBackup)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.IsError() {
-		return nil, result.Error
-	}
-
-	return result.Data, nil
-}
-
-func (client *Client) DeleteBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string) (bool, error) {
+func (client *Client) PatchIpFilters(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, filters dbaas.AllowedCIDRs) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
-		SetPathParam("backup_id", fmt.Sprint(backupId)).
-		SetResult(&result).
-		SetError(&result).
-		Delete(EndpointDatabaseBackup)
-	if err != nil {
-		return false, err
-	}
-
-	if resp.IsError() {
-		return false, result.Error
-	}
-
-	return result.Data, nil
-}
-
-func (client *Client) CreateRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, backupId string) (*dbaas.DBaaSRestore, error) {
-	var result helpers.NormalizedApiResponse[*dbaas.DBaaSRestore]
-
-	resp, err := client.resty.R().
-		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
-		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
-		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
-		SetQueryParam("backup_id", backupId).
-		SetResult(&result).
-		SetError(&result).
-		Post(EndpointDatabaseRestores)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.IsError() {
-		return nil, result.Error
-	}
-
-	return result.Data, nil
-}
-
-func (client *Client) GetRestore(publicCloudId int, publicCloudProjectId int, dbaasId int, restoreId string) (*dbaas.DBaaSRestore, error) {
-	var result helpers.NormalizedApiResponse[*dbaas.DBaaSRestore]
-
-	resp, err := client.resty.R().
-		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
-		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
-		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
-		SetPathParam("restore_id", fmt.Sprint(restoreId)).
-		SetResult(&result).
-		SetError(&result).
-		Get(EndpointDatabaseRestore)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.IsError() {
-		return nil, result.Error
-	}
-
-	return result.Data, nil
-}
-
-func (client *Client) PatchIpFilters(publicCloudId int, publicCloudProjectId int, dbaasId int, filters []string) (bool, error) {
-	var result helpers.NormalizedApiResponse[bool]
-
-	resp, err := client.resty.R().
-		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
-		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
-		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
-		SetBody(map[string][]string{
-			"ip_filters": filters,
-		}).
+		SetBody(filters).
 		SetResult(&result).
 		SetError(&result).
 		Put(EndpointDatabaseIpFilter)
@@ -270,7 +159,7 @@ func (client *Client) PatchIpFilters(publicCloudId int, publicCloudProjectId int
 	return result.Data, nil
 }
 
-func (client *Client) GetIpFilters(publicCloudId int, publicCloudProjectId int, dbaasId int) ([]string, error) {
+func (client *Client) GetIpFilters(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) ([]string, error) {
 	var result helpers.NormalizedApiResponse[[]string]
 
 	resp, err := client.resty.R().
@@ -280,6 +169,153 @@ func (client *Client) GetIpFilters(publicCloudId int, publicCloudProjectId int, 
 		SetResult(&result).
 		SetError(&result).
 		Get(EndpointDatabaseIpFilter)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) CreateDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, backupSchedules *dbaas.DBaasBackupSchedule) (*dbaas.DBaasBackupScheduleCreateInfo, error) {
+	var result helpers.NormalizedApiResponse[*dbaas.DBaasBackupScheduleCreateInfo]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
+		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
+		SetBody(backupSchedules).
+		SetResult(&result).
+		SetError(&result).
+		Post(EndpointDatabaseBackupSchedules)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) UpdateDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, id int64, backupSchedules *dbaas.DBaasBackupSchedule) (bool, error) {
+	var result helpers.NormalizedApiResponse[bool]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
+		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
+		SetPathParam("schedule_id", fmt.Sprint(id)).
+		SetBody(backupSchedules).
+		SetResult(&result).
+		SetError(&result).
+		Patch(EndpointDatabaseBackupSchedule)
+	if err != nil {
+		return false, err
+	}
+
+	if resp.IsError() {
+		return false, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) GetDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, id int64) (*dbaas.DBaasBackupSchedule, error) {
+	var result helpers.NormalizedApiResponse[*dbaas.DBaasBackupSchedule]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
+		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
+		SetPathParam("schedule_id", fmt.Sprint(id)).
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointDatabaseBackupSchedule)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) DeleteDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, id int64) (bool, error) {
+	var result helpers.NormalizedApiResponse[bool]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
+		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
+		SetPathParam("schedule_id", fmt.Sprint(id)).
+		SetResult(&result).
+		SetError(&result).
+		Delete(EndpointDatabaseBackupSchedule)
+	if err != nil {
+		return false, err
+	}
+
+	if resp.IsError() {
+		return false, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) GetDbaasRegions() ([]string, error) {
+	var result helpers.NormalizedApiResponse[[]string]
+
+	resp, err := client.resty.R().
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointDbaasDataRegion)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) GetDbaasTypes() ([]*dbaas.DbaasType, error) {
+	var result helpers.NormalizedApiResponse[[]*dbaas.DbaasType]
+
+	resp, err := client.resty.R().
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointDbaasDataTypes)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) GetDbaasPacks(dbType string) ([]*dbaas.Pack, error) {
+	var result helpers.NormalizedApiResponse[[]*dbaas.Pack]
+
+	resp, err := client.resty.R().
+		SetQueryParams(map[string]string{
+			"type":     dbType,
+			"per_page": "1000",
+		}).
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointDbaasDataPacks)
 	if err != nil {
 		return nil, err
 	}
