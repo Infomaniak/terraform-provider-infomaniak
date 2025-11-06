@@ -30,8 +30,8 @@ resource "infomaniak_dbaas_backup_schedule" "db-0-backup-0" {
   public_cloud_project_id = local.public_cloud_project_id
   dbaas_id = infomaniak_dbaas.db-0.id
 
-  time = "12:00"
-  keep = 3
+  scheduled_at = "12:00"
+  retention = 3
   is_pitr_enabled = true
 }
 
@@ -48,8 +48,8 @@ resource "infomaniak_dbaas_backup_schedule" "db-0-backup-0" {
 ### Optional
 
 - `add_default_schedule` (Boolean) If you want the default backup schedule.
-- `time` (Date) Backup hour in UTC format.
-- `keep` (Integer) The number of backups to keep.
+- `scheduled_at` (Date) Backup hour in UTC TZ format (`HH:MM`).
+- `retention` (Integer) The number of backups to keep.
 - `is_pitr_enabled` (Boolean) Enable / disable point in time recovery. 
 
 ### Read-Only

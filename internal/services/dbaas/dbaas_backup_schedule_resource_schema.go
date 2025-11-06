@@ -53,14 +53,14 @@ func getDbaasBackupScheduleResourceSchema() schema.Schema {
 					boolplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"time": schema.StringAttribute{
+			"scheduled_at": schema.StringAttribute{
 				Optional:            true,
 				MarkdownDescription: "Use the given time as the time to create the scheduled backup (24 hour, UTC)",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"keep": schema.Int64Attribute{
+			"retention": schema.Int64Attribute{
 				Optional:            true,
 				MarkdownDescription: "The number of backups to keep for the schedule",
 				PlanModifiers: []planmodifier.Int64{
