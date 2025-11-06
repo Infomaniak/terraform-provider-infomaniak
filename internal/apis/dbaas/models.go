@@ -7,22 +7,54 @@ import (
 )
 
 type DBaaSPack struct {
-	Id   int    `json:"id,omitempty"`
+	Id   int64  `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
 }
 
+type DbaasType struct {
+	Name     string   `json:"name,omitempty"`
+	Versions []string `json:"versions,omitempty"`
+}
+
+type Pack struct {
+	ID        int64  `json:"id,omitempty"`
+	Type      string `json:"type,omitempty"`
+	Group     string `json:"group,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Instances int64  `json:"instances,omitempty"`
+	CPU       int64  `json:"cpu,omitempty"`
+	RAM       int64  `json:"ram,omitempty"`
+	Storage   int64  `json:"storage,omitempty"`
+	Rates     Rates  `json:"rates"`
+}
+
+type Rates struct {
+	CHF Pricing `json:"CHF"`
+	EUR Pricing `json:"EUR"`
+}
+
+type Pricing struct {
+	HourExclTax float64 `json:"hour_excl_tax,omitempty"`
+	HourInclTax float64 `json:"hour_incl_tax,omitempty"`
+}
+
 type DBaaS struct {
-	Id         int                  `json:"id,omitempty"`
+	Id         int64                `json:"id,omitempty"`
 	Project    DBaaSProject         `json:"project,omitzero"`
-	PackId     int                  `json:"pack_id,omitempty"`
+	PackId     int64                `json:"pack_id,omitempty"`
 	Pack       *DBaaSPack           `json:"pack,omitempty"`
 	Connection *DBaaSConnectionInfo `json:"connection,omitempty"`
 
-	Type    string `json:"type,omitempty"`
-	Version string `json:"version,omitempty"`
-	Name    string `json:"name,omitempty"`
-	Region  string `json:"region,omitempty"`
-	Status  string `json:"status,omitempty"`
+	Type                 string `json:"type,omitempty"`
+	Version              string `json:"version,omitempty"`
+	Name                 string `json:"name,omitempty"`
+	KubernetesIdentifier string `json:"kube_identifier,omitempty"`
+	Region               string `json:"region,omitempty"`
+	Status               string `json:"status,omitempty"`
+}
+
+type AllowedCIDRs struct {
+	IpFilters []string `json:"ip_filters,omitempty"`
 }
 
 // avoid crashes when the backend returns [] instead of null when connection is not yet avaialble
@@ -52,8 +84,18 @@ func (d *DBaaS) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type DBaasBackupSchedule struct {
+	AddDefaultSchedule *bool `json:"add_default_schedule,omitempty"`
+
+	Id            *int64  `json:"id,omitempty"`
+	Name          *string `json:"name,omitempty"`
+	ScheduledAt   *string `json:"scheduled_at,omitempty"`
+	Retention     *int64  `json:"retention,omitempty"`
+	IsPitrEnabled *bool   `json:"is_pitr_enabled,omitempty"`
+}
+
 type DBaaSCreateInfo struct {
-	Id             int    `json:"id"`
+	Id             int64  `json:"id"`
 	RootPassword   string `json:"root_password"`
 	KubeIdentifier string `json:"kube_identifier"`
 }
@@ -87,6 +129,6 @@ func (dbaas *DBaaS) Key() string {
 }
 
 type DBaaSProject struct {
-	PublicCloudId int `json:"public_cloud_id,omitempty"`
-	ProjectId     int `json:"id,omitempty"`
+	PublicCloudId int64 `json:"public_cloud_id,omitempty"`
+	ProjectId     int64 `json:"id,omitempty"`
 }
