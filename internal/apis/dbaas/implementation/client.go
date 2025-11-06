@@ -137,16 +137,14 @@ func (client *Client) DeleteDBaaS(publicCloudId int, publicCloudProjectId int, d
 	return result.Data, nil
 }
 
-func (client *Client) PatchIpFilters(publicCloudId int, publicCloudProjectId int, dbaasId int, filters []string) (bool, error) {
+func (client *Client) PatchIpFilters(publicCloudId int, publicCloudProjectId int, dbaasId int, filters dbaas.AllowedCIDRs) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
-		SetBody(map[string][]string{
-			"ip_filters": filters,
-		}).
+		SetBody(filters).
 		SetResult(&result).
 		SetError(&result).
 		Put(EndpointDatabaseIpFilter)

@@ -51,8 +51,10 @@ type DBaaS struct {
 	KubernetesIdentifier string `json:"kube_identifier,omitempty"`
 	Region               string `json:"region,omitempty"`
 	Status               string `json:"status,omitempty"`
+}
 
-	AllowedCIDRs []string
+type AllowedCIDRs struct {
+	IpFilters []string `json:"ip_filters,omitempty"`
 }
 
 // avoid crashes when the backend returns [] instead of null when connection is not yet avaialble
