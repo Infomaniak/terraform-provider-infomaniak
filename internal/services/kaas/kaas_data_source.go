@@ -178,9 +178,9 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
 	obj, err := d.client.Kaas.GetKaas(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(data.Id.ValueInt64()),
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -191,9 +191,9 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	kubeconfig, err := d.client.Kaas.GetKubeconfig(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(data.Id.ValueInt64()),
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -208,9 +208,9 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	data.KubernetesVersion = types.StringValue(obj.KubernetesVersion)
 
 	apiserverParams, err := d.client.Kaas.GetApiserverParams(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(data.Id.ValueInt64()),
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(

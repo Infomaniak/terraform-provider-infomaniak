@@ -306,8 +306,8 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	input := &kaas.Kaas{
 		Project: kaas.KaasProject{
-			PublicCloudId: int(data.PublicCloudId.ValueInt64()),
-			ProjectId:     int(data.PublicCloudProjectId.ValueInt64()),
+			PublicCloudId: data.PublicCloudId.ValueInt64(),
+			ProjectId:     data.PublicCloudProjectId.ValueInt64(),
 		},
 		Region:            data.Region.ValueString(),
 		KubernetesVersion: data.KubernetesVersion.ValueString(),
@@ -325,7 +325,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	data.Id = types.Int64Value(int64(kaasId))
+	data.Id = types.Int64Value(kaasId)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
 	kaasObject, err := r.waitUntilActive(ctx, input, kaasId)
@@ -418,7 +418,7 @@ func (state *KaasModel) canSetApiserverToNil() bool {
 	return apiserver.Audit == nil && apiserver.Oidc == nil && apiserver.Params.IsNull()
 }
 
-func (r *kaasResource) waitUntilActive(ctx context.Context, kaas *kaas.Kaas, id int) (*kaas.Kaas, error) {
+func (r *kaasResource) waitUntilActive(ctx context.Context, kaas *kaas.Kaas, id int64) (*kaas.Kaas, error) {
 	for {
 		found, err := r.client.Kaas.GetKaas(kaas.Project.PublicCloudId, kaas.Project.ProjectId, id)
 		if err != nil {
@@ -462,9 +462,9 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	// Read API call logic
 	kaasObject, err := r.client.Kaas.GetKaas(
-		int(state.PublicCloudId.ValueInt64()),
-		int(state.PublicCloudProjectId.ValueInt64()),
-		int(state.Id.ValueInt64()),
+		state.PublicCloudId.ValueInt64(),
+		state.PublicCloudProjectId.ValueInt64(),
+		state.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -481,7 +481,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		resp.Diagnostics.AddWarning("could not fetch and set kubeconfig", err.Error())
 	}
 
-	apiserverParams, err := r.client.Kaas.GetApiserverParams(int(state.PublicCloudId.ValueInt64()), int(state.PublicCloudProjectId.ValueInt64()), kaasObject.Id)
+	apiserverParams, err := r.client.Kaas.GetApiserverParams(state.PublicCloudId.ValueInt64(), state.PublicCloudProjectId.ValueInt64(), kaasObject.Id)
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Could not get Oidc",
@@ -540,13 +540,13 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *kaasResource) prepareUpdateInput(state, data KaasModel, packID int) *kaas.Kaas {
+func (r *kaasResource) prepareUpdateInput(state, data KaasModel, packID int64) *kaas.Kaas {
 	input := &kaas.Kaas{
 		Project: kaas.KaasProject{
-			PublicCloudId: int(data.PublicCloudId.ValueInt64()),
-			ProjectId:     int(data.PublicCloudProjectId.ValueInt64()),
+			PublicCloudId: data.PublicCloudId.ValueInt64(),
+			ProjectId:     data.PublicCloudProjectId.ValueInt64(),
 		},
-		Id:                int(state.Id.ValueInt64()),
+		Id:                state.Id.ValueInt64(),
 		Name:              data.Name.ValueString(),
 		PackId:            packID,
 		Region:            state.Region.ValueString(),
@@ -619,9 +619,9 @@ func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 
 	// DeleteKaas API call logic
 	_, err := r.client.Kaas.DeleteKaas(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(data.Id.ValueInt64()),
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -700,7 +700,7 @@ func (r *kaasResource) getPackId(data KaasModel, diagnostic *diag.Diagnostics) (
 }
 
 func (model *KaasModel) fill(kaas *kaas.Kaas) {
-	model.Id = types.Int64Value(int64(kaas.Id))
+	model.Id = types.Int64Value(kaas.Id)
 	model.Region = types.StringValue(kaas.Region)
 	model.KubernetesVersion = types.StringValue(kaas.KubernetesVersion)
 	model.Name = types.StringValue(kaas.Name)

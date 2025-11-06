@@ -51,7 +51,7 @@ func (client *Client) FindPack(dbType string, name string) (*dbaas.DBaaSPack, er
 	return data[0], nil
 }
 
-func (client *Client) GetDBaaS(publicCloudId int, publicCloudProjectId int, dbaasId int) (*dbaas.DBaaS, error) {
+func (client *Client) GetDBaaS(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) (*dbaas.DBaaS, error) {
 	var result helpers.NormalizedApiResponse[*dbaas.DBaaS]
 
 	resp, err := client.resty.R().
@@ -116,7 +116,7 @@ func (client *Client) UpdateDBaaS(input *dbaas.DBaaS) (bool, error) {
 	return result.Data, nil
 }
 
-func (client *Client) DeleteDBaaS(publicCloudId int, publicCloudProjectId int, dbaasId int) (bool, error) {
+func (client *Client) DeleteDBaaS(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().
@@ -137,7 +137,7 @@ func (client *Client) DeleteDBaaS(publicCloudId int, publicCloudProjectId int, d
 	return result.Data, nil
 }
 
-func (client *Client) PatchIpFilters(publicCloudId int, publicCloudProjectId int, dbaasId int, filters dbaas.AllowedCIDRs) (bool, error) {
+func (client *Client) PatchIpFilters(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, filters dbaas.AllowedCIDRs) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().
@@ -159,7 +159,7 @@ func (client *Client) PatchIpFilters(publicCloudId int, publicCloudProjectId int
 	return result.Data, nil
 }
 
-func (client *Client) GetIpFilters(publicCloudId int, publicCloudProjectId int, dbaasId int) ([]string, error) {
+func (client *Client) GetIpFilters(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) ([]string, error) {
 	var result helpers.NormalizedApiResponse[[]string]
 
 	resp, err := client.resty.R().
@@ -180,7 +180,7 @@ func (client *Client) GetIpFilters(publicCloudId int, publicCloudProjectId int, 
 	return result.Data, nil
 }
 
-func (client *Client) CreateDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, backupSchedules *dbaas.DBaasBackupSchedule) (*dbaas.DBaasBackupScheduleCreateInfo, error) {
+func (client *Client) CreateDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, backupSchedules *dbaas.DBaasBackupSchedule) (*dbaas.DBaasBackupScheduleCreateInfo, error) {
 	var result helpers.NormalizedApiResponse[*dbaas.DBaasBackupScheduleCreateInfo]
 
 	resp, err := client.resty.R().
@@ -202,7 +202,7 @@ func (client *Client) CreateDBaasScheduleBackup(publicCloudId int, publicCloudPr
 	return result.Data, nil
 }
 
-func (client *Client) UpdateDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, id int, backupSchedules *dbaas.DBaasBackupSchedule) (bool, error) {
+func (client *Client) UpdateDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, id int64, backupSchedules *dbaas.DBaasBackupSchedule) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().
@@ -225,7 +225,7 @@ func (client *Client) UpdateDBaasScheduleBackup(publicCloudId int, publicCloudPr
 	return result.Data, nil
 }
 
-func (client *Client) GetDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, id int) (*dbaas.DBaasBackupSchedule, error) {
+func (client *Client) GetDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, id int64) (*dbaas.DBaasBackupSchedule, error) {
 	var result helpers.NormalizedApiResponse[*dbaas.DBaasBackupSchedule]
 
 	resp, err := client.resty.R().
@@ -247,7 +247,7 @@ func (client *Client) GetDBaasScheduleBackup(publicCloudId int, publicCloudProje
 	return result.Data, nil
 }
 
-func (client *Client) DeleteDBaasScheduleBackup(publicCloudId int, publicCloudProjectId int, dbaasId int, id int) (bool, error) {
+func (client *Client) DeleteDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, id int64) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().

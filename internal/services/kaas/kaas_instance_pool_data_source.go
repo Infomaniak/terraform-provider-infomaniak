@@ -78,11 +78,11 @@ func (d *kaasInstancePoolDataSource) Schema(ctx context.Context, _ datasource.Sc
 				Computed:    true,
 				Description: "The flavor name of the instance in this instance pool",
 			},
-			"min_instances": schema.Int32Attribute{
+			"min_instances": schema.Int64Attribute{
 				Computed:    true,
 				Description: "The minimum amount of instances in the instance pool",
 			},
-			"max_instances": schema.Int32Attribute{
+			"max_instances": schema.Int64Attribute{
 				Computed:    true,
 				Description: "The maximum amount of instances in the instance pool",
 			},
@@ -103,10 +103,10 @@ func (d *kaasInstancePoolDataSource) Read(ctx context.Context, req datasource.Re
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
 	obj, err := d.client.Kaas.GetInstancePool(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(data.KaasId.ValueInt64()),
-		int(data.Id.ValueInt64()),
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.KaasId.ValueInt64(),
+		data.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -116,11 +116,11 @@ func (d *kaasInstancePoolDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 
-	data.Id = types.Int64Value(int64(obj.Id))
+	data.Id = types.Int64Value(obj.Id)
 	data.Name = types.StringValue(obj.Name)
 	data.FlavorName = types.StringValue(obj.FlavorName)
-	data.MinInstances = types.Int32Value(obj.MinInstances)
-	data.MaxInstances = types.Int32Value(obj.MaxInstances)
+	data.MinInstances = types.Int64Value(obj.MinInstances)
+	data.MaxInstances = types.Int64Value(obj.MaxInstances)
 	labels, diags := types.MapValueFrom(ctx, types.StringType, obj.Labels)
 	resp.Diagnostics.Append(diags...)
 	data.Labels = labels
