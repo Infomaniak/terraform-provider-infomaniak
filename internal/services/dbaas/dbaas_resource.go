@@ -222,8 +222,11 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	allowedCIDRs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
-	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &allowedCIDRs, false)...)
+	cidrs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
+	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &cidrs, false)...)
+	allowedCIDRs := dbaas.AllowedCIDRs{
+		IpFilters: cidrs,
+	}
 	ok, err := r.client.DBaas.PatchIpFilters(
 		input.Project.PublicCloudId,
 		input.Project.ProjectId,
@@ -348,8 +351,11 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	allowedCIDRs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
-	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &allowedCIDRs, false)...)
+	cidrs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
+	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &cidrs, false)...)
+	allowedCIDRs := dbaas.AllowedCIDRs{
+		IpFilters: cidrs,
+	}
 	ok, err := r.client.DBaas.PatchIpFilters(
 		int(state.PublicCloudId.ValueInt64()),
 		int(state.PublicCloudProjectId.ValueInt64()),
