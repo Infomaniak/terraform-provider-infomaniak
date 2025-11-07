@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+
+    - name: Install Task
+      uses: arduino/setup-task@b91d5d2c96a56797b48ac1e0e89220bf64044611
     
     - name: Set up Go
       uses: actions/setup-go@v4
@@ -31,20 +34,8 @@ jobs:
           direct {}
         }' > $HOME/.terraformrc
 
-    - name: Install provider
-      run: make install
-
-    - name: Run acceptance unit tests and standard tests
-      run: make test-unit
-
-    - name: Generate reports
-      run: make generate-reports
-    
-    - name: Generate global coverage
-      run: make global-coverage
-  
-    - name: Generate cobertura report
-      run: make cobertura
+    - name: Testing pipeline
+      run: task
 
     - name: Upload test reports
       id: artifact-upload-step
@@ -55,9 +46,6 @@ jobs:
         path: |
           reports/
           !reports/*.tmp
-    
-    - name: Output artifact URL
-      run:  echo 'Artifact URL is ${{ steps.artifact-upload-step.outputs.artifact-url }}'
     
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
