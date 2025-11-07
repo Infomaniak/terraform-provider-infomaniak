@@ -83,3 +83,4 @@ jobs:
       with:
         message: |
           📦 [Download](${{ steps.artifact-upload-step.outputs.artifact-url }}) test reports to see details
+        comment-tag: test-reports
