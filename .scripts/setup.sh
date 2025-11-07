@@ -9,4 +9,4 @@ for dir in $LOG_DIRS; do
     touch "$dir/terraform.log"
 done
 
-mkdir -p "$REPORT_DIR"/{unit,acceptance,covcounters/merged}
+mkdir -p "$REPORT_DIR"/{deploy,unit,acceptance,covcounters/merged}

@@ -58,6 +58,15 @@ jobs:
     
     - name: Output artifact URL
       run:  echo 'Artifact URL is ${{ steps.artifact-upload-step.outputs.artifact-url }}'
+    
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: reports/deploy
+        destination_dir: pr-${{ github.event.pull_request.number }}
+        user_name: github-actions[bot]
+        user_email: github-actions[bot]@users.noreply.github.com
 
     - name: Cobertura pull request comment unit test
       if: github.event_name == 'pull_request'
@@ -82,5 +91,11 @@ jobs:
       uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b
       with:
         message: |
-          📦 [Download](${{ steps.artifact-upload-step.outputs.artifact-url }}) test reports to see details
+          ## 📊 Test Reports Available
+          
+          🔍 **Unit Test Results**: [View Detailed Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.pull_request.number }}/coverage_unit.html)
+          
+          🔍 **Acceptance Mocked Test Results**: [View Detailed Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.pull_request.number }}/coverage_mocked_acceptance.html)
+
+          📦 [Download archive](${{ steps.artifact-upload-step.outputs.artifact-url }}) test reports to see details
         comment-tag: test-reports
