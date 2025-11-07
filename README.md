@@ -2,7 +2,10 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/Infomaniak/terraform-provider-infomaniak)](https://goreportcard.com/report/github.com/Infomaniak/terraform-provider-infomaniak)
 [![License](https://img.shields.io/github/license/Infomaniak/terraform-provider-infomaniak)](LICENSE)
 [![Release](https://img.shields.io/github/release/Infomaniak/terraform-provider-infomaniak.svg)](https://github.com/Infomaniak/terraform-provider-infomaniak/releases)
-[![Terraform Registry](https://img.shields.io/badge/Terraform-Registry-blueviolet)](https://registry.terraform.io/providers/Infomaniak/infomaniak/latest/docs)
+[![Terraform Registry](https://img.shields.io/badge/Terraform-Registry-blueviolet?logo=terraform)](https://registry.terraform.io/providers/Infomaniak/infomaniak/latest/docs)
+[![OpenTofu Registry](https://img.shields.io/badge/OpenTofu-Registry-yellow?logo=opentofu)](https://search.opentofu.org/provider/infomaniak/infomaniak/latest)
+[![Coverage](https://img.shields.io/endpoint?url=https://infomaniak.github.io/terraform-provider-infomaniak/main/coverage_mocked_acceptance_badge.json)](https://infomaniak.github.io/terraform-provider-infomaniak/main/coverage_mocked_acceptance.html)
+
 
 # Infomaniak Terraform Provider
 
