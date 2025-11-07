@@ -64,7 +64,7 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: reports/deploy
-        destination_dir: pr-${{ github.event.pull_request.number }}
+        destination_dir: ${{ github.ref == 'refs/heads/main' && 'main' || format('pr-{0}', github.event.pull_request.number) }}
         user_name: github-actions[bot]
         user_email: github-actions[bot]@users.noreply.github.com
 
