@@ -12,6 +12,8 @@ if [[ -f "$COV_FILE_UNIT" ]]; then
     go tool cover -func="$COV_FILE_UNIT" > "$REPORT_DIR/unit/coverage_summary.txt"
     go tool cover -html="$COV_FILE_UNIT" -o "$REPORT_DIR/unit/coverage.html"
 
+    cp $REPORT_DIR/unit/coverage.html $REPORT_DIR/deploy/coverage_unit.html
+
     echo "Reports:"
     echo " - Summary: $REPORT_DIR/unit/coverage_summary.txt"
     echo " - HTML: $REPORT_DIR/unit/coverage.html"
@@ -26,6 +28,8 @@ if [[ -f "$COV_FILE_UNIT" ]]; then
     
     go tool cover -func="$COV_ACCEPTANCE_MOCKED" > "$REPORT_DIR/acceptance/coverage_summary.txt"
     go tool cover -html="$COV_ACCEPTANCE_MOCKED" -o "$REPORT_DIR/acceptance/coverage.html"
+
+    cp $REPORT_DIR/acceptance/coverage.html $REPORT_DIR/deploy/coverage_mocked_acceptance.html
 
     echo "Reports:"
     echo " - Summary: $REPORT_DIR/acceptance/coverage_summary.txt"
