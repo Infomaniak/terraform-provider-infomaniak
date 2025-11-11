@@ -140,10 +140,7 @@
 		</div>
 		<div id="content">
 		
-		<pre class="file" id="file0" style="display: none">// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
-package main
+		<pre class="file" id="file0" style="display: none">package main
 
 import (
         "context"
@@ -1307,7 +1304,7 @@ func init() <span class="cov10" title="295">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="285">{
+        if err == nil </span><span class="cov9" title="292">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1317,17 +1314,17 @@ func init() <span class="cov10" title="295">{
 
         // Try to get cache
         <span class="cov10" title="295">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="285">{
+        if err == nil </span><span class="cov9" title="292">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov4" title="10">{
+                if err != nil </span><span class="cov2" title="3">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="285">return</span>
+                <span class="cov9" title="292">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov4" title="10">_, err = os.Create(mockedApiStatePath)
+        <span class="cov2" title="3">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -1765,10 +1762,7 @@ func (instancePool *InstancePool) Key() string <span class="cov8" title="12">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
-package provider
+		<pre class="file" id="file13" style="display: none">package provider
 
 import (
         "context"
