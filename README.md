@@ -56,9 +56,7 @@ Two types of tests are available for the provider:
 - Unit tests: Test specific functions
 - Acceptance mocked tests: End-to-end tests using real Terraform files with mocked infrastructure calls
 
-Run tests using the [makefile](./makefile):
+Run tests using the [Taskfile.yml](./Taskfile.yml):
 ```bash
-make prepare-go
-make prepare-env
-make test-unit
+go tool task
 ```
