@@ -78,7 +78,7 @@ var _ = Describe("KaaS API Client", func() {
 			httpmock.ActivateNonDefault(client.resty.Client())
 			defer httpmock.DeactivateAndReset()
 
-			expectedResult := 12
+			expectedResult := int64(12)
 
 			httpmock.RegisterResponder("POST", TestEndpointKaases, httpmock.NewJsonResponderOrPanic(200, NewSuccessResponse(expectedResult)))
 

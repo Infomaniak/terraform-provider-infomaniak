@@ -7,10 +7,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -58,25 +54,7 @@ func (r *zoneResource) Configure(ctx context.Context, req resource.ConfigureRequ
 }
 
 func (r *zoneResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"fqdn": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The fqdn of the zone",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"id": schema.Int64Attribute{
-				Computed:            true,
-				MarkdownDescription: "A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.",
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
-				},
-			},
-		},
-		MarkdownDescription: "The Zone resource allows the user to manage a zone for a domain project",
-	}
+	resp.Schema = getZoneResourceSchema()
 }
 
 func (r *zoneResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

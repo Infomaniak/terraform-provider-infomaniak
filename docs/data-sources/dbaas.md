@@ -42,6 +42,7 @@ data "infomaniak_dbaas" "db-0" {
 ### Read-Only
 
 - `region` (String) Region where the instance live.
+- `kube_identifier` (String) A computed value that gives the kubernetes identifier of the DbaaS
 - `pack_name` (String) The name of the pack corresponding the DBaaS project.
 - `type` (String) The type of the database to use.
 - `version` (String) The version of the database to use.

@@ -137,7 +137,7 @@ func TestKaasResource_Plan(t *testing.T) {
 }
 
 func TestKaasResource_Import(t *testing.T) {
-	var resourcePublicCloudId, resourcePublicCloudProjectId, resourceId int
+	var resourcePublicCloudId, resourcePublicCloudProjectId, resourceId int64
 
 	client := mockKaas.New()
 	kaasId, err := client.CreateKaas(&kaas.Kaas{

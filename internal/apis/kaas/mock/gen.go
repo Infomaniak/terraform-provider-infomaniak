@@ -7,8 +7,8 @@ import (
 	"math/rand/v2"
 )
 
-func genId() int {
-	return rand.Int()
+func genId() int64 {
+	return rand.Int64()
 }
 
 func genKubeconfig() string {

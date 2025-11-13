@@ -6,7 +6,6 @@ import (
 	"terraform-provider-infomaniak/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -47,53 +46,7 @@ func (d *kaasInstancePoolDataSource) Configure(_ context.Context, req datasource
 
 // Schema defines the schema for the data source.
 func (d *kaasInstancePoolDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"public_cloud_id": schema.Int64Attribute{
-				Required:    true,
-				Description: "The id of the public cloud project where KaaS is installed",
-			},
-			"public_cloud_project_id": schema.Int64Attribute{
-				Required:    true,
-				Description: "The id of the public cloud project where KaaS is installed",
-			},
-			"kaas_id": schema.Int64Attribute{
-				Required:    true,
-				Description: "The id of the kaas project.",
-			},
-			"id": schema.Int64Attribute{
-				Required:    true,
-				Description: "A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.",
-			},
-			"name": schema.StringAttribute{
-				Computed:    true,
-				Description: "The name of this instance pool",
-			},
-			"availability_zone": schema.StringAttribute{
-				Computed:            true,
-				Description:         "The availability zone for the instances in the pool",
-				MarkdownDescription: "The availability zone for the instances in the pool",
-			},
-			"flavor_name": schema.StringAttribute{
-				Computed:    true,
-				Description: "The flavor name of the instance in this instance pool",
-			},
-			"min_instances": schema.Int32Attribute{
-				Computed:    true,
-				Description: "The minimum amount of instances in the instance pool",
-			},
-			"max_instances": schema.Int32Attribute{
-				Computed:    true,
-				Description: "The maximum amount of instances in the instance pool",
-			},
-			"labels": schema.MapAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
-				Description: "Kubernetes node labels",
-			},
-		},
-		MarkdownDescription: "The KaaS Instance Pool data source retrieves information about a KaaS instance pool.",
-	}
+	resp.Schema = getKaasInstancePoolDataSourceSchema()
 }
 
 // Read refreshes the Terraform state with the latest data.
@@ -103,10 +56,10 @@ func (d *kaasInstancePoolDataSource) Read(ctx context.Context, req datasource.Re
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
 	obj, err := d.client.Kaas.GetInstancePool(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(data.KaasId.ValueInt64()),
-		int(data.Id.ValueInt64()),
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.KaasId.ValueInt64(),
+		data.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -116,11 +69,11 @@ func (d *kaasInstancePoolDataSource) Read(ctx context.Context, req datasource.Re
 		return
 	}
 
-	data.Id = types.Int64Value(int64(obj.Id))
+	data.Id = types.Int64Value(obj.Id)
 	data.Name = types.StringValue(obj.Name)
 	data.FlavorName = types.StringValue(obj.FlavorName)
-	data.MinInstances = types.Int32Value(obj.MinInstances)
-	data.MaxInstances = types.Int32Value(obj.MaxInstances)
+	data.MinInstances = types.Int64Value(obj.MinInstances)
+	data.MaxInstances = types.Int64Value(obj.MaxInstances)
 	labels, diags := types.MapValueFrom(ctx, types.StringType, obj.Labels)
 	resp.Diagnostics.Append(diags...)
 	data.Labels = labels

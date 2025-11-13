@@ -7,7 +7,7 @@ import (
 )
 
 type KaasPack struct {
-	Id          int    `json:"kaas_pack_id,omitempty"`
+	Id          int64  `json:"kaas_pack_id,omitempty"`
 	Name        string `json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
 }
@@ -57,9 +57,9 @@ type ApiServerParams struct {
 
 type Kaas struct {
 	Name    string      `json:"name,omitempty"`
-	Id      int         `json:"kaas_id,omitempty"`
+	Id      int64       `json:"kaas_id,omitempty"`
 	Project KaasProject `json:"project,omitzero"`
-	PackId  int         `json:"kaas_pack_id,omitempty"`
+	PackId  int64       `json:"kaas_pack_id,omitempty"`
 	Pack    *KaasPack   `json:"pack,omitempty"`
 
 	Region            string `json:"region,omitempty"`
@@ -72,24 +72,24 @@ func (kaas *Kaas) Key() string {
 }
 
 type KaasProject struct {
-	PublicCloudId int `json:"public_cloud_id,omitempty"`
-	ProjectId     int `json:"id,omitempty"`
+	PublicCloudId int64 `json:"public_cloud_id,omitempty"`
+	ProjectId     int64 `json:"id,omitempty"`
 }
 
 type InstancePool struct {
-	KaasId int `json:"kaas_id,omitempty"`
-	Id     int `json:"instance_pool_id,omitempty"`
+	KaasId int64 `json:"kaas_id,omitempty"`
+	Id     int64 `json:"instance_pool_id,omitempty"`
 
 	Name             string            `json:"name,omitempty"`
 	FlavorName       string            `json:"flavor,omitempty"`
 	AvailabilityZone string            `json:"availability_zone,omitempty"`
-	MinInstances     int32             `json:"minimum_instances,omitempty"`
-	MaxInstances     int32             `json:"maximum_instances,omitempty"`
+	MinInstances     int64             `json:"minimum_instances,omitempty"`
+	MaxInstances     int64             `json:"maximum_instances,omitempty"`
 	Status           string            `json:"status,omitempty"`
 	Labels           map[string]string `json:"labels,omitempty"`
 
-	TargetInstances    int32 `json:"target_instances,omitempty"`
-	AvailableInstances int32 `json:"available_instances,omitempty"`
+	TargetInstances    int64 `json:"target_instances,omitempty"`
+	AvailableInstances int64 `json:"available_instances,omitempty"`
 
 	ErrorMessages []string `json:"error_messages,omitempty"`
 }
