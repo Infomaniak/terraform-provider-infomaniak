@@ -10,4 +10,5 @@ func Register() {
 	registry.RegisterDataSource(NewKaasInstancePoolDataSource)
 	registry.RegisterDataSource(NewKaasInstancePoolFlavorDataSource)
 	registry.RegisterDataSource(NewKaasRegionsDataSource)
+	registry.RegisterDataSource(NewKaasVersionsDataSource)
 }

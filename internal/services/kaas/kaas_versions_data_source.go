@@ -11,25 +11,25 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ datasource.DataSource              = &kaasRegionsDataSource{}
-	_ datasource.DataSourceWithConfigure = &kaasRegionsDataSource{}
+	_ datasource.DataSource              = &kaasVersionsDataSource{}
+	_ datasource.DataSourceWithConfigure = &kaasVersionsDataSource{}
 )
 
-type kaasRegionsDataSource struct {
+type kaasVersionsDataSource struct {
 	client *apis.Client
 }
 
-type KaasRegionModel struct {
+type KaasVersionsModel struct {
 	Items types.List `tfsdk:"items"`
 }
 
 // NewDBaasDataSource is a helper function to simplify the provider implementation.
-func NewKaasRegionsDataSource() datasource.DataSource {
-	return &kaasRegionsDataSource{}
+func NewKaasVersionsDataSource() datasource.DataSource {
+	return &kaasVersionsDataSource{}
 }
 
 // Configure adds the provider configured client to the data source.
-func (d *kaasRegionsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *kaasVersionsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	// Add a nil check when handling ProviderData because Terraform
 	// sets that data after it calls the ConfigureProvider RPC.
 	if req.ProviderData == nil {
@@ -49,21 +49,21 @@ func (d *kaasRegionsDataSource) Configure(_ context.Context, req datasource.Conf
 }
 
 // Schema defines the schema for the data source.
-func (d *kaasRegionsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = getKaasRegionDataSourceSchema()
+func (d *kaasVersionsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = getKaasVersionsDataSourceSchema()
 }
 
 // Read refreshes the Terraform state with the latest data.
-func (d *kaasRegionsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data KaasRegionModel
+func (d *kaasVersionsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data KaasVersionsModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
-	obj, err := d.client.Kaas.GetRegions()
+	obj, err := d.client.Kaas.GetVersions()
 
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Unable to find KaaS regions",
+			"Unable to get KaaS versions",
 			err.Error(),
 		)
 		return
@@ -86,6 +86,6 @@ func (d *kaasRegionsDataSource) Read(ctx context.Context, req datasource.ReadReq
 }
 
 // Metadata returns the data source type name.
-func (d *kaasRegionsDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_kaas_regions"
+func (d *kaasVersionsDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_kaas_versions"
 }
