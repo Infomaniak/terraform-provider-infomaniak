@@ -2,7 +2,6 @@ package kaas
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
@@ -25,12 +24,7 @@ func getKaasInstancePoolFlavorDataSourceSchema() schema.Schema {
 				Optional:            true,
 				MarkdownDescription: "The name of the KaaS instance pool flavor",
 				Validators: []validator.String{
-					NameOrResources(
-						path.MatchRoot("name"),
-						path.MatchRoot("cpu"),
-						path.MatchRoot("ram"),
-						path.MatchRoot("storage"),
-					),
+					NameOrResourcesValidator{},
 				},
 			},
 			"cpu": schema.Int64Attribute{

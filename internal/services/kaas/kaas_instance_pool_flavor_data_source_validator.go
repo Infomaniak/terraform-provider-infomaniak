@@ -3,7 +3,6 @@ package kaas
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
@@ -39,8 +38,4 @@ func (v NameOrResourcesValidator) ValidateString(ctx context.Context, req valida
 			v.Description(ctx),
 		)
 	}
-}
-
-func NameOrResources(namePath path.Expression, resourcePaths ...path.Expression) validator.String {
-	return NameOrResourcesValidator{}
 }
