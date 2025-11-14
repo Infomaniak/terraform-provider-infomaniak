@@ -46,6 +46,24 @@ func (client *Client) GetPacks() ([]*kaas.KaasPack, error) {
 	return result.Data, nil
 }
 
+func (client *Client) GetRegions() ([]string, error) {
+	var result helpers.NormalizedApiResponse[[]string]
+
+	resp, err := client.resty.R().
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointRegions)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	return result.Data, nil
+}
+
 func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, params kaas.KaasFlavorLookupParameters) (*kaas.KaasFlavor, error) {
 	var result helpers.NormalizedApiResponse[[]*kaas.KaasFlavor]
 
@@ -54,7 +72,6 @@ func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64,
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetQueryParam("region", region).
-		SetDebug(true).
 		SetError(&result)
 
 	if params.Name != nil {

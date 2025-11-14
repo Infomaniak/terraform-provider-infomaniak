@@ -2,6 +2,7 @@ package kaas
 
 type Api interface {
 	GetPacks() ([]*KaasPack, error)
+	GetRegions() ([]string, error)
 	GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, params KaasFlavorLookupParameters) (*KaasFlavor, error)
 	GetVersions() ([]string, error)
 

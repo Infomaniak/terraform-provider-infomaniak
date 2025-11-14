@@ -1,8 +1,8 @@
 package implementation
 
 var (
-	EndpointPacks = "/1/public_clouds/kaas/packs"
-
+	EndpointPacks    = "/1/public_clouds/kaas/packs"
+	EndpointRegions  = "/1/public_clouds/kaas/regions"
 	EndpointVersions = "/1/public_clouds/kaas/versions"
 
 	EndpointKaases         = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/kaas"

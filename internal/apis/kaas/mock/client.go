@@ -35,6 +35,10 @@ func (c *Client) GetPacks() ([]*kaas.KaasPack, error) {
 	}, nil
 }
 
+func (c *Client) GetRegions() ([]string, error) {
+	return []string{"dc4-a"}, nil
+}
+
 func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, params kaas.KaasFlavorLookupParameters) (*kaas.KaasFlavor, error) {
 	if params.Name != nil && *params.Name == "flavor_that_doesnt_exist" {
 		return nil, fmt.Errorf("flavor not found")
