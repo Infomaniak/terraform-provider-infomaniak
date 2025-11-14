@@ -4504,7 +4504,6 @@ func (d *kaasInstancePoolFlavorDataSource) Metadata(_ context.Context, req datas
 
 import (
         "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-        "github.com/hashicorp/terraform-plugin-framework/path"
         "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
@@ -4527,12 +4526,7 @@ func getKaasInstancePoolFlavorDataSourceSchema() schema.Schema <span class="cov0
                                 Optional:            true,
                                 MarkdownDescription: "The name of the KaaS instance pool flavor",
                                 Validators: []validator.String{
-                                        NameOrResources(
-                                                path.MatchRoot("name"),
-                                                path.MatchRoot("cpu"),
-                                                path.MatchRoot("ram"),
-                                                path.MatchRoot("storage"),
-                                        ),
+                                        NameOrResourcesValidator{},
                                 },
                         },
                         "cpu": schema.Int64Attribute{
@@ -4585,7 +4579,6 @@ func getKaasInstancePoolFlavorDataSourceSchema() schema.Schema <span class="cov0
 import (
         "context"
 
-        "github.com/hashicorp/terraform-plugin-framework/path"
         "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
@@ -4622,10 +4615,6 @@ func (v NameOrResourcesValidator) ValidateString(ctx context.Context, req valida
                 )
         }</span>
 }
-
-func NameOrResources(namePath path.Expression, resourcePaths ...path.Expression) validator.String <span class="cov0" title="0">{
-        return NameOrResourcesValidator{}
-}</span>
 </pre>
 		
 		<pre class="file" id="file30" style="display: none">package kaas
