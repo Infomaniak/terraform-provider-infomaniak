@@ -75,7 +75,7 @@
 				
 				<option value="file9">terraform-provider-infomaniak/internal/apis/kaas/mock/cache.go (60.6%)</option>
 				
-				<option value="file10">terraform-provider-infomaniak/internal/apis/kaas/mock/client.go (55.7%)</option>
+				<option value="file10">terraform-provider-infomaniak/internal/apis/kaas/mock/client.go (53.0%)</option>
 				
 				<option value="file11">terraform-provider-infomaniak/internal/apis/kaas/mock/gen.go (81.8%)</option>
 				
@@ -941,7 +941,7 @@ func (client *Client) GetPacks() ([]*kaas.KaasPack, error) <span class="cov0" ti
         <span class="cov0" title="0">return result.Data, nil</span>
 }
 
-func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, name *string, cpu *int64, ram *int64, storage *int64, memory_optimized *bool, iops_optimized *bool, gpu_optimized *bool) (*kaas.KaasFlavor, error) <span class="cov0" title="0">{
+func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, params kaas.KaasFlavorLookupParameters) (*kaas.KaasFlavor, error) <span class="cov0" title="0">{
         var result helpers.NormalizedApiResponse[[]*kaas.KaasFlavor]
 
         builder := client.resty.R().
@@ -952,32 +952,32 @@ func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64,
                 SetDebug(true).
                 SetError(&amp;result)
 
-        if name != nil </span><span class="cov0" title="0">{
-                builder.SetQueryParam("filter[search]", *name)
+        if params.Name != nil </span><span class="cov0" title="0">{
+                builder.SetQueryParam("filter[search]", *params.Name)
         }</span>
 
-        <span class="cov0" title="0">if cpu != nil </span><span class="cov0" title="0">{
-                builder.SetQueryParam("filter[cpu]", strconv.FormatInt(*cpu, 10))
+        <span class="cov0" title="0">if params.Cpu != nil </span><span class="cov0" title="0">{
+                builder.SetQueryParam("filter[cpu]", strconv.FormatInt(*params.Cpu, 10))
         }</span>
 
-        <span class="cov0" title="0">if ram != nil </span><span class="cov0" title="0">{
-                builder.SetQueryParam("filter[ram]", strconv.FormatInt(*ram, 10))
+        <span class="cov0" title="0">if params.Ram != nil </span><span class="cov0" title="0">{
+                builder.SetQueryParam("filter[ram]", strconv.FormatInt(*params.Ram, 10))
         }</span>
 
-        <span class="cov0" title="0">if storage != nil </span><span class="cov0" title="0">{
-                builder.SetQueryParam("filter[storage]", strconv.FormatInt(*storage, 10))
+        <span class="cov0" title="0">if params.Storage != nil </span><span class="cov0" title="0">{
+                builder.SetQueryParam("filter[storage]", strconv.FormatInt(*params.Storage, 10))
         }</span>
 
-        <span class="cov0" title="0">if memory_optimized != nil </span><span class="cov0" title="0">{
-                builder.SetQueryParam("filter[memory_optimized]", strconv.FormatBool(*memory_optimized))
+        <span class="cov0" title="0">if params.IsMemoryOptimized != nil </span><span class="cov0" title="0">{
+                builder.SetQueryParam("filter[memory_optimized]", strconv.FormatBool(*params.IsMemoryOptimized))
         }</span>
 
-        <span class="cov0" title="0">if iops_optimized != nil </span><span class="cov0" title="0">{
-                builder.SetQueryParam("filter[iops_optimized]", strconv.FormatBool(*iops_optimized))
+        <span class="cov0" title="0">if params.IsIopsOptimized != nil </span><span class="cov0" title="0">{
+                builder.SetQueryParam("filter[iops_optimized]", strconv.FormatBool(*params.IsIopsOptimized))
         }</span>
 
-        <span class="cov0" title="0">if gpu_optimized != nil </span><span class="cov0" title="0">{
-                builder.SetQueryParam("filter[gpu_optimized]", strconv.FormatBool(*gpu_optimized))
+        <span class="cov0" title="0">if params.IsGpuOptimized != nil </span><span class="cov0" title="0">{
+                builder.SetQueryParam("filter[gpu_optimized]", strconv.FormatBool(*params.IsGpuOptimized))
         }</span>
 
         <span class="cov0" title="0">resp, err := builder.Get(EndpointKaasFlavors)
@@ -1453,59 +1453,51 @@ func (c *Client) GetPacks() ([]*kaas.KaasPack, error) <span class="cov6" title="
         }, nil
 }</span>
 
-func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, name *string, cpu *int64, ram *int64, storage *int64, memory_optimized *bool, iops_optimized *bool, gpu_optimized *bool) (*kaas.KaasFlavor, error) <span class="cov4" title="7">{
-        if name != nil &amp;&amp; *name == "flavor_that_doesnt_exist" </span><span class="cov1" title="1">{
+func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, params kaas.KaasFlavorLookupParameters) (*kaas.KaasFlavor, error) <span class="cov4" title="7">{
+        if params.Name != nil &amp;&amp; *params.Name == "flavor_that_doesnt_exist" </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("flavor not found")
         }</span>
 
         <span class="cov3" title="6">flavor := &amp;kaas.KaasFlavor{
-                IsAvailable: true,
+                Name:              "a4-ram8-disk20-perf1",
+                Cpu:               4,
+                Ram:               8,
+                Storage:           20,
+                IsMemoryOptimized: false,
+                IsIopsOptimized:   false,
+                IsGpuOptimized:    false,
+                IsAvailable:       true,
                 Rates: &amp;kaas.PricingModel{
                         HourlyExcludingTaxes: 0.01848,
                         HourlyIncludingTaxes: 0.019972,
                 },
         }
 
-        if name != nil </span><span class="cov2" title="3">{
-                flavor.Name = *name
-        }</span> else<span class="cov2" title="3"> {
-                flavor.Name = "a4-ram8-disk20-perf1"
+        if params.Name != nil </span><span class="cov2" title="3">{
+                flavor.Name = *params.Name
         }</span>
 
-        <span class="cov3" title="6">if cpu != nil </span><span class="cov2" title="3">{
-                flavor.Cpu = *cpu
-        }</span> else<span class="cov2" title="3"> {
-                flavor.Cpu = 4
+        <span class="cov3" title="6">if params.Cpu != nil </span><span class="cov2" title="3">{
+                flavor.Cpu = *params.Ram
         }</span>
 
-        <span class="cov3" title="6">if ram != nil </span><span class="cov2" title="3">{
-                flavor.Ram = *ram
-        }</span> else<span class="cov2" title="3"> {
-                flavor.Ram = 8
+        <span class="cov3" title="6">if params.Ram != nil </span><span class="cov2" title="3">{
+                flavor.Ram = *params.Ram
         }</span>
 
-        <span class="cov3" title="6">if storage != nil </span><span class="cov2" title="3">{
-                flavor.Storage = *storage
-        }</span> else<span class="cov2" title="3"> {
-                flavor.Storage = 20
+        <span class="cov3" title="6">if params.Storage != nil </span><span class="cov2" title="3">{
+                flavor.Storage = *params.Storage
         }</span>
 
-        <span class="cov3" title="6">if memory_optimized != nil </span><span class="cov0" title="0">{
-                flavor.IsMemoryOptimized = *memory_optimized
-        }</span> else<span class="cov3" title="6"> {
-                flavor.IsMemoryOptimized = false
+        <span class="cov3" title="6">if params.IsMemoryOptimized != nil </span><span class="cov0" title="0">{
+                flavor.IsMemoryOptimized = *params.IsMemoryOptimized
         }</span>
 
-        <span class="cov3" title="6">if iops_optimized != nil </span><span class="cov2" title="3">{
-                flavor.IsIopsOptimized = *iops_optimized
-        }</span> else<span class="cov2" title="3"> {
-                flavor.IsIopsOptimized = false
+        <span class="cov3" title="6">if params.IsIopsOptimized != nil </span><span class="cov2" title="3">{
+                flavor.IsIopsOptimized = *params.IsIopsOptimized
         }</span>
-
-        <span class="cov3" title="6">if gpu_optimized != nil </span><span class="cov0" title="0">{
-                flavor.IsGpuOptimized = *gpu_optimized
-        }</span> else<span class="cov3" title="6"> {
-                flavor.IsGpuOptimized = false
+        <span class="cov3" title="6">if params.IsGpuOptimized != nil </span><span class="cov0" title="0">{
+                flavor.IsGpuOptimized = *params.IsGpuOptimized
         }</span>
 
         <span class="cov3" title="6">return flavor, nil</span>
@@ -1803,6 +1795,16 @@ type KaasPack struct {
         Id          int    `json:"kaas_pack_id,omitempty"`
         Name        string `json:"name,omitempty"`
         Description string `json:"description,omitempty"`
+}
+
+type KaasFlavorLookupParameters struct {
+        Name              *string
+        Cpu               *int64
+        Ram               *int64
+        Storage           *int64
+        IsMemoryOptimized *bool
+        IsIopsOptimized   *bool
+        IsGpuOptimized    *bool
 }
 
 type KaasFlavor struct {
@@ -4438,6 +4440,7 @@ func (d *kaasInstancePoolDataSource) Metadata(_ context.Context, req datasource.
 import (
         "context"
         "terraform-provider-infomaniak/internal/apis"
+        "terraform-provider-infomaniak/internal/apis/kaas"
         "terraform-provider-infomaniak/internal/provider"
 
         "github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -4514,13 +4517,15 @@ func (d *kaasInstancePoolFlavorDataSource) Read(ctx context.Context, req datasou
                 data.PublicCloudId.ValueInt64(),
                 data.PublicCloudProjectId.ValueInt64(),
                 data.Region.ValueString(),
-                data.Name.ValueStringPointer(),
-                data.Cpu.ValueInt64Pointer(),
-                data.Ram.ValueInt64Pointer(),
-                data.Storage.ValueInt64Pointer(),
-                data.IsMemoryOptimized.ValueBoolPointer(),
-                data.IsIopsOptimized.ValueBoolPointer(),
-                data.IsGpuOptimized.ValueBoolPointer(),
+                kaas.KaasFlavorLookupParameters{
+                        Name:              data.Name.ValueStringPointer(),
+                        Cpu:               data.Cpu.ValueInt64Pointer(),
+                        Ram:               data.Ram.ValueInt64Pointer(),
+                        Storage:           data.Storage.ValueInt64Pointer(),
+                        IsMemoryOptimized: data.IsMemoryOptimized.ValueBoolPointer(),
+                        IsIopsOptimized:   data.IsIopsOptimized.ValueBoolPointer(),
+                        IsGpuOptimized:    data.IsGpuOptimized.ValueBoolPointer(),
+                },
         )
 
         if err != nil </span><span class="cov1" title="1">{
