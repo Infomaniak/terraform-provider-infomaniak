@@ -69,7 +69,7 @@
 				
 				<option value="file6">terraform-provider-infomaniak/internal/apis/helpers/user_agent.go (0.0%)</option>
 				
-				<option value="file7">terraform-provider-infomaniak/internal/apis/kaas/implementation/client.go (15.3%)</option>
+				<option value="file7">terraform-provider-infomaniak/internal/apis/kaas/implementation/client.go (14.5%)</option>
 				
 				<option value="file8">terraform-provider-infomaniak/internal/apis/kaas/mock/cache.go (0.0%)</option>
 				
@@ -117,15 +117,19 @@
 				
 				<option value="file30">terraform-provider-infomaniak/internal/services/kaas/kaas_instance_pool_resource.go (0.0%)</option>
 				
-				<option value="file31">terraform-provider-infomaniak/internal/services/kaas/kaas_resource.go (0.0%)</option>
+				<option value="file31">terraform-provider-infomaniak/internal/services/kaas/kaas_regions_data_source.go (0.0%)</option>
 				
-				<option value="file32">terraform-provider-infomaniak/internal/services/kaas/register.go (100.0%)</option>
+				<option value="file32">terraform-provider-infomaniak/internal/services/kaas/kaas_regions_data_source_schema.go (0.0%)</option>
 				
-				<option value="file33">terraform-provider-infomaniak/internal/services/scopes/scopes.go (0.0%)</option>
+				<option value="file33">terraform-provider-infomaniak/internal/services/kaas/kaas_resource.go (0.0%)</option>
 				
-				<option value="file34">terraform-provider-infomaniak/internal/test/testing.go (0.0%)</option>
+				<option value="file34">terraform-provider-infomaniak/internal/services/kaas/register.go (100.0%)</option>
 				
-				<option value="file35">terraform-provider-infomaniak/main.go (0.0%)</option>
+				<option value="file35">terraform-provider-infomaniak/internal/services/scopes/scopes.go (0.0%)</option>
+				
+				<option value="file36">terraform-provider-infomaniak/internal/test/testing.go (0.0%)</option>
+				
+				<option value="file37">terraform-provider-infomaniak/main.go (0.0%)</option>
 				
 				</select>
 			</div>
@@ -887,6 +891,24 @@ func (client *Client) GetPacks() ([]*kaas.KaasPack, error) <span class="cov0" ti
         <span class="cov0" title="0">return result.Data, nil</span>
 }
 
+func (client *Client) GetRegions() ([]string, error) <span class="cov0" title="0">{
+        var result helpers.NormalizedApiResponse[[]string]
+
+        resp, err := client.resty.R().
+                SetResult(&amp;result).
+                SetError(&amp;result).
+                Get(EndpointRegions)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">if resp.IsError() </span><span class="cov0" title="0">{
+                return nil, result.Error
+        }</span>
+
+        <span class="cov0" title="0">return result.Data, nil</span>
+}
+
 func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, params kaas.KaasFlavorLookupParameters) (*kaas.KaasFlavor, error) <span class="cov0" title="0">{
         var result helpers.NormalizedApiResponse[[]*kaas.KaasFlavor]
 
@@ -895,7 +917,6 @@ func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64,
                 SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
                 SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
                 SetQueryParam("region", region).
-                SetDebug(true).
                 SetError(&amp;result)
 
         if params.Name != nil </span><span class="cov0" title="0">{
@@ -1397,6 +1418,10 @@ func (c *Client) GetPacks() ([]*kaas.KaasPack, error) <span class="cov0" title="
                         Description: "Pro Cluster",
                 },
         }, nil
+}</span>
+
+func (c *Client) GetRegions() ([]string, error) <span class="cov0" title="0">{
+        return []string{"dc4-a"}, nil
 }</span>
 
 func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, params kaas.KaasFlavorLookupParameters) (*kaas.KaasFlavor, error) <span class="cov0" title="0">{
@@ -5070,6 +5095,120 @@ func (model *KaasInstancePoolModel) fill(instancePool *kaas.InstancePool) <span 
 
 import (
         "context"
+        "terraform-provider-infomaniak/internal/apis"
+        "terraform-provider-infomaniak/internal/provider"
+
+        "github.com/hashicorp/terraform-plugin-framework/datasource"
+        "github.com/hashicorp/terraform-plugin-framework/types"
+)
+
+// Ensure the implementation satisfies the expected interfaces.
+var (
+        _ datasource.DataSource              = &amp;kaasRegionsDataSource{}
+        _ datasource.DataSourceWithConfigure = &amp;kaasRegionsDataSource{}
+)
+
+type kaasRegionsDataSource struct {
+        client *apis.Client
+}
+
+type KaasRegionModel struct {
+        Items types.List `tfsdk:"items"`
+}
+
+// NewDBaasDataSource is a helper function to simplify the provider implementation.
+func NewKaasRegionsDataSource() datasource.DataSource <span class="cov0" title="0">{
+        return &amp;kaasRegionsDataSource{}
+}</span>
+
+// Configure adds the provider configured client to the data source.
+func (d *kaasRegionsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) <span class="cov0" title="0">{
+        // Add a nil check when handling ProviderData because Terraform
+        // sets that data after it calls the ConfigureProvider RPC.
+        if req.ProviderData == nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov0" title="0">client, err := provider.GetApiClient(req.ProviderData)
+        if err != nil </span><span class="cov0" title="0">{
+                resp.Diagnostics.AddError(
+                        "Unexpected Data Source Configure Type",
+                        err.Error(),
+                )
+                return
+        }</span>
+
+        <span class="cov0" title="0">d.client = client</span>
+}
+
+// Schema defines the schema for the data source.
+func (d *kaasRegionsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov0" title="0">{
+        resp.Schema = getKaasRegionDataSourceSchema()
+}</span>
+
+// Read refreshes the Terraform state with the latest data.
+func (d *kaasRegionsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) <span class="cov0" title="0">{
+        var data KaasRegionModel
+
+        resp.Diagnostics.Append(req.Config.Get(ctx, &amp;data)...)
+
+        obj, err := d.client.Kaas.GetRegions()
+
+        if err != nil </span><span class="cov0" title="0">{
+                resp.Diagnostics.AddError(
+                        "Unable to find KaaS instance pool flavor",
+                        err.Error(),
+                )
+                return
+        }</span>
+
+        <span class="cov0" title="0">items, diags := types.ListValueFrom(ctx, types.StringType, obj)
+        resp.Diagnostics.Append(diags...)
+        if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov0" title="0">data.Items = items
+
+        // Set state
+        diags = resp.State.Set(ctx, &amp;data)
+        resp.Diagnostics.Append(diags...)
+        if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
+                return
+        }</span>
+}
+
+// Metadata returns the data source type name.
+func (d *kaasRegionsDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) <span class="cov0" title="0">{
+        resp.TypeName = req.ProviderTypeName + "_kaas_regions"
+}</span>
+</pre>
+		
+		<pre class="file" id="file32" style="display: none">package kaas
+
+import (
+        "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+        "github.com/hashicorp/terraform-plugin-framework/types"
+)
+
+func getKaasRegionDataSourceSchema() schema.Schema <span class="cov0" title="0">{
+        return schema.Schema{
+                Attributes: map[string]schema.Attribute{
+                        "items": schema.ListAttribute{
+                                Computed:    true,
+                                Description: "A list of every available regions",
+                                ElementType: types.StringType,
+                        },
+                },
+                MarkdownDescription: "The kaas region data source allows the user to get all available regions.",
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file33" style="display: none">package kaas
+
+import (
+        "context"
         "errors"
         "fmt"
         "strconv"
@@ -5776,7 +5915,7 @@ func (model *KaasModel) fill(kaas *kaas.Kaas) <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file32" style="display: none">package kaas
+		<pre class="file" id="file34" style="display: none">package kaas
 
 import "terraform-provider-infomaniak/internal/provider/registry"
 
@@ -5787,10 +5926,11 @@ func Register() <span class="cov8" title="1">{
         registry.RegisterDataSource(NewKaasDataSource)
         registry.RegisterDataSource(NewKaasInstancePoolDataSource)
         registry.RegisterDataSource(NewKaasInstancePoolFlavorDataSource)
+        registry.RegisterDataSource(NewKaasRegionsDataSource)
 }</span>
 </pre>
 		
-		<pre class="file" id="file33" style="display: none">package scopes
+		<pre class="file" id="file35" style="display: none">package scopes
 
 import (
         "maps"
@@ -5823,7 +5963,7 @@ func (s *Scope) Build() map[string]schema.Attribute <span class="cov0" title="0"
 }</span>
 </pre>
 		
-		<pre class="file" id="file34" style="display: none">package test
+		<pre class="file" id="file36" style="display: none">package test
 
 import (
         "fmt"
@@ -5888,7 +6028,7 @@ func TestCheckGetFromState(name string, key string, out *string) func(s *terrafo
 }
 </pre>
 		
-		<pre class="file" id="file35" style="display: none">package main
+		<pre class="file" id="file37" style="display: none">package main
 
 import (
         "context"
