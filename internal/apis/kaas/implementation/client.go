@@ -2,6 +2,8 @@ package implementation
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"terraform-provider-infomaniak/internal/apis/helpers"
 	"terraform-provider-infomaniak/internal/apis/kaas"
 
@@ -42,6 +44,70 @@ func (client *Client) GetPacks() ([]*kaas.KaasPack, error) {
 	}
 
 	return result.Data, nil
+}
+
+func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, name *string, cpu *int64, ram *int64, storage *int64, memory_optimized *bool, iops_optimized *bool, gpu_optimized *bool) (*kaas.KaasFlavor, error) {
+	var result helpers.NormalizedApiResponse[[]*kaas.KaasFlavor]
+
+	builder := client.resty.R().
+		SetResult(&result).
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
+		SetQueryParam("region", region).
+		SetDebug(true).
+		SetError(&result)
+
+	if name != nil {
+		builder.SetQueryParam("filter[search]", *name)
+	}
+
+	if cpu != nil {
+		builder.SetQueryParam("filter[cpu]", strconv.FormatInt(*cpu, 10))
+	}
+
+	if ram != nil {
+		builder.SetQueryParam("filter[ram]", strconv.FormatInt(*ram, 10))
+	}
+
+	if storage != nil {
+		builder.SetQueryParam("filter[storage]", strconv.FormatInt(*storage, 10))
+	}
+
+	if memory_optimized != nil {
+		builder.SetQueryParam("filter[memory_optimized]", strconv.FormatBool(*memory_optimized))
+	}
+
+	if iops_optimized != nil {
+		builder.SetQueryParam("filter[iops_optimized]", strconv.FormatBool(*iops_optimized))
+	}
+
+	if gpu_optimized != nil {
+		builder.SetQueryParam("filter[gpu_optimized]", strconv.FormatBool(*gpu_optimized))
+	}
+
+	resp, err := builder.Get(EndpointKaasFlavors)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	if len(result.Data) == 0 {
+		return nil, fmt.Errorf("flavor not found")
+	}
+
+	if len(result.Data) != 1 {
+		flavors := strings.Builder{}
+		for _, flavor := range result.Data {
+			flavors.WriteString(flavor.Name)
+			flavors.WriteString(", ")
+		}
+		return nil, fmt.Errorf("multiple flavors found, please refine your search\nFound flavors: %s", flavors.String())
+	}
+
+	return result.Data[0], nil
 }
 
 func (client *Client) GetVersions() ([]string, error) {

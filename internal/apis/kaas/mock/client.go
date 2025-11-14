@@ -35,6 +35,64 @@ func (c *Client) GetPacks() ([]*kaas.KaasPack, error) {
 	}, nil
 }
 
+func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, name *string, cpu *int64, ram *int64, storage *int64, memory_optimized *bool, iops_optimized *bool, gpu_optimized *bool) (*kaas.KaasFlavor, error) {
+	if name != nil && *name == "flavor_that_doesnt_exist" {
+		return nil, fmt.Errorf("flavor not found")
+	}
+
+	flavor := &kaas.KaasFlavor{
+		IsAvailable: true,
+		Rates: &kaas.PricingModel{
+			HourlyExcludingTaxes: 0.01848,
+			HourlyIncludingTaxes: 0.019972,
+		},
+	}
+
+	if name != nil {
+		flavor.Name = *name
+	} else {
+		flavor.Name = "a4-ram8-disk20-perf1"
+	}
+
+	if cpu != nil {
+		flavor.Cpu = *cpu
+	} else {
+		flavor.Cpu = 4
+	}
+
+	if ram != nil {
+		flavor.Ram = *ram
+	} else {
+		flavor.Ram = 8
+	}
+
+	if storage != nil {
+		flavor.Storage = *storage
+	} else {
+		flavor.Storage = 20
+	}
+
+	if memory_optimized != nil {
+		flavor.IsMemoryOptimized = *memory_optimized
+	} else {
+		flavor.IsMemoryOptimized = false
+	}
+
+	if iops_optimized != nil {
+		flavor.IsIopsOptimized = *iops_optimized
+	} else {
+		flavor.IsIopsOptimized = false
+	}
+
+	if gpu_optimized != nil {
+		flavor.IsGpuOptimized = *gpu_optimized
+	} else {
+		flavor.IsGpuOptimized = false
+	}
+
+	return flavor, nil
+}
+
 func (c *Client) MustGetPackFromId(id int) *kaas.KaasPack {
 	packs, _ := c.GetPacks()
 	for _, pack := range packs {

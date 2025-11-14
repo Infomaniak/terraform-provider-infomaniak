@@ -2,6 +2,7 @@ package kaas
 
 type Api interface {
 	GetPacks() ([]*KaasPack, error)
+	GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, name *string, cpu *int64, ram *int64, storage *int64, memory_optimized *bool, iops_optimized *bool, gpu_optimized *bool) (*KaasFlavor, error)
 	GetVersions() ([]string, error)
 
 	GetKaas(publicCloudId int, publicCloudProjectId int, kaasId int) (*Kaas, error)

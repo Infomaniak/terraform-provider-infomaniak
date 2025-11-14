@@ -12,6 +12,23 @@ type KaasPack struct {
 	Description string `json:"description,omitempty"`
 }
 
+type KaasFlavor struct {
+	Name              string        `json:"name,omitempty"`
+	Cpu               int64         `json:"cpu,omitempty"`
+	Ram               int64         `json:"ram,omitempty"`
+	Storage           int64         `json:"storage,omitempty"`
+	IsAvailable       bool          `json:"is_available,omitempty"`
+	IsMemoryOptimized bool          `json:"is_memory_optimized,omitempty"`
+	IsIopsOptimized   bool          `json:"is_iops_optimized,omitempty"`
+	IsGpuOptimized    bool          `json:"is_gpu_optimized,omitempty"`
+	Rates             *PricingModel `json:"rates,omitempty"`
+}
+
+type PricingModel struct {
+	HourlyExcludingTaxes float64 `json:"hour_excl_tax,omitempty"`
+	HourlyIncludingTaxes float64 `json:"hour_incl_tax,omitempty"`
+}
+
 type Apiserver struct {
 	Params                     *ApiServerParams  `json:"apiserver_params"`
 	NonSpecificApiServerParams map[string]string `json:"-"`
