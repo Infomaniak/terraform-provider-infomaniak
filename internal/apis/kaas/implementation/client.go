@@ -46,7 +46,7 @@ func (client *Client) GetPacks() ([]*kaas.KaasPack, error) {
 	return result.Data, nil
 }
 
-func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, name *string, cpu *int64, ram *int64, storage *int64, memory_optimized *bool, iops_optimized *bool, gpu_optimized *bool) (*kaas.KaasFlavor, error) {
+func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, params kaas.KaasFlavorLookupParameters) (*kaas.KaasFlavor, error) {
 	var result helpers.NormalizedApiResponse[[]*kaas.KaasFlavor]
 
 	builder := client.resty.R().
@@ -57,32 +57,32 @@ func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64,
 		SetDebug(true).
 		SetError(&result)
 
-	if name != nil {
-		builder.SetQueryParam("filter[search]", *name)
+	if params.Name != nil {
+		builder.SetQueryParam("filter[search]", *params.Name)
 	}
 
-	if cpu != nil {
-		builder.SetQueryParam("filter[cpu]", strconv.FormatInt(*cpu, 10))
+	if params.Cpu != nil {
+		builder.SetQueryParam("filter[cpu]", strconv.FormatInt(*params.Cpu, 10))
 	}
 
-	if ram != nil {
-		builder.SetQueryParam("filter[ram]", strconv.FormatInt(*ram, 10))
+	if params.Ram != nil {
+		builder.SetQueryParam("filter[ram]", strconv.FormatInt(*params.Ram, 10))
 	}
 
-	if storage != nil {
-		builder.SetQueryParam("filter[storage]", strconv.FormatInt(*storage, 10))
+	if params.Storage != nil {
+		builder.SetQueryParam("filter[storage]", strconv.FormatInt(*params.Storage, 10))
 	}
 
-	if memory_optimized != nil {
-		builder.SetQueryParam("filter[memory_optimized]", strconv.FormatBool(*memory_optimized))
+	if params.IsMemoryOptimized != nil {
+		builder.SetQueryParam("filter[memory_optimized]", strconv.FormatBool(*params.IsMemoryOptimized))
 	}
 
-	if iops_optimized != nil {
-		builder.SetQueryParam("filter[iops_optimized]", strconv.FormatBool(*iops_optimized))
+	if params.IsIopsOptimized != nil {
+		builder.SetQueryParam("filter[iops_optimized]", strconv.FormatBool(*params.IsIopsOptimized))
 	}
 
-	if gpu_optimized != nil {
-		builder.SetQueryParam("filter[gpu_optimized]", strconv.FormatBool(*gpu_optimized))
+	if params.IsGpuOptimized != nil {
+		builder.SetQueryParam("filter[gpu_optimized]", strconv.FormatBool(*params.IsGpuOptimized))
 	}
 
 	resp, err := builder.Get(EndpointKaasFlavors)

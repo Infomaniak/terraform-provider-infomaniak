@@ -12,6 +12,16 @@ type KaasPack struct {
 	Description string `json:"description,omitempty"`
 }
 
+type KaasFlavorLookupParameters struct {
+	Name              *string
+	Cpu               *int64
+	Ram               *int64
+	Storage           *int64
+	IsMemoryOptimized *bool
+	IsIopsOptimized   *bool
+	IsGpuOptimized    *bool
+}
+
 type KaasFlavor struct {
 	Name              string        `json:"name,omitempty"`
 	Cpu               int64         `json:"cpu,omitempty"`

@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestKaasInstancePoolFlavorDatasource_Schema(t *testing.T) {
+func TestKaasInstancePoolFlavorDatasourceSchema(t *testing.T) {
 	testCases := map[string]resource.TestCase{
 		"data_source.kaas_instance_pool_flavor.good": {
 			ProtoV6ProviderFactories: provider.ProtoV6ProviderFactories(),

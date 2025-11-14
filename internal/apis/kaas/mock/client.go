@@ -35,59 +35,51 @@ func (c *Client) GetPacks() ([]*kaas.KaasPack, error) {
 	}, nil
 }
 
-func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, name *string, cpu *int64, ram *int64, storage *int64, memory_optimized *bool, iops_optimized *bool, gpu_optimized *bool) (*kaas.KaasFlavor, error) {
-	if name != nil && *name == "flavor_that_doesnt_exist" {
+func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64, region string, params kaas.KaasFlavorLookupParameters) (*kaas.KaasFlavor, error) {
+	if params.Name != nil && *params.Name == "flavor_that_doesnt_exist" {
 		return nil, fmt.Errorf("flavor not found")
 	}
 
 	flavor := &kaas.KaasFlavor{
-		IsAvailable: true,
+		Name:              "a4-ram8-disk20-perf1",
+		Cpu:               4,
+		Ram:               8,
+		Storage:           20,
+		IsMemoryOptimized: false,
+		IsIopsOptimized:   false,
+		IsGpuOptimized:    false,
+		IsAvailable:       true,
 		Rates: &kaas.PricingModel{
 			HourlyExcludingTaxes: 0.01848,
 			HourlyIncludingTaxes: 0.019972,
 		},
 	}
 
-	if name != nil {
-		flavor.Name = *name
-	} else {
-		flavor.Name = "a4-ram8-disk20-perf1"
+	if params.Name != nil {
+		flavor.Name = *params.Name
 	}
 
-	if cpu != nil {
-		flavor.Cpu = *cpu
-	} else {
-		flavor.Cpu = 4
+	if params.Cpu != nil {
+		flavor.Cpu = *params.Ram
 	}
 
-	if ram != nil {
-		flavor.Ram = *ram
-	} else {
-		flavor.Ram = 8
+	if params.Ram != nil {
+		flavor.Ram = *params.Ram
 	}
 
-	if storage != nil {
-		flavor.Storage = *storage
-	} else {
-		flavor.Storage = 20
+	if params.Storage != nil {
+		flavor.Storage = *params.Storage
 	}
 
-	if memory_optimized != nil {
-		flavor.IsMemoryOptimized = *memory_optimized
-	} else {
-		flavor.IsMemoryOptimized = false
+	if params.IsMemoryOptimized != nil {
+		flavor.IsMemoryOptimized = *params.IsMemoryOptimized
 	}
 
-	if iops_optimized != nil {
-		flavor.IsIopsOptimized = *iops_optimized
-	} else {
-		flavor.IsIopsOptimized = false
+	if params.IsIopsOptimized != nil {
+		flavor.IsIopsOptimized = *params.IsIopsOptimized
 	}
-
-	if gpu_optimized != nil {
-		flavor.IsGpuOptimized = *gpu_optimized
-	} else {
-		flavor.IsGpuOptimized = false
+	if params.IsGpuOptimized != nil {
+		flavor.IsGpuOptimized = *params.IsGpuOptimized
 	}
 
 	return flavor, nil

@@ -3,6 +3,7 @@ package kaas
 import (
 	"context"
 	"terraform-provider-infomaniak/internal/apis"
+	"terraform-provider-infomaniak/internal/apis/kaas"
 	"terraform-provider-infomaniak/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -79,13 +80,15 @@ func (d *kaasInstancePoolFlavorDataSource) Read(ctx context.Context, req datasou
 		data.PublicCloudId.ValueInt64(),
 		data.PublicCloudProjectId.ValueInt64(),
 		data.Region.ValueString(),
-		data.Name.ValueStringPointer(),
-		data.Cpu.ValueInt64Pointer(),
-		data.Ram.ValueInt64Pointer(),
-		data.Storage.ValueInt64Pointer(),
-		data.IsMemoryOptimized.ValueBoolPointer(),
-		data.IsIopsOptimized.ValueBoolPointer(),
-		data.IsGpuOptimized.ValueBoolPointer(),
+		kaas.KaasFlavorLookupParameters{
+			Name:              data.Name.ValueStringPointer(),
+			Cpu:               data.Cpu.ValueInt64Pointer(),
+			Ram:               data.Ram.ValueInt64Pointer(),
+			Storage:           data.Storage.ValueInt64Pointer(),
+			IsMemoryOptimized: data.IsMemoryOptimized.ValueBoolPointer(),
+			IsIopsOptimized:   data.IsIopsOptimized.ValueBoolPointer(),
+			IsGpuOptimized:    data.IsGpuOptimized.ValueBoolPointer(),
+		},
 	)
 
 	if err != nil {
