@@ -7,9 +7,17 @@ import (
 )
 
 type KaasPack struct {
-	Id          int    `json:"kaas_pack_id,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
+	Id              int         `json:"kaas_pack_id,omitempty"`
+	Name            string      `json:"name,omitempty"`
+	Description     string      `json:"description,omitempty"`
+	PricePerHour    *RatesModel `json:"price_per_hour,omitempty"`
+	LimitPerProject int64       `json:"limit_per_project,omitempty"`
+	IsActive        bool        `json:"is_active,omitempty"`
+}
+
+type RatesModel struct {
+	CHF float64 `json:"CHF,omitempty"`
+	EUR float64 `json:"EUR,omitempty"`
 }
 
 type KaasFlavorLookupParameters struct {

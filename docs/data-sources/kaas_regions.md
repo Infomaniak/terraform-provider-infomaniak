@@ -17,4 +17,4 @@ data "infomaniak_kaas_regions" "kaas_regions" {}
 
 ## Schema
 ### Read-Only
-- items (List of String) A list of region identifiers where KaaS is available.
+- `items` (List of String) A list of region identifiers where KaaS is available.

@@ -38,23 +38,23 @@ data "infomaniak_kaas_instance_pool_flavor" "example_flavor_by_specs" {
 
 ## Schema
 ### Required
-- public_cloud_id (Integer) The ID of the Public Cloud where the instance pool flavor is located.
-- public_cloud_project_id (Integer) The ID of the Public Cloud project associated with the instance pool flavor.
-- region (String) Region where the instance pool live.
+- `public_cloud_id` (Integer) The ID of the Public Cloud where the instance pool flavor is located.
+- `public_cloud_project_id` (Integer) The ID of the Public Cloud project associated with the instance pool flavor.
+- `region` (String) Region where the instance pool live.
 
 ### Optional
 At least one of the following must be provided:
-- name (String) The unique identifier name of the instance pool flavor.
-- cpu (Integer) Number of vCPUs of the desired flavor.
-- ram (Integer) Amount of RAM (in GB) of the desired flavor.
-- storage (Integer) Storage size (in GB) of the desired flavor.
+- `name` (String) The unique identifier name of the instance pool flavor.
+- `cpu` (Integer) Number of vCPUs of the desired flavor.
+- `ram` (Integer) Amount of RAM (in GB) of the desired flavor.
+- `storage` (Integer) Storage size (in GB) of the desired flavor.
 Additionally:
-- is_memory_optimized (Boolean) Whether the flavor is optimized for memory usage.
-- is_iops_optimized (Boolean) Whether the flavor is optimized for high disk usage.
-- is_gpu_optimized (Boolean) Whether the flavor supports GPU acceleration.
+- `is_memory_optimized` (Boolean) Whether the flavor is optimized for memory usage.
+- `is_iops_optimized` (Boolean) Whether the flavor is optimized for high disk usage.
+- `is_gpu_optimized` (Boolean) Whether the flavor supports GPU acceleration.
 
 ### Read-Only
-- is_available (Boolean) Indicates if the flavor is currently available for use.  
-- rates (Object) Pricing details for the flavor:
-    - hour_excl_tax (Float) Hourly price excluding taxes.
-    - hour_incl_tax (Float) Hourly price including taxes.
+- `is_available` (Boolean) Indicates if the flavor is currently available for use.  
+- `rates` (Object) Pricing details for the flavor:
+    - `hour_excl_tax` (Float) Hourly price excluding taxes.
+    - `hour_incl_tax` (Float) Hourly price including taxes.
