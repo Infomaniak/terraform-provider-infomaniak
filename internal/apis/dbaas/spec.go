@@ -18,5 +18,5 @@ type Api interface {
 
 	GetDbaasRegions() ([]string, error)
 	GetDbaasTypes() ([]*DbaasType, error)
-	GetDbaasPacks(dbType string) ([]*Pack, error)
+	GetDbaasPack(params PackFilter) (*Pack, error)
 }

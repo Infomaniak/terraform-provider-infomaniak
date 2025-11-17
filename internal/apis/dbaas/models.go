@@ -16,6 +16,16 @@ type DbaasType struct {
 	Versions []string `json:"versions,omitempty"`
 }
 
+type PackFilter struct {
+	DbType    string
+	Group     *string
+	Name      *string
+	Instances *int64
+	Cpu       *int64
+	Ram       *int64
+	Storage   *int64
+}
+
 type Pack struct {
 	ID        int64  `json:"id,omitempty"`
 	Type      string `json:"type,omitempty"`

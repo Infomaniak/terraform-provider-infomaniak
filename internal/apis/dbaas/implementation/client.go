@@ -2,6 +2,8 @@ package implementation
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
 	"terraform-provider-infomaniak/internal/apis/helpers"
 
@@ -305,17 +307,39 @@ func (client *Client) GetDbaasTypes() ([]*dbaas.DbaasType, error) {
 	return result.Data, nil
 }
 
-func (client *Client) GetDbaasPacks(dbType string) ([]*dbaas.Pack, error) {
+func (client *Client) GetDbaasPack(params dbaas.PackFilter) (*dbaas.Pack, error) {
 	var result helpers.NormalizedApiResponse[[]*dbaas.Pack]
 
-	resp, err := client.resty.R().
-		SetQueryParams(map[string]string{
-			"type":     dbType,
-			"per_page": "1000",
-		}).
+	builder := client.resty.R().
 		SetResult(&result).
 		SetError(&result).
-		Get(EndpointDbaasDataPacks)
+		SetQueryParam("filter[type]", params.DbType)
+
+	if params.Name != nil {
+		builder = builder.SetQueryParam("filter[names][]", *params.Name)
+	}
+
+	if params.Group != nil {
+		builder = builder.SetQueryParam("filter[groups][]", *params.Group)
+	}
+
+	if params.Instances != nil {
+		builder = builder.SetQueryParam("filter[instances]", strconv.FormatInt(*params.Instances, 10))
+	}
+
+	if params.Cpu != nil {
+		builder = builder.SetQueryParam("filter[cpu]", strconv.FormatInt(*params.Cpu, 10))
+	}
+
+	if params.Ram != nil {
+		builder = builder.SetQueryParam("filter[ram]", strconv.FormatInt(*params.Ram, 10))
+	}
+
+	if params.Storage != nil {
+		builder = builder.SetQueryParam("filter[storage]", strconv.FormatInt(*params.Storage, 10))
+	}
+
+	resp, err := builder.Get(EndpointPacks)
 	if err != nil {
 		return nil, err
 	}
@@ -324,5 +348,19 @@ func (client *Client) GetDbaasPacks(dbType string) ([]*dbaas.Pack, error) {
 		return nil, result.Error
 	}
 
-	return result.Data, nil
+	data := result.Data
+	if len(data) == 0 {
+		return nil, fmt.Errorf("pack not found")
+	}
+
+	if len(data) != 1 {
+		packs := strings.Builder{}
+		for _, pack := range data {
+			packs.WriteString(pack.Name)
+			packs.WriteString(", ")
+		}
+		return nil, fmt.Errorf("multiple packs found, please refine your search\nfound packs: %s", packs.String())
+	}
+
+	return data[0], nil
 }
