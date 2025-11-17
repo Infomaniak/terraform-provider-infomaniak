@@ -46,29 +46,22 @@ func getDbaasBackupScheduleResourceSchema() schema.Schema {
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"add_default_schedule": schema.BoolAttribute{
-				Optional:            true,
-				MarkdownDescription: "Add the default backup schedule to the Database Service. The default schedule is ran during a random hour:minute once a day keeping 7 days worth of backups",
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
-				},
-			},
 			"scheduled_at": schema.StringAttribute{
-				Optional:            true,
+				Required:            true,
 				MarkdownDescription: "Use the given time as the time to create the scheduled backup (24 hour, UTC)",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"retention": schema.Int64Attribute{
-				Optional:            true,
+				Required:            true,
 				MarkdownDescription: "The number of backups to keep for the schedule",
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.UseStateForUnknown(),
 				},
 			},
 			"is_pitr_enabled": schema.BoolAttribute{
-				Optional:            true,
+				Required:            true,
 				MarkdownDescription: "Enable/Disable point in time recovery",
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifier.UseStateForUnknown(),

@@ -72,10 +72,12 @@ func (data *DBaasDataModel) fill(obj *dbaas.DBaaS) {
 	data.Region = types.StringValue(obj.Region)
 	data.Type = types.StringValue(obj.Type)
 	data.Version = types.StringValue(obj.Version)
-	data.Host = types.StringValue(obj.Connection.Host)
-	data.Port = types.StringValue(obj.Connection.Port)
-	data.User = types.StringValue(obj.Connection.User)
-	data.Ca = types.StringValue(obj.Connection.Ca)
+	if obj.Connection != nil {
+		data.Host = types.StringValue(obj.Connection.Host)
+		data.Port = types.StringValue(obj.Connection.Port)
+		data.User = types.StringValue(obj.Connection.User)
+		data.Ca = types.StringValue(obj.Connection.Ca)
+	}
 	data.KubernetesIdentifier = types.StringValue(obj.KubernetesIdentifier)
 }
 
