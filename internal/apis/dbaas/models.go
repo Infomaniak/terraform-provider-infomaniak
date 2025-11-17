@@ -95,8 +95,6 @@ func (d *DBaaS) UnmarshalJSON(data []byte) error {
 }
 
 type DBaasBackupSchedule struct {
-	AddDefaultSchedule *bool `json:"add_default_schedule,omitempty"`
-
 	Id            *int64  `json:"id,omitempty"`
 	Name          *string `json:"name,omitempty"`
 	ScheduledAt   *string `json:"scheduled_at,omitempty"`

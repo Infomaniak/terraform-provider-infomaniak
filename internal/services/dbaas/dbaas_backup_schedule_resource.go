@@ -37,14 +37,12 @@ type DBaasBackupScheduleModel struct {
 
 	Id                 types.Int64  `tfsdk:"id"`
 	Name               types.String `tfsdk:"name"`
-	AddDefaultSchedule types.Bool   `tfsdk:"add_default_schedule"`
 	ScheduledAt        types.String `tfsdk:"scheduled_at"`
 	Retention          types.Int64  `tfsdk:"retention"`
 	IsPitrEnabled      types.Bool   `tfsdk:"is_pitr_enabled"`
 }
 
 func (model *DBaasBackupScheduleModel) fill(backupSchedule *dbaas.DBaasBackupSchedule) {
-	model.AddDefaultSchedule = types.BoolPointerValue(backupSchedule.AddDefaultSchedule)
 	model.ScheduledAt = types.StringPointerValue(backupSchedule.ScheduledAt)
 	model.Retention = types.Int64PointerValue(backupSchedule.Retention)
 	model.IsPitrEnabled = types.BoolPointerValue(backupSchedule.IsPitrEnabled)
@@ -91,7 +89,6 @@ func (r *dbaasBackupScheduleResource) Create(ctx context.Context, req resource.C
 	}
 
 	input := &dbaas.DBaasBackupSchedule{
-		AddDefaultSchedule: data.AddDefaultSchedule.ValueBoolPointer(),
 		ScheduledAt:        data.ScheduledAt.ValueStringPointer(),
 		Retention:          data.Retention.ValueInt64Pointer(),
 		IsPitrEnabled:      data.IsPitrEnabled.ValueBoolPointer(),
@@ -145,7 +142,6 @@ func (r *dbaasBackupScheduleResource) Update(ctx context.Context, req resource.U
 	}
 
 	input := &dbaas.DBaasBackupSchedule{
-		AddDefaultSchedule: data.AddDefaultSchedule.ValueBoolPointer(),
 		ScheduledAt:        data.ScheduledAt.ValueStringPointer(),
 		Retention:          data.Retention.ValueInt64Pointer(),
 		IsPitrEnabled:      data.IsPitrEnabled.ValueBoolPointer(),
