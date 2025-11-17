@@ -2,35 +2,100 @@
 
 version: '3'
 
-env:
-#      TF_LOG: debug
+vars:
+  LOG_DIRS:
+    sh: echo "./internal/services/kaas/tmp ./internal/services/dbaas/tmp"
+  REPORT_DIR:
+    sh: echo "$(pwd)/reports"
+  OS:
+    sh: uname
 
 tasks:
   default:
+    cmds:
+      - task: prepare-go
+      - task: prepare-env
+      - task: install
+      - task: test-unit
+      - task: generate-reports
+      - task: global-coverage
+      - task: cobertura
+
+  prepare-go:
+    desc: Download Go modules
+    cmds:
+      - go mod download
+
+  prepare-env:
+    desc: Prepare test environment
     deps:
-     - fmt
-     - lint
-     - install
-     - generate
+      - prepare-go
+    cmds:
+      - ./.scripts/setup.sh "{{.LOG_DIRS}}" "{{.REPORT_DIR}}"
+
+  test-unit:
+    desc: Run unit tests
+    deps:
+      - prepare-go
+      - prepare-env
+    cmds:
+      - ./.scripts/run-tests.sh "{{.REPORT_DIR}}"
+
+  generate-reports:
+    desc: Generate test reports
+    deps:
+      - prepare-go
+      - prepare-env
+    cmds:
+      - ./.scripts/generate-reports.sh "{{.REPORT_DIR}}" "{{.OS}}"
+
+  global-coverage:
+    desc: Generate global coverage report
+    deps:
+      - prepare-go
+      - prepare-env
+    cmds:
+      - ./.scripts/global-coverage.sh "{{.REPORT_DIR}}" "{{.OS}}"
+
+  cobertura:
+    desc: Generate Cobertura format reports
+    deps:
+      - prepare-go
+      - prepare-env
+    cmds:
+      - ./.scripts/generate-cobertura-reports.sh "{{.REPORT_DIR}}" "{{.OS}}"
+
+  install:
+    desc: Build and install Terraform provider
+    cmds:
+      - go build -cover -covermode="count" -o ${HOME}/go/bin/terraform-provider-infomaniak main.go
+
+  clean:
+    desc: Clean generated files
+    cmds:
+      - rm -rf "{{.REPORT_DIR}}"
+
   build:
     cmds:
       - go build -v ./...
-  install:
-    cmds:
-      - go install
+
   lint:
     cmds:
       - golangci-lint run
-  generate:
+
+  generate-tools:
     dir: tools
     cmds:
       - go generate ./...
+
   fmt:
     cmds:
       - gofmt -s -w -e .
+
   test:
     cmds:
       - go test -v -cover -timeout=120s ./...
+
   testacc:
     cmds:
       - INFOMANIAK_HOST=https://api.infomaniak.com INFOMANIAK_TOKEN=fs TF_ACC=1 go test -v -cover -timeout 120m ./...
