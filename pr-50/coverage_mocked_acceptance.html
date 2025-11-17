@@ -87,7 +87,7 @@
 				
 				<option value="file15">terraform-provider-infomaniak/internal/provider/utils.go (62.5%)</option>
 				
-				<option value="file16">terraform-provider-infomaniak/internal/services/dbaas/dbaas_backup_schedule_resource.go (3.3%)</option>
+				<option value="file16">terraform-provider-infomaniak/internal/services/dbaas/dbaas_backup_schedule_resource.go (3.4%)</option>
 				
 				<option value="file17">terraform-provider-infomaniak/internal/services/dbaas/dbaas_backup_schedule_resource_schema.go (100.0%)</option>
 				
@@ -95,7 +95,7 @@
 				
 				<option value="file19">terraform-provider-infomaniak/internal/services/dbaas/dbaas_constants_data_source_schema.go (100.0%)</option>
 				
-				<option value="file20">terraform-provider-infomaniak/internal/services/dbaas/dbaas_data_source.go (7.7%)</option>
+				<option value="file20">terraform-provider-infomaniak/internal/services/dbaas/dbaas_data_source.go (7.5%)</option>
 				
 				<option value="file21">terraform-provider-infomaniak/internal/services/dbaas/dbaas_data_source_schema.go (100.0%)</option>
 				
@@ -710,8 +710,6 @@ func (d *DBaaS) UnmarshalJSON(data []byte) error <span class="cov0" title="0">{
 }
 
 type DBaasBackupSchedule struct {
-        AddDefaultSchedule *bool `json:"add_default_schedule,omitempty"`
-
         Id            *int64  `json:"id,omitempty"`
         Name          *string `json:"name,omitempty"`
         ScheduledAt   *string `json:"scheduled_at,omitempty"`
@@ -2255,14 +2253,12 @@ type DBaasBackupScheduleModel struct {
 
         Id                 types.Int64  `tfsdk:"id"`
         Name               types.String `tfsdk:"name"`
-        AddDefaultSchedule types.Bool   `tfsdk:"add_default_schedule"`
         ScheduledAt        types.String `tfsdk:"scheduled_at"`
         Retention          types.Int64  `tfsdk:"retention"`
         IsPitrEnabled      types.Bool   `tfsdk:"is_pitr_enabled"`
 }
 
 func (model *DBaasBackupScheduleModel) fill(backupSchedule *dbaas.DBaasBackupSchedule) <span class="cov0" title="0">{
-        model.AddDefaultSchedule = types.BoolPointerValue(backupSchedule.AddDefaultSchedule)
         model.ScheduledAt = types.StringPointerValue(backupSchedule.ScheduledAt)
         model.Retention = types.Int64PointerValue(backupSchedule.Retention)
         model.IsPitrEnabled = types.BoolPointerValue(backupSchedule.IsPitrEnabled)
@@ -2309,7 +2305,6 @@ func (r *dbaasBackupScheduleResource) Create(ctx context.Context, req resource.C
         }</span>
 
         <span class="cov0" title="0">input := &amp;dbaas.DBaasBackupSchedule{
-                AddDefaultSchedule: data.AddDefaultSchedule.ValueBoolPointer(),
                 ScheduledAt:        data.ScheduledAt.ValueStringPointer(),
                 Retention:          data.Retention.ValueInt64Pointer(),
                 IsPitrEnabled:      data.IsPitrEnabled.ValueBoolPointer(),
@@ -2363,7 +2358,6 @@ func (r *dbaasBackupScheduleResource) Update(ctx context.Context, req resource.U
         }</span>
 
         <span class="cov0" title="0">input := &amp;dbaas.DBaasBackupSchedule{
-                AddDefaultSchedule: data.AddDefaultSchedule.ValueBoolPointer(),
                 ScheduledAt:        data.ScheduledAt.ValueStringPointer(),
                 Retention:          data.Retention.ValueInt64Pointer(),
                 IsPitrEnabled:      data.IsPitrEnabled.ValueBoolPointer(),
@@ -2548,29 +2542,22 @@ func getDbaasBackupScheduleResourceSchema() schema.Schema <span class="cov10" ti
                                         stringplanmodifier.UseStateForUnknown(),
                                 },
                         },
-                        "add_default_schedule": schema.BoolAttribute{
-                                Optional:            true,
-                                MarkdownDescription: "Add the default backup schedule to the Database Service. The default schedule is ran during a random hour:minute once a day keeping 7 days worth of backups",
-                                PlanModifiers: []planmodifier.Bool{
-                                        boolplanmodifier.UseStateForUnknown(),
-                                },
-                        },
                         "scheduled_at": schema.StringAttribute{
-                                Optional:            true,
+                                Required:            true,
                                 MarkdownDescription: "Use the given time as the time to create the scheduled backup (24 hour, UTC)",
                                 PlanModifiers: []planmodifier.String{
                                         stringplanmodifier.UseStateForUnknown(),
                                 },
                         },
                         "retention": schema.Int64Attribute{
-                                Optional:            true,
+                                Required:            true,
                                 MarkdownDescription: "The number of backups to keep for the schedule",
                                 PlanModifiers: []planmodifier.Int64{
                                         int64planmodifier.UseStateForUnknown(),
                                 },
                         },
                         "is_pitr_enabled": schema.BoolAttribute{
-                                Optional:            true,
+                                Required:            true,
                                 MarkdownDescription: "Enable/Disable point in time recovery",
                                 PlanModifiers: []planmodifier.Bool{
                                         boolplanmodifier.UseStateForUnknown(),
@@ -2802,12 +2789,14 @@ func (data *DBaasDataModel) fill(obj *dbaas.DBaaS) <span class="cov0" title="0">
         data.Region = types.StringValue(obj.Region)
         data.Type = types.StringValue(obj.Type)
         data.Version = types.StringValue(obj.Version)
-        data.Host = types.StringValue(obj.Connection.Host)
-        data.Port = types.StringValue(obj.Connection.Port)
-        data.User = types.StringValue(obj.Connection.User)
-        data.Ca = types.StringValue(obj.Connection.Ca)
-        data.KubernetesIdentifier = types.StringValue(obj.KubernetesIdentifier)
-}</span>
+        if obj.Connection != nil </span><span class="cov0" title="0">{
+                data.Host = types.StringValue(obj.Connection.Host)
+                data.Port = types.StringValue(obj.Connection.Port)
+                data.User = types.StringValue(obj.Connection.User)
+                data.Ca = types.StringValue(obj.Connection.Ca)
+        }</span>
+        <span class="cov0" title="0">data.KubernetesIdentifier = types.StringValue(obj.KubernetesIdentifier)</span>
+}
 
 // Schema defines the schema for the data source.
 func (d *dbaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="147">{
