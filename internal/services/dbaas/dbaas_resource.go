@@ -372,11 +372,13 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
 	model.Name = types.StringValue(dbaas.Name)
 	model.PackName = types.StringValue(dbaas.Pack.Name)
 
-	model.Host = types.StringValue(dbaas.Connection.Host)
-	model.Port = types.StringValue(dbaas.Connection.Port)
-	model.User = types.StringValue(dbaas.Connection.User)
-	model.Password = types.StringValue(dbaas.Connection.Password)
-	model.Ca = types.StringValue(dbaas.Connection.Ca)
+	if dbaas.Connection != nil {
+		model.Host = types.StringValue(dbaas.Connection.Host)
+		model.Port = types.StringValue(dbaas.Connection.Port)
+		model.User = types.StringValue(dbaas.Connection.User)
+		model.Password = types.StringValue(dbaas.Connection.Password)
+		model.Ca = types.StringValue(dbaas.Connection.Ca)
+	}
 }
 
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int64) (*dbaas.DBaaS, error) {
