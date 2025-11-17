@@ -57,7 +57,7 @@
 				
 				<option value="file0">terraform-provider-infomaniak/internal/apis/client.go (0.0%)</option>
 				
-				<option value="file1">terraform-provider-infomaniak/internal/apis/dbaas/implementation/client.go (5.9%)</option>
+				<option value="file1">terraform-provider-infomaniak/internal/apis/dbaas/implementation/client.go (4.8%)</option>
 				
 				<option value="file2">terraform-provider-infomaniak/internal/apis/dbaas/models.go (0.0%)</option>
 				
@@ -97,9 +97,9 @@
 				
 				<option value="file20">terraform-provider-infomaniak/internal/services/dbaas/dbaas_data_source_schema.go (0.0%)</option>
 				
-				<option value="file21">terraform-provider-infomaniak/internal/services/dbaas/dbaas_packs_data_source.go (0.0%)</option>
+				<option value="file21">terraform-provider-infomaniak/internal/services/dbaas/dbaas_pack_data_source.go (0.0%)</option>
 				
-				<option value="file22">terraform-provider-infomaniak/internal/services/dbaas/dbaas_packs_data_source_schema.go (0.0%)</option>
+				<option value="file22">terraform-provider-infomaniak/internal/services/dbaas/dbaas_pack_data_source_schema.go (0.0%)</option>
 				
 				<option value="file23">terraform-provider-infomaniak/internal/services/dbaas/dbaas_resource.go (0.0%)</option>
 				
@@ -195,6 +195,8 @@ func NewClient(baseUri, token, version string) *Client <span class="cov0" title=
 
 import (
         "fmt"
+        "strconv"
+        "strings"
         "terraform-provider-infomaniak/internal/apis/dbaas"
         "terraform-provider-infomaniak/internal/apis/helpers"
 
@@ -498,17 +500,39 @@ func (client *Client) GetDbaasTypes() ([]*dbaas.DbaasType, error) <span class="c
         <span class="cov0" title="0">return result.Data, nil</span>
 }
 
-func (client *Client) GetDbaasPacks(dbType string) ([]*dbaas.Pack, error) <span class="cov0" title="0">{
+func (client *Client) GetDbaasPack(params dbaas.PackFilter) (*dbaas.Pack, error) <span class="cov0" title="0">{
         var result helpers.NormalizedApiResponse[[]*dbaas.Pack]
 
-        resp, err := client.resty.R().
-                SetQueryParams(map[string]string{
-                        "type":     dbType,
-                        "per_page": "1000",
-                }).
+        builder := client.resty.R().
                 SetResult(&amp;result).
                 SetError(&amp;result).
-                Get(EndpointDbaasDataPacks)
+                SetQueryParam("filter[type]", params.DbType)
+
+        if params.Name != nil </span><span class="cov0" title="0">{
+                builder = builder.SetQueryParam("filter[names][]", *params.Name)
+        }</span>
+
+        <span class="cov0" title="0">if params.Group != nil </span><span class="cov0" title="0">{
+                builder = builder.SetQueryParam("filter[groups][]", *params.Group)
+        }</span>
+
+        <span class="cov0" title="0">if params.Instances != nil </span><span class="cov0" title="0">{
+                builder = builder.SetQueryParam("filter[instances]", strconv.FormatInt(*params.Instances, 10))
+        }</span>
+
+        <span class="cov0" title="0">if params.Cpu != nil </span><span class="cov0" title="0">{
+                builder = builder.SetQueryParam("filter[cpu]", strconv.FormatInt(*params.Cpu, 10))
+        }</span>
+
+        <span class="cov0" title="0">if params.Ram != nil </span><span class="cov0" title="0">{
+                builder = builder.SetQueryParam("filter[ram]", strconv.FormatInt(*params.Ram, 10))
+        }</span>
+
+        <span class="cov0" title="0">if params.Storage != nil </span><span class="cov0" title="0">{
+                builder = builder.SetQueryParam("filter[storage]", strconv.FormatInt(*params.Storage, 10))
+        }</span>
+
+        <span class="cov0" title="0">resp, err := builder.Get(EndpointPacks)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
@@ -517,7 +541,21 @@ func (client *Client) GetDbaasPacks(dbType string) ([]*dbaas.Pack, error) <span 
                 return nil, result.Error
         }</span>
 
-        <span class="cov0" title="0">return result.Data, nil</span>
+        <span class="cov0" title="0">data := result.Data
+        if len(data) == 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("pack not found")
+        }</span>
+
+        <span class="cov0" title="0">if len(data) != 1 </span><span class="cov0" title="0">{
+                packs := strings.Builder{}
+                for _, pack := range data </span><span class="cov0" title="0">{
+                        packs.WriteString(pack.Name)
+                        packs.WriteString(", ")
+                }</span>
+                <span class="cov0" title="0">return nil, fmt.Errorf("multiple packs found, please refine your search\nfound packs: %s", packs.String())</span>
+        }
+
+        <span class="cov0" title="0">return data[0], nil</span>
 }
 </pre>
 		
@@ -537,6 +575,16 @@ type DBaaSPack struct {
 type DbaasType struct {
         Name     string   `json:"name,omitempty"`
         Versions []string `json:"versions,omitempty"`
+}
+
+type PackFilter struct {
+        DbType    string
+        Group     *string
+        Name      *string
+        Instances *int64
+        Cpu       *int64
+        Ram       *int64
+        Storage   *int64
 }
 
 type Pack struct {
@@ -1874,10 +1922,7 @@ func (instancePool *InstancePool) Key() string <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file12" style="display: none">// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
-package provider
+		<pre class="file" id="file12" style="display: none">package provider
 
 import (
         "context"
@@ -2845,6 +2890,7 @@ func getDbaasDataSourceSchema() schema.Schema <span class="cov0" title="0">{
 import (
         "context"
         "terraform-provider-infomaniak/internal/apis"
+        "terraform-provider-infomaniak/internal/apis/dbaas"
         "terraform-provider-infomaniak/internal/provider"
 
         "github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -2853,21 +2899,21 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-        _ datasource.DataSource              = &amp;dbaasPacksDataSource{}
-        _ datasource.DataSourceWithConfigure = &amp;dbaasPacksDataSource{}
+        _ datasource.DataSource              = &amp;dbaasPackDataSource{}
+        _ datasource.DataSourceWithConfigure = &amp;dbaasPackDataSource{}
 )
 
-type dbaasPacksDataSource struct {
+type dbaasPackDataSource struct {
         client *apis.Client
 }
 
 // NewDBaasDataSource is a helper function to simplify the provider implementation.
-func NewDBaasPacksDataSource() datasource.DataSource <span class="cov0" title="0">{
-        return &amp;dbaasPacksDataSource{}
+func NewDBaasPackDataSource() datasource.DataSource <span class="cov0" title="0">{
+        return &amp;dbaasPackDataSource{}
 }</span>
 
 // Configure adds the provider configured client to the data source.
-func (d *dbaasPacksDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) <span class="cov0" title="0">{
+func (d *dbaasPackDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) <span class="cov0" title="0">{
         // Add a nil check when handling ProviderData because Terraform
         // sets that data after it calls the ConfigureProvider RPC.
         if req.ProviderData == nil </span><span class="cov0" title="0">{
@@ -2886,26 +2932,21 @@ func (d *dbaasPacksDataSource) Configure(_ context.Context, req datasource.Confi
         <span class="cov0" title="0">d.client = client</span>
 }
 
-type DBaasConstantsDataModel struct {
-        Type  types.String      `tfsdk:"type"`
-        Packs []DBaasPacksModel `tfsdk:"packs"`
-}
-
-type DBaasPacksModel struct {
-        ID        types.Int64  `tfsdk:"id"`
+type DBaasPackDataModel struct {
         Type      types.String `tfsdk:"type"`
+        ID        types.Int64  `tfsdk:"id"`
         Group     types.String `tfsdk:"group"`
         Name      types.String `tfsdk:"name"`
         Instances types.Int64  `tfsdk:"instances"`
         CPU       types.Int64  `tfsdk:"cpu"`
         RAM       types.Int64  `tfsdk:"ram"`
         Storage   types.Int64  `tfsdk:"storage"`
-        Rates     RatesModel   `tfsdk:"rates"`
+        Rates     *RatesModel  `tfsdk:"rates"`
 }
 
 type RatesModel struct {
-        CHF PricingModel `tfsdk:"chf"`
-        EUR PricingModel `tfsdk:"eur"`
+        CHF *PricingModel `tfsdk:"chf"`
+        EUR *PricingModel `tfsdk:"eur"`
 }
 
 type PricingModel struct {
@@ -2914,17 +2955,25 @@ type PricingModel struct {
 }
 
 // Schema defines the schema for the data source.
-func (d *dbaasPacksDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov0" title="0">{
+func (d *dbaasPackDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov0" title="0">{
         resp.Schema = getDbaasPacksDataSourceSchema()
 }</span>
 
 // Read refreshes the Terraform state with the latest data.
-func (d *dbaasPacksDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) <span class="cov0" title="0">{
-        var data DBaasConstantsDataModel
+func (d *dbaasPackDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) <span class="cov0" title="0">{
+        var data DBaasPackDataModel
 
         resp.Diagnostics.Append(req.Config.Get(ctx, &amp;data)...)
 
-        packs, err := d.client.DBaas.GetDbaasPacks(data.Type.ValueString())
+        pack, err := d.client.DBaas.GetDbaasPack(dbaas.PackFilter{
+                DbType:    data.Type.ValueString(),
+                Group:     data.Group.ValueStringPointer(),
+                Name:      data.Name.ValueStringPointer(),
+                Instances: data.Instances.ValueInt64Pointer(),
+                Cpu:       data.CPU.ValueInt64Pointer(),
+                Ram:       data.RAM.ValueInt64Pointer(),
+                Storage:   data.Storage.ValueInt64Pointer(),
+        })
         if err != nil </span><span class="cov0" title="0">{
                 resp.Diagnostics.AddError(
                         "Unable to find DBaaS packs",
@@ -2933,31 +2982,14 @@ func (d *dbaasPacksDataSource) Read(ctx context.Context, req datasource.ReadRequ
                 return
         }</span>
 
-        <span class="cov0" title="0">var tfPacks []DBaasPacksModel
-        for _, pack := range packs </span><span class="cov0" title="0">{
-                tfPacks = append(tfPacks, DBaasPacksModel{
-                        ID:        types.Int64Value(pack.ID),
-                        Type:      types.StringValue(pack.Type),
-                        Group:     types.StringValue(pack.Group),
-                        Name:      types.StringValue(pack.Name),
-                        Instances: types.Int64Value(pack.Instances),
-                        CPU:       types.Int64Value(pack.CPU),
-                        RAM:       types.Int64Value(pack.RAM),
-                        Storage:   types.Int64Value(pack.Storage),
-                        Rates: RatesModel{
-                                CHF: PricingModel{
-                                        HourlyExcludingTaxes: types.Float64Value(pack.Rates.CHF.HourExclTax),
-                                        HourlyIncludingTaxes: types.Float64Value(pack.Rates.CHF.HourInclTax),
-                                },
-                                EUR: PricingModel{
-                                        HourlyExcludingTaxes: types.Float64Value(pack.Rates.EUR.HourExclTax),
-                                        HourlyIncludingTaxes: types.Float64Value(pack.Rates.EUR.HourInclTax),
-                                },
-                        },
-                })
-        }</span>
-
-        <span class="cov0" title="0">data.Packs = tfPacks
+        <span class="cov0" title="0">data.Type = types.StringValue(pack.Type)
+        data.Group = types.StringValue(pack.Group)
+        data.ID = types.Int64Value(pack.ID)
+        data.Name = types.StringValue(pack.Name)
+        data.Instances = types.Int64Value(pack.Instances)
+        data.CPU = types.Int64Value(pack.CPU)
+        data.RAM = types.Int64Value(pack.RAM)
+        data.Storage = types.Int64Value(pack.Storage)
 
         // Set state
         resp.Diagnostics.Append(resp.State.Set(ctx, &amp;data)...)
@@ -2967,8 +2999,8 @@ func (d *dbaasPacksDataSource) Read(ctx context.Context, req datasource.ReadRequ
 }
 
 // Metadata returns the data source type name.
-func (d *dbaasPacksDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) <span class="cov0" title="0">{
-        resp.TypeName = req.ProviderTypeName + "_dbaas_packs"
+func (d *dbaasPackDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) <span class="cov0" title="0">{
+        resp.TypeName = req.ProviderTypeName + "_dbaas_pack"
 }</span>
 </pre>
 		
@@ -2993,42 +3025,32 @@ func getDbaasPacksDataSourceSchema() schema.Schema <span class="cov0" title="0">
                         "type": schema.StringAttribute{
                                 Required: true,
                         },
-                        "packs": schema.ListNestedAttribute{
+                        "id": schema.Int64Attribute{
                                 Computed: true,
-                                NestedObject: schema.NestedAttributeObject{
-                                        Attributes: map[string]schema.Attribute{
-                                                "id": schema.Int64Attribute{
-                                                        Computed: true,
-                                                },
-                                                "type": schema.StringAttribute{
-                                                        Computed: true,
-                                                },
-                                                "group": schema.StringAttribute{
-                                                        Computed: true,
-                                                },
-                                                "name": schema.StringAttribute{
-                                                        Computed: true,
-                                                },
-                                                "instances": schema.Int64Attribute{
-                                                        Computed: true,
-                                                },
-                                                "cpu": schema.Int64Attribute{
-                                                        Computed: true,
-                                                },
-                                                "ram": schema.Int64Attribute{
-                                                        Computed: true,
-                                                },
-                                                "storage": schema.Int64Attribute{
-                                                        Computed: true,
-                                                },
-                                                "rates": schema.SingleNestedAttribute{
-                                                        Computed: true,
-                                                        Attributes: map[string]schema.Attribute{
-                                                                "chf": pricingObject,
-                                                                "eur": pricingObject,
-                                                        },
-                                                },
-                                        },
+                        },
+                        "group": schema.StringAttribute{
+                                Optional: true,
+                        },
+                        "name": schema.StringAttribute{
+                                Optional: true,
+                        },
+                        "instances": schema.Int64Attribute{
+                                Optional: true,
+                        },
+                        "cpu": schema.Int64Attribute{
+                                Optional: true,
+                        },
+                        "ram": schema.Int64Attribute{
+                                Optional: true,
+                        },
+                        "storage": schema.Int64Attribute{
+                                Optional: true,
+                        },
+                        "rates": schema.SingleNestedAttribute{
+                                Computed: true,
+                                Attributes: map[string]schema.Attribute{
+                                        "chf": pricingObject,
+                                        "eur": pricingObject,
                                 },
                         },
                 },
@@ -3560,7 +3582,7 @@ func Register() <span class="cov8" title="1">{
         registry.RegisterResource(NewDBaasBackupScheduleResource)
 
         registry.RegisterDataSource(NewDBaasDataSource)
-        registry.RegisterDataSource(NewDBaasPacksDataSource)
+        registry.RegisterDataSource(NewDBaasPackDataSource)
         registry.RegisterDataSource(NewDBaasConstsDataSource)
 }</span>
 </pre>
@@ -6079,10 +6101,7 @@ func TestCheckGetFromState(name string, key string, out *string) func(s *terrafo
 }
 </pre>
 		
-		<pre class="file" id="file42" style="display: none">// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
-package main
+		<pre class="file" id="file42" style="display: none">package main
 
 import (
         "context"
