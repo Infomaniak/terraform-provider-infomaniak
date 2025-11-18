@@ -158,6 +158,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	data.fill(dbaasObject)
+	data.Password = types.StringValue(createInfos.RootPassword)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

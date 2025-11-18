@@ -104,7 +104,7 @@ type DBaasBackupSchedule struct {
 
 type DBaaSCreateInfo struct {
 	Id             int64  `json:"id"`
-	RootPassword   string `json:"root_password"`
+	RootPassword   string `json:"admin_password"`
 	KubeIdentifier string `json:"kube_identifier"`
 }
 
