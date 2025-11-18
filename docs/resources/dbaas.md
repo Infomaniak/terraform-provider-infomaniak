@@ -51,6 +51,7 @@ resource "infomaniak_dbaas" "db-0" {
 ### Read-Only
 
 - `id` (Integer) A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.
+- `kube_identifier` (String) A computed value that gives the kubernetes identifier of the DbaaS
 - `host` (String) The host to access the Database.
 - `port` (String) The port to access the Database.
 - `user` (String) The user to access the Database.
