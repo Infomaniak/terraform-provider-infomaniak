@@ -665,7 +665,7 @@ type DBaasBackupSchedule struct {
 
 type DBaaSCreateInfo struct {
         Id             int64  `json:"id"`
-        RootPassword   string `json:"root_password"`
+        RootPassword   string `json:"admin_password"`
         KubeIdentifier string `json:"kube_identifier"`
 }
 
@@ -3207,6 +3207,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
         }</span>
 
         <span class="cov0" title="0">data.fill(dbaasObject)
+        data.Password = types.StringValue(createInfos.RootPassword)
 
         // Save data into Terraform state
         resp.Diagnostics.Append(resp.State.Set(ctx, &amp;data)...)</span>
