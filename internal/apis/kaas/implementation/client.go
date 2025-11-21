@@ -145,7 +145,7 @@ func (client *Client) GetVersions() ([]string, error) {
 	return result.Data, nil
 }
 
-func (client *Client) GetKaas(publicCloudId int, publicCloudProjectId int, kaasId int) (*kaas.Kaas, error) {
+func (client *Client) GetKaas(publicCloudId int64, publicCloudProjectId int64, kaasId int64) (*kaas.Kaas, error) {
 	var result helpers.NormalizedApiResponse[*kaas.Kaas]
 
 	resp, err := client.resty.R().
@@ -167,7 +167,7 @@ func (client *Client) GetKaas(publicCloudId int, publicCloudProjectId int, kaasI
 	return result.Data, nil
 }
 
-func (client *Client) GetKubeconfig(publicCloudId int, publicCloudProjectId int, kaasId int) (string, error) {
+func (client *Client) GetKubeconfig(publicCloudId int64, publicCloudProjectId int64, kaasId int64) (string, error) {
 	var result helpers.NormalizedApiResponse[string]
 
 	resp, err := client.resty.R().
@@ -188,8 +188,8 @@ func (client *Client) GetKubeconfig(publicCloudId int, publicCloudProjectId int,
 	return result.Data, nil
 }
 
-func (client *Client) CreateKaas(input *kaas.Kaas) (int, error) {
-	var result helpers.NormalizedApiResponse[int]
+func (client *Client) CreateKaas(input *kaas.Kaas) (int64, error) {
+	var result helpers.NormalizedApiResponse[int64]
 
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(input.Project.PublicCloudId)).
@@ -231,7 +231,7 @@ func (client *Client) UpdateKaas(input *kaas.Kaas) (bool, error) {
 	return result.Data, nil
 }
 
-func (client *Client) DeleteKaas(publicCloudId int, publicCloudProjectId int, kaasId int) (bool, error) {
+func (client *Client) DeleteKaas(publicCloudId int64, publicCloudProjectId int64, kaasId int64) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().
@@ -252,7 +252,7 @@ func (client *Client) DeleteKaas(publicCloudId int, publicCloudProjectId int, ka
 	return result.Data, nil
 }
 
-func (client *Client) GetInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) (*kaas.InstancePool, error) {
+func (client *Client) GetInstancePool(publicCloudId int64, publicCloudProjectId int64, kaasId int64, instancePoolId int64) (*kaas.InstancePool, error) {
 	var result helpers.NormalizedApiResponse[*kaas.InstancePool]
 
 	resp, err := client.resty.R().
@@ -279,8 +279,8 @@ func (client *Client) GetInstancePool(publicCloudId int, publicCloudProjectId in
 	return result.Data, nil
 }
 
-func (client *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId int, input *kaas.InstancePool) (int, error) {
-	var result helpers.NormalizedApiResponse[int]
+func (client *Client) CreateInstancePool(publicCloudId int64, publicCloudProjectId int64, input *kaas.InstancePool) (int64, error) {
+	var result helpers.NormalizedApiResponse[int64]
 
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
@@ -301,7 +301,7 @@ func (client *Client) CreateInstancePool(publicCloudId int, publicCloudProjectId
 	return result.Data, nil
 }
 
-func (client *Client) UpdateInstancePool(publicCloudId int, publicCloudProjectId int, input *kaas.InstancePool) (bool, error) {
+func (client *Client) UpdateInstancePool(publicCloudId int64, publicCloudProjectId int64, input *kaas.InstancePool) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().
@@ -324,7 +324,7 @@ func (client *Client) UpdateInstancePool(publicCloudId int, publicCloudProjectId
 	return result.Data, nil
 }
 
-func (client *Client) DeleteInstancePool(publicCloudId int, publicCloudProjectId int, kaasId int, instancePoolId int) (bool, error) {
+func (client *Client) DeleteInstancePool(publicCloudId int64, publicCloudProjectId int64, kaasId int64, instancePoolId int64) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().
@@ -346,7 +346,7 @@ func (client *Client) DeleteInstancePool(publicCloudId int, publicCloudProjectId
 	return result.Data, nil
 }
 
-func (client *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int, projectId int, kaasId int) (bool, error) {
+func (client *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int64, projectId int64, kaasId int64) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
@@ -368,7 +368,7 @@ func (client *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId 
 	return result.Data, nil
 }
 
-func (client *Client) GetApiserverParams(publicCloudId int, projectId int, kaasId int) (*kaas.Apiserver, error) {
+func (client *Client) GetApiserverParams(publicCloudId int64, projectId int64, kaasId int64) (*kaas.Apiserver, error) {
 
 	var result helpers.NormalizedApiResponse[*kaas.Apiserver]
 	resp, err := client.resty.R().

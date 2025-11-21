@@ -4,22 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 	"strconv"
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
 	"terraform-provider-infomaniak/internal/provider"
-	"terraform-provider-infomaniak/internal/services/scopes"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -38,9 +33,10 @@ type dbaasResource struct {
 }
 
 type DBaasModel struct {
-	PublicCloudId        types.Int64 `tfsdk:"public_cloud_id"`
-	PublicCloudProjectId types.Int64 `tfsdk:"public_cloud_project_id"`
-	Id                   types.Int64 `tfsdk:"id"`
+	PublicCloudId        types.Int64  `tfsdk:"public_cloud_id"`
+	PublicCloudProjectId types.Int64  `tfsdk:"public_cloud_project_id"`
+	Id                   types.Int64  `tfsdk:"id"`
+	KubernetesIdentifier types.String `tfsdk:"kube_identifier"`
 
 	Name     types.String `tfsdk:"name"`
 	PackName types.String `tfsdk:"pack_name"`
@@ -53,6 +49,8 @@ type DBaasModel struct {
 	User     types.String `tfsdk:"user"`
 	Password types.String `tfsdk:"password"`
 	Ca       types.String `tfsdk:"ca"`
+
+	AllowedCIDRs types.List `tfsdk:"allowed_cidrs"`
 }
 
 func (r *dbaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -80,77 +78,7 @@ func (r *dbaasResource) Configure(ctx context.Context, req resource.ConfigureReq
 }
 
 func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"pack_name": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The name of the pack associated to the DBaaS project",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"type": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The type of database associated with the DBaaS being installed",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"version": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The version of database associated with the DBaaS being installed",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"name": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The name of the DBaaS project",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"id": schema.Int64Attribute{
-				Computed:            true,
-				MarkdownDescription: "A computed value representing the unique identifier for the architecture. Mandatory for acceptance testing.",
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
-				},
-			},
-			"region": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The region where the DBaaS will reside.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"host": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "The host to access this database.",
-			},
-			"port": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "The port to access this database.",
-			},
-			"user": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "The username to access this database.",
-			},
-			"password": schema.StringAttribute{
-				Computed:            true,
-				Sensitive:           true,
-				MarkdownDescription: "The password to access this database.",
-			},
-			"ca": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "The Database CA Certificate",
-			},
-		},
-		MarkdownDescription: "The dbaas resource allows the user to manage a dbaas project",
-	}
-
-	maps.Copy(resp.Schema.Attributes, scopes.PublicCloud.Build())
+	resp.Schema = getDbaasResourceSchema()
 }
 
 func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -170,8 +98,8 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	input := &dbaas.DBaaS{
 		Project: dbaas.DBaaSProject{
-			PublicCloudId: int(data.PublicCloudId.ValueInt64()),
-			ProjectId:     int(data.PublicCloudProjectId.ValueInt64()),
+			PublicCloudId: data.PublicCloudId.ValueInt64(),
+			ProjectId:     data.PublicCloudProjectId.ValueInt64(),
 		},
 		Region:  data.Region.ValueString(),
 		Version: data.Version.ValueString(),
@@ -181,7 +109,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	// CreateDBaas API call logic
-	dbaasId, err := r.client.DBaas.CreateDBaaS(input)
+	createInfos, err := r.client.DBaas.CreateDBaaS(input)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error when creating DBaaS",
@@ -190,10 +118,10 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	data.Id = types.Int64Value(int64(dbaasId))
+	data.Id = types.Int64Value(createInfos.Id)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
-	dbaasObject, err := r.waitUntilActive(ctx, input, dbaasId)
+	dbaasObject, err := r.waitUntilActive(ctx, input, createInfos.Id)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error when waiting for DBaaS to be Active",
@@ -206,20 +134,31 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	connectionInfos, err := r.client.DBaas.GetPassword(
+	cidrs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
+	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &cidrs, false)...)
+	allowedCIDRs := dbaas.AllowedCIDRs{
+		IpFilters: cidrs,
+	}
+	ok, err := r.client.DBaas.PatchIpFilters(
 		input.Project.PublicCloudId,
 		input.Project.ProjectId,
-		dbaasId,
+		dbaasObject.Id,
+		allowedCIDRs,
 	)
+	if !ok {
+		resp.Diagnostics.AddError("Unknown IP filter error", "")
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error when reading DBaaS connection infos",
+			"Error when updating IP Filters",
 			err.Error(),
 		)
 		return
 	}
 
-	data.fill(dbaasObject, connectionInfos)
+	data.fill(dbaasObject)
+	data.Password = types.StringValue(createInfos.RootPassword)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -237,9 +176,9 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 
 	// Read API call logic
 	dbaasObject, err := r.client.DBaas.GetDBaaS(
-		int(state.PublicCloudId.ValueInt64()),
-		int(state.PublicCloudProjectId.ValueInt64()),
-		int(state.Id.ValueInt64()),
+		state.PublicCloudId.ValueInt64(),
+		state.PublicCloudProjectId.ValueInt64(),
+		state.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -249,20 +188,24 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	connectionInfos, err := r.client.DBaas.GetPassword(
-		int(state.PublicCloudId.ValueInt64()),
-		int(state.PublicCloudProjectId.ValueInt64()),
-		int(state.Id.ValueInt64()),
+	filteredIps, err := r.client.DBaas.GetIpFilters(
+		state.PublicCloudId.ValueInt64(),
+		state.PublicCloudProjectId.ValueInt64(),
+		state.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error when reading DBaaS connection infos",
+			"Error when reading DBaaS filtered IPs",
 			err.Error(),
 		)
 		return
 	}
 
-	state.fill(dbaasObject, connectionInfos)
+	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, filteredIps)
+	state.AllowedCIDRs = listFilteredIps
+	resp.Diagnostics.Append(diags...)
+
+	state.fill(dbaasObject)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -288,10 +231,10 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	// Update API call logic
 	input := &dbaas.DBaaS{
 		Project: dbaas.DBaaSProject{
-			PublicCloudId: int(data.PublicCloudId.ValueInt64()),
-			ProjectId:     int(data.PublicCloudProjectId.ValueInt64()),
+			PublicCloudId: data.PublicCloudId.ValueInt64(),
+			ProjectId:     data.PublicCloudProjectId.ValueInt64(),
 		},
-		Id:      int(state.Id.ValueInt64()),
+		Id:      state.Id.ValueInt64(),
 		Name:    data.Name.ValueString(),
 		PackId:  chosenPackState.Id,
 		Region:  state.Region.ValueString(),
@@ -321,23 +264,33 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	connectionInfos, err := r.client.DBaas.GetPassword(
-		int(state.PublicCloudId.ValueInt64()),
-		int(state.PublicCloudProjectId.ValueInt64()),
-		int(state.Id.ValueInt64()),
+	cidrs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
+	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &cidrs, false)...)
+	allowedCIDRs := dbaas.AllowedCIDRs{
+		IpFilters: cidrs,
+	}
+	ok, err := r.client.DBaas.PatchIpFilters(
+		state.PublicCloudId.ValueInt64(),
+		state.PublicCloudProjectId.ValueInt64(),
+		state.Id.ValueInt64(),
+		allowedCIDRs,
 	)
+	if !ok && err == nil {
+		resp.Diagnostics.AddError("Unknown IP filter error", "")
+	}
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error when reading DBaaS connection infos",
+			"Error when updating IP Filters",
 			err.Error(),
 		)
 		return
 	}
 
-	state.fill(dbaasObject, connectionInfos)
+	state.AllowedCIDRs = data.AllowedCIDRs
+	state.fill(dbaasObject)
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *dbaasResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -352,9 +305,9 @@ func (r *dbaasResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 
 	// DeleteDBaas API call logic
 	_, err := r.client.DBaas.DeleteDBaaS(
-		int(data.PublicCloudId.ValueInt64()),
-		int(data.PublicCloudProjectId.ValueInt64()),
-		int(data.Id.ValueInt64()),
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.Id.ValueInt64(),
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -411,21 +364,25 @@ func (r *dbaasResource) getPackId(data DBaasModel, diagnostic *diag.Diagnostics)
 	return pack, nil
 }
 
-func (model *DBaasModel) fill(dbaas *dbaas.DBaaS, connectionInfos *dbaas.DBaaSConnectionInfo) {
-	model.Id = types.Int64Value(int64(dbaas.Id))
+func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
+	model.Id = types.Int64Value(dbaas.Id)
+	model.KubernetesIdentifier = types.StringValue(dbaas.KubernetesIdentifier)
 	model.Region = types.StringValue(dbaas.Region)
 	model.Type = types.StringValue(dbaas.Type)
 	model.Version = types.StringValue(dbaas.Version)
 	model.Name = types.StringValue(dbaas.Name)
 	model.PackName = types.StringValue(dbaas.Pack.Name)
 
-	model.Host = types.StringValue(connectionInfos.Host)
-	model.Port = types.StringValue(connectionInfos.Port)
-	model.User = types.StringValue(connectionInfos.User)
-	model.Password = types.StringValue(connectionInfos.Password)
-	model.Ca = types.StringValue(connectionInfos.Ca)
+	if dbaas.Connection != nil {
+		model.Host = types.StringValue(dbaas.Connection.Host)
+		model.Port = types.StringValue(dbaas.Connection.Port)
+		model.User = types.StringValue(dbaas.Connection.User)
+		model.Password = types.StringValue(dbaas.Connection.Password)
+		model.Ca = types.StringValue(dbaas.Connection.Ca)
+	}
 }
-func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int) (*dbaas.DBaaS, error) {
+
+func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int64) (*dbaas.DBaaS, error) {
 	t := time.NewTicker(5 * time.Second)
 	for {
 		select {
