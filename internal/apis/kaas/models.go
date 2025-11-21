@@ -7,7 +7,7 @@ import (
 )
 
 type KaasPack struct {
-	Id              int         `json:"kaas_pack_id,omitempty"`
+	Id              int64       `json:"kaas_pack_id,omitempty"`
 	Name            string      `json:"name,omitempty"`
 	Description     string      `json:"description,omitempty"`
 	PricePerHour    *RatesModel `json:"price_per_hour,omitempty"`
