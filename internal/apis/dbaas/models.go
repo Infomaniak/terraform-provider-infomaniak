@@ -48,6 +48,26 @@ type Pricing struct {
 	HourInclTax float64 `json:"hour_incl_tax,omitempty"`
 }
 
+type StringMap map[string]string
+
+func (sm *StringMap) UnmarshalJSON(data []byte) error {
+	var raw map[string]any
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	*sm = make(StringMap)
+	for key, value := range raw {
+		switch v := value.(type) {
+		case string:
+			(*sm)[key] = v
+		default:
+			(*sm)[key] = fmt.Sprintf("%v", v)
+		}
+	}
+	return nil
+}
+
 type DBaaS struct {
 	Id         int64                `json:"id,omitempty"`
 	Project    DBaaSProject         `json:"project,omitzero"`
@@ -61,6 +81,8 @@ type DBaaS struct {
 	KubernetesIdentifier string `json:"kube_identifier,omitempty"`
 	Region               string `json:"region,omitempty"`
 	Status               string `json:"status,omitempty"`
+
+	Settings StringMap
 }
 
 type AllowedCIDRs struct {
