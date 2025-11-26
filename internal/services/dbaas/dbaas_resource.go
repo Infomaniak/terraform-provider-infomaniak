@@ -140,6 +140,9 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	cidrs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
 	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &cidrs, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	allowedCIDRs := dbaas.AllowedCIDRs{
 		IpFilters: cidrs,
 	}
@@ -161,9 +164,12 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	if !data.Configuration.IsNull() {
+	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
 		configuration := make(map[string]string)
 		resp.Diagnostics.Append(data.Configuration.ElementsAs(ctx, &configuration, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		ok, err = r.client.DBaas.PutConfiguration(
 			data.PublicCloudId.ValueInt64(),
 			data.PublicCloudProjectId.ValueInt64(),
@@ -181,6 +187,8 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 			)
 			return
 		}
+	} else {
+		data.Configuration = types.MapNull(types.StringType)
 	}
 
 	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
@@ -353,7 +361,7 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 
 	state.AllowedCIDRs = data.AllowedCIDRs
 
-	if !data.Configuration.IsNull() {
+	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
 		settings := make(map[string]string)
 		resp.Diagnostics.Append(data.Configuration.ElementsAs(ctx, &settings, false)...)
 		ok, err = r.client.DBaas.PutConfiguration(
@@ -496,11 +504,14 @@ func (r *dbaasResource) refreshEffectiveConfiguration(ctx context.Context, publi
 			"Error when reading DBaaS settings",
 			err.Error(),
 		)
-		return types.Map{}, diags
+		return types.MapNull(types.StringType), diags
 	}
 
-	mapSettings, diags := types.MapValueFrom(ctx, types.StringType, effectiveSettings)
-	diags.Append(diags...)
+	mapSettings, diag := types.MapValueFrom(ctx, types.StringType, effectiveSettings)
+	diags.Append(diag...)
+	if diags.HasError() {
+		return types.MapNull(types.StringType), diags
+	}
 
 	return mapSettings, diags
 }
