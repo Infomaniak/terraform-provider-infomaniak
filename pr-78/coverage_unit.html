@@ -141,7 +141,7 @@
 				
 				<option value="file42">terraform-provider-infomaniak/internal/test/testing.go (0.0%)</option>
 				
-				<option value="file43">terraform-provider-infomaniak/internal/utils/utils.go (0.0%)</option>
+				<option value="file43">terraform-provider-infomaniak/internal/utils/utils.go (100.0%)</option>
 				
 				<option value="file44">terraform-provider-infomaniak/main.go (0.0%)</option>
 				
@@ -6319,7 +6319,7 @@ import (
         "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func StringMapStateManager(ctx context.Context, newEffective types.Map, stateEffective types.Map, localManager types.Map) (types.Map, types.Map, diag.Diagnostics) <span class="cov0" title="0">{
+func StringMapStateManager(ctx context.Context, newEffective types.Map, stateEffective types.Map, userDefined types.Map) (types.Map, types.Map, diag.Diagnostics) <span class="cov8" title="1">{
         var diags diag.Diagnostics
 
         incomingFromApi := make(map[string]string)
@@ -6329,27 +6329,27 @@ func StringMapStateManager(ctx context.Context, newEffective types.Map, stateEff
         diags.Append(stateEffective.ElementsAs(ctx, &amp;incomingFromState, false)...)
 
         local := make(map[string]string)
-        diags.Append(localManager.ElementsAs(ctx, &amp;local, false)...)
+        diags.Append(userDefined.ElementsAs(ctx, &amp;local, false)...)
 
-        for incomingEffectiveKey, incomingEffectiveValue := range incomingFromApi </span><span class="cov0" title="0">{
+        for incomingEffectiveKey, incomingEffectiveValue := range incomingFromApi </span><span class="cov8" title="1">{
                 _, localManagerUseKey := local[incomingEffectiveKey]
-                if localManagerUseKey </span><span class="cov0" title="0">{
+                if localManagerUseKey </span><span class="cov8" title="1">{
                         local[incomingEffectiveKey] = incomingEffectiveValue
                 }</span>
         }
 
-        <span class="cov0" title="0">for incomingEffectiveKey, incomingEffectiveValue := range incomingFromApi </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">for incomingEffectiveKey, incomingEffectiveValue := range incomingFromApi </span><span class="cov8" title="1">{
                 stateEffectiveValue, stateEffectiveUseKey := incomingFromState[incomingEffectiveKey]
-                if stateEffectiveUseKey </span><span class="cov0" title="0">{
+                if stateEffectiveUseKey </span><span class="cov8" title="1">{
                         // The user changed the value from an other source than terraform
-                        if stateEffectiveValue != incomingEffectiveValue </span><span class="cov0" title="0">{
+                        if stateEffectiveValue != incomingEffectiveValue </span><span class="cov8" title="1">{
                                 local[incomingEffectiveKey] = incomingEffectiveValue
                         }</span>
-                        <span class="cov0" title="0">incomingFromState[incomingEffectiveKey] = incomingEffectiveValue</span>
+                        <span class="cov8" title="1">incomingFromState[incomingEffectiveKey] = incomingEffectiveValue</span>
                 }
         }
 
-        <span class="cov0" title="0">localMap, diags := types.MapValueFrom(ctx, types.StringType, local)
+        <span class="cov8" title="1">localMap, diags := types.MapValueFrom(ctx, types.StringType, local)
         diags.Append(diags...)
 
         effectiveMap, diags := types.MapValueFrom(ctx, types.StringType, incomingFromState)

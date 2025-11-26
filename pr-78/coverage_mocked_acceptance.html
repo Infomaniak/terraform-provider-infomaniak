@@ -1585,7 +1585,7 @@ func init() <span class="cov10" title="295">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="287">{
+        if err == nil </span><span class="cov9" title="288">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1595,17 +1595,17 @@ func init() <span class="cov10" title="295">{
 
         // Try to get cache
         <span class="cov10" title="295">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="287">{
+        if err == nil </span><span class="cov9" title="288">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov4" title="8">{
+                if err != nil </span><span class="cov4" title="7">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="287">return</span>
+                <span class="cov9" title="288">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov4" title="8">_, err = os.Create(mockedApiStatePath)
+        <span class="cov4" title="7">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -6308,7 +6308,7 @@ import (
         "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func StringMapStateManager(ctx context.Context, newEffective types.Map, stateEffective types.Map, localManager types.Map) (types.Map, types.Map, diag.Diagnostics) <span class="cov0" title="0">{
+func StringMapStateManager(ctx context.Context, newEffective types.Map, stateEffective types.Map, userDefined types.Map) (types.Map, types.Map, diag.Diagnostics) <span class="cov0" title="0">{
         var diags diag.Diagnostics
 
         incomingFromApi := make(map[string]string)
@@ -6318,7 +6318,7 @@ func StringMapStateManager(ctx context.Context, newEffective types.Map, stateEff
         diags.Append(stateEffective.ElementsAs(ctx, &amp;incomingFromState, false)...)
 
         local := make(map[string]string)
-        diags.Append(localManager.ElementsAs(ctx, &amp;local, false)...)
+        diags.Append(userDefined.ElementsAs(ctx, &amp;local, false)...)
 
         for incomingEffectiveKey, incomingEffectiveValue := range incomingFromApi </span><span class="cov0" title="0">{
                 _, localManagerUseKey := local[incomingEffectiveKey]
