@@ -102,14 +102,14 @@ require (
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.uber.org/mock v0.6.0 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.3 // indirect
-	golang.org/x/crypto v0.41.0 // indirect
-	golang.org/x/mod v0.27.0 // indirect
-	golang.org/x/net v0.43.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/mod v0.29.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/term v0.37.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
-	golang.org/x/tools v0.36.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/tools v0.38.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
 	google.golang.org/grpc v1.71.0 // indirect
@@ -123,6 +123,6 @@ require (
 tool (
 	github.com/boumenot/gocover-cobertura
 	github.com/go-task/task/v3/cmd/task
-	go.uber.org/mock/mockgen
 	github.com/onsi/ginkgo/v2/ginkgo
+	go.uber.org/mock/mockgen
 )
