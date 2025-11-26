@@ -141,6 +141,8 @@
 				
 				<option value="file42">terraform-provider-infomaniak/internal/services/kaas/register.go (100.0%)</option>
 				
+				<option value="file43">terraform-provider-infomaniak/internal/utils/utils.go (0.0%)</option>
+				
 				</select>
 			</div>
 			<div id="legend">
@@ -2318,11 +2320,11 @@ type DBaasBackupScheduleModel struct {
         PublicCloudProjectId types.Int64 `tfsdk:"public_cloud_project_id"`
         DbaasId              types.Int64 `tfsdk:"dbaas_id"`
 
-        Id                 types.Int64  `tfsdk:"id"`
-        Name               types.String `tfsdk:"name"`
-        ScheduledAt        types.String `tfsdk:"scheduled_at"`
-        Retention          types.Int64  `tfsdk:"retention"`
-        IsPitrEnabled      types.Bool   `tfsdk:"is_pitr_enabled"`
+        Id            types.Int64  `tfsdk:"id"`
+        Name          types.String `tfsdk:"name"`
+        ScheduledAt   types.String `tfsdk:"scheduled_at"`
+        Retention     types.Int64  `tfsdk:"retention"`
+        IsPitrEnabled types.Bool   `tfsdk:"is_pitr_enabled"`
 }
 
 func (model *DBaasBackupScheduleModel) fill(backupSchedule *dbaas.DBaasBackupSchedule) <span class="cov0" title="0">{
@@ -2372,9 +2374,9 @@ func (r *dbaasBackupScheduleResource) Create(ctx context.Context, req resource.C
         }</span>
 
         <span class="cov0" title="0">input := &amp;dbaas.DBaasBackupSchedule{
-                ScheduledAt:        data.ScheduledAt.ValueStringPointer(),
-                Retention:          data.Retention.ValueInt64Pointer(),
-                IsPitrEnabled:      data.IsPitrEnabled.ValueBoolPointer(),
+                ScheduledAt:   data.ScheduledAt.ValueStringPointer(),
+                Retention:     data.Retention.ValueInt64Pointer(),
+                IsPitrEnabled: data.IsPitrEnabled.ValueBoolPointer(),
         }
 
         scheduleId, err := r.client.DBaas.CreateDBaasScheduleBackup(
@@ -2425,9 +2427,9 @@ func (r *dbaasBackupScheduleResource) Update(ctx context.Context, req resource.U
         }</span>
 
         <span class="cov0" title="0">input := &amp;dbaas.DBaasBackupSchedule{
-                ScheduledAt:        data.ScheduledAt.ValueStringPointer(),
-                Retention:          data.Retention.ValueInt64Pointer(),
-                IsPitrEnabled:      data.IsPitrEnabled.ValueBoolPointer(),
+                ScheduledAt:   data.ScheduledAt.ValueStringPointer(),
+                Retention:     data.Retention.ValueInt64Pointer(),
+                IsPitrEnabled: data.IsPitrEnabled.ValueBoolPointer(),
         }
 
         ok, err := r.client.DBaas.UpdateDBaasScheduleBackup(
@@ -3179,6 +3181,7 @@ import (
         "terraform-provider-infomaniak/internal/apis"
         "terraform-provider-infomaniak/internal/apis/dbaas"
         "terraform-provider-infomaniak/internal/provider"
+        "terraform-provider-infomaniak/internal/utils"
         "time"
 
         "github.com/hashicorp/terraform-plugin-framework/diag"
@@ -3352,18 +3355,19 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
                 }</span>
         }
 
-        <span class="cov0" title="0">data.EffectiveConfiguration, resp.Diagnostics = r.refreshEffectiveConfiguration(
+        <span class="cov0" title="0">newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
                 ctx,
                 data.PublicCloudId.ValueInt64(),
                 data.PublicCloudProjectId.ValueInt64(),
                 data.Id.ValueInt64(),
-                &amp;resp.Diagnostics,
         )
+        resp.Diagnostics.Append(diags...)
         if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                 return
         }</span>
 
-        <span class="cov0" title="0">data.fill(dbaasObject)
+        <span class="cov0" title="0">data.EffectiveConfiguration = newEffectiveConfig
+        data.fill(dbaasObject)
         data.Password = types.StringValue(createInfos.RootPassword)
 
         // Save data into Terraform state
@@ -3411,53 +3415,37 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
         state.AllowedCIDRs = listFilteredIps
         resp.Diagnostics.Append(diags...)
 
-        oldStateEffectiveConfiguration := make(map[string]string)
-        resp.Diagnostics.Append(state.EffectiveConfiguration.ElementsAs(ctx, &amp;oldStateEffectiveConfiguration, false)...)
-
-        state.EffectiveConfiguration, resp.Diagnostics = r.refreshEffectiveConfiguration(
+        newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
                 ctx,
                 state.PublicCloudId.ValueInt64(),
                 state.PublicCloudProjectId.ValueInt64(),
                 state.Id.ValueInt64(),
-                &amp;resp.Diagnostics,
         )
+        resp.Diagnostics.Append(diags...)
         if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                 return
         }</span>
 
         <span class="cov0" title="0">if !state.Configuration.IsNull() </span><span class="cov0" title="0">{
-                stateConfiguration := make(map[string]string)
-                resp.Diagnostics.Append(state.Configuration.ElementsAs(ctx, &amp;stateConfiguration, false)...)
+                newEffectiveConfig, newConfig, diags := utils.StringMapStateManager(
+                        ctx,
+                        newEffectiveConfig,
+                        state.EffectiveConfiguration,
+                        state.Configuration,
+                )
+                resp.Diagnostics.Append(diags...)
+                state.EffectiveConfiguration = newEffectiveConfig
+                state.Configuration = newConfig
+        }</span>
 
-                stateEffectiveConfiguration := make(map[string]string)
-                resp.Diagnostics.Append(state.EffectiveConfiguration.ElementsAs(ctx, &amp;stateEffectiveConfiguration, false)...)
-
-                for effectiveConfigurationKey, effectiveConfigurationValue := range stateEffectiveConfiguration </span><span class="cov0" title="0">{
-                        _, ok := stateConfiguration[effectiveConfigurationKey]
-                        if ok </span><span class="cov0" title="0">{
-                                stateConfiguration[effectiveConfigurationKey] = effectiveConfigurationValue
-                        }</span>
-
-                        <span class="cov0" title="0">oldEffectiveConfigurationValue, okOld := oldStateEffectiveConfiguration[effectiveConfigurationKey]
-                        stateEffectiveConfigValue, ok := stateEffectiveConfiguration[effectiveConfigurationKey]
-                        if okOld &amp;&amp; (!ok || stateEffectiveConfigValue != oldEffectiveConfigurationValue) </span><span class="cov0" title="0">{
-                                stateConfiguration[effectiveConfigurationKey] = effectiveConfigurationValue
-                        }</span>
-                }
-
-                <span class="cov0" title="0">mapStateConfiguration, diags := types.MapValueFrom(ctx, types.StringType, stateConfiguration)
-                state.Configuration = mapStateConfiguration
-                resp.Diagnostics.Append(diags...)</span>
-        }
-
-        <span class="cov0" title="0">state.fill(dbaasObject)
-
-        if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
+        <span class="cov0" title="0">if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                 return
         }</span>
 
+        <span class="cov0" title="0">state.fill(dbaasObject)
+
         // Save updated data into Terraform state
-        <span class="cov0" title="0">resp.Diagnostics.Append(resp.State.Set(ctx, &amp;state)...)</span>
+        resp.Diagnostics.Append(resp.State.Set(ctx, &amp;state)...)</span>
 }
 
 func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) <span class="cov0" title="0">{
@@ -3561,18 +3549,19 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
                 <span class="cov0" title="0">state.Configuration = data.Configuration</span>
         }
 
-        <span class="cov0" title="0">state.EffectiveConfiguration, resp.Diagnostics = r.refreshEffectiveConfiguration(
+        <span class="cov0" title="0">newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
                 ctx,
                 state.PublicCloudId.ValueInt64(),
                 state.PublicCloudProjectId.ValueInt64(),
                 state.Id.ValueInt64(),
-                &amp;resp.Diagnostics,
         )
+        resp.Diagnostics.Append(diags...)
         if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                 return
         }</span>
 
-        <span class="cov0" title="0">state.fill(dbaasObject)
+        <span class="cov0" title="0">state.EffectiveConfiguration = newEffectiveConfig
+        state.fill(dbaasObject)
 
         // Save updated data into Terraform state
         resp.Diagnostics.Append(resp.State.Set(ctx, &amp;state)...)</span>
@@ -3667,24 +3656,25 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) <span class="cov0" title="0">{
         }</span>
 }
 
-func (r *dbaasResource) refreshEffectiveConfiguration(ctx context.Context, publicCloudId, publicCloudProjectId, id int64, diagnostics *diag.Diagnostics) (types.Map, diag.Diagnostics) <span class="cov0" title="0">{
+func (r *dbaasResource) refreshEffectiveConfiguration(ctx context.Context, publicCloudId, publicCloudProjectId, id int64) (types.Map, diag.Diagnostics) <span class="cov0" title="0">{
+        var diags diag.Diagnostics
         effectiveSettings, err := r.client.DBaas.GetConfiguration(
                 publicCloudId,
                 publicCloudProjectId,
                 id,
         )
         if err != nil </span><span class="cov0" title="0">{
-                diagnostics.AddError(
+                diags.AddError(
                         "Error when reading DBaaS settings",
                         err.Error(),
                 )
-                return types.Map{}, *diagnostics
+                return types.Map{}, diags
         }</span>
 
         <span class="cov0" title="0">mapSettings, diags := types.MapValueFrom(ctx, types.StringType, effectiveSettings)
-        diagnostics.Append(diags...)
+        diags.Append(diags...)
 
-        return mapSettings, *diagnostics</span>
+        return mapSettings, diags</span>
 }
 
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int64) (*dbaas.DBaaS, error) <span class="cov0" title="0">{
@@ -3817,15 +3807,15 @@ func getDbaasResourceSchema() schema.Schema <span class="cov10" title="147">{
                                 MarkdownDescription: "DbaaS kubernetes name",
                         },
                         "configuration": schema.MapAttribute{
-                                Computed: true,
-                                Optional: true,
+                                Computed:    true,
+                                Optional:    true,
                                 ElementType: types.StringType,
                                 PlanModifiers: []planmodifier.Map{
                                         mapplanmodifier.UseStateForUnknown(),
                                 },
                         },
                         "effective_configuration": schema.MapAttribute{
-                                Computed: true,
+                                Computed:    true,
                                 ElementType: types.StringType,
                         },
                 },
@@ -6307,6 +6297,55 @@ func Register() <span class="cov10" title="295">{
         registry.RegisterDataSource(NewKaasDataSource)
         registry.RegisterDataSource(NewKaasInstancePoolDataSource)
 }</span>
+</pre>
+		
+		<pre class="file" id="file43" style="display: none">package utils
+
+import (
+        "context"
+
+        "github.com/hashicorp/terraform-plugin-framework/diag"
+        "github.com/hashicorp/terraform-plugin-framework/types"
+)
+
+func StringMapStateManager(ctx context.Context, newEffective types.Map, stateEffective types.Map, localManager types.Map) (types.Map, types.Map, diag.Diagnostics) <span class="cov0" title="0">{
+        var diags diag.Diagnostics
+
+        incomingFromApi := make(map[string]string)
+        diags.Append(newEffective.ElementsAs(ctx, &amp;incomingFromApi, false)...)
+
+        incomingFromState := make(map[string]string)
+        diags.Append(stateEffective.ElementsAs(ctx, &amp;incomingFromState, false)...)
+
+        local := make(map[string]string)
+        diags.Append(localManager.ElementsAs(ctx, &amp;local, false)...)
+
+        for incomingEffectiveKey, incomingEffectiveValue := range incomingFromApi </span><span class="cov0" title="0">{
+                _, localManagerUseKey := local[incomingEffectiveKey]
+                if localManagerUseKey </span><span class="cov0" title="0">{
+                        local[incomingEffectiveKey] = incomingEffectiveValue
+                }</span>
+        }
+
+        <span class="cov0" title="0">for incomingEffectiveKey, incomingEffectiveValue := range incomingFromApi </span><span class="cov0" title="0">{
+                stateEffectiveValue, stateEffectiveUseKey := incomingFromState[incomingEffectiveKey]
+                if stateEffectiveUseKey </span><span class="cov0" title="0">{
+                        // The user changed the value from an other source than terraform
+                        if stateEffectiveValue != incomingEffectiveValue </span><span class="cov0" title="0">{
+                                local[incomingEffectiveKey] = incomingEffectiveValue
+                        }</span>
+                        <span class="cov0" title="0">incomingFromState[incomingEffectiveKey] = incomingEffectiveValue</span>
+                }
+        }
+
+        <span class="cov0" title="0">localMap, diags := types.MapValueFrom(ctx, types.StringType, local)
+        diags.Append(diags...)
+
+        effectiveMap, diags := types.MapValueFrom(ctx, types.StringType, incomingFromState)
+        diags.Append(diags...)
+
+        return effectiveMap, localMap, diags</span>
+}
 </pre>
 		
 		</div>
