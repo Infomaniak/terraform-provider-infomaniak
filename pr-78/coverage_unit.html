@@ -3479,7 +3479,7 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 
         <span class="cov0" title="0">state.AllowedCIDRs = data.AllowedCIDRs
 
-        if !data.Configuration.IsNull() </span><span class="cov0" title="0">{
+        if !data.Configuration.IsNull() &amp;&amp; !data.Configuration.IsUnknown() </span><span class="cov0" title="0">{
                 settings := make(map[string]string)
                 resp.Diagnostics.Append(data.Configuration.ElementsAs(ctx, &amp;settings, false)...)
                 ok, err = r.client.DBaas.PutConfiguration(
