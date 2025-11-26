@@ -124,4 +124,5 @@ tool (
 	github.com/boumenot/gocover-cobertura
 	github.com/go-task/task/v3/cmd/task
 	go.uber.org/mock/mockgen
+	github.com/onsi/ginkgo/v2/ginkgo
 )

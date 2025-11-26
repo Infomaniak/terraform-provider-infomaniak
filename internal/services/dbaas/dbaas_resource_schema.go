@@ -104,15 +104,15 @@ func getDbaasResourceSchema() schema.Schema {
 				MarkdownDescription: "DbaaS kubernetes name",
 			},
 			"configuration": schema.MapAttribute{
-				Computed: true,
-				Optional: true,
+				Computed:    true,
+				Optional:    true,
 				ElementType: types.StringType,
 				PlanModifiers: []planmodifier.Map{
 					mapplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"effective_configuration": schema.MapAttribute{
-				Computed: true,
+				Computed:    true,
 				ElementType: types.StringType,
 			},
 		},
