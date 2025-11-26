@@ -35,11 +35,11 @@ type DBaasBackupScheduleModel struct {
 	PublicCloudProjectId types.Int64 `tfsdk:"public_cloud_project_id"`
 	DbaasId              types.Int64 `tfsdk:"dbaas_id"`
 
-	Id                 types.Int64  `tfsdk:"id"`
-	Name               types.String `tfsdk:"name"`
-	ScheduledAt        types.String `tfsdk:"scheduled_at"`
-	Retention          types.Int64  `tfsdk:"retention"`
-	IsPitrEnabled      types.Bool   `tfsdk:"is_pitr_enabled"`
+	Id            types.Int64  `tfsdk:"id"`
+	Name          types.String `tfsdk:"name"`
+	ScheduledAt   types.String `tfsdk:"scheduled_at"`
+	Retention     types.Int64  `tfsdk:"retention"`
+	IsPitrEnabled types.Bool   `tfsdk:"is_pitr_enabled"`
 }
 
 func (model *DBaasBackupScheduleModel) fill(backupSchedule *dbaas.DBaasBackupSchedule) {
@@ -89,9 +89,9 @@ func (r *dbaasBackupScheduleResource) Create(ctx context.Context, req resource.C
 	}
 
 	input := &dbaas.DBaasBackupSchedule{
-		ScheduledAt:        data.ScheduledAt.ValueStringPointer(),
-		Retention:          data.Retention.ValueInt64Pointer(),
-		IsPitrEnabled:      data.IsPitrEnabled.ValueBoolPointer(),
+		ScheduledAt:   data.ScheduledAt.ValueStringPointer(),
+		Retention:     data.Retention.ValueInt64Pointer(),
+		IsPitrEnabled: data.IsPitrEnabled.ValueBoolPointer(),
 	}
 
 	scheduleId, err := r.client.DBaas.CreateDBaasScheduleBackup(
@@ -142,9 +142,9 @@ func (r *dbaasBackupScheduleResource) Update(ctx context.Context, req resource.U
 	}
 
 	input := &dbaas.DBaasBackupSchedule{
-		ScheduledAt:        data.ScheduledAt.ValueStringPointer(),
-		Retention:          data.Retention.ValueInt64Pointer(),
-		IsPitrEnabled:      data.IsPitrEnabled.ValueBoolPointer(),
+		ScheduledAt:   data.ScheduledAt.ValueStringPointer(),
+		Retention:     data.Retention.ValueInt64Pointer(),
+		IsPitrEnabled: data.IsPitrEnabled.ValueBoolPointer(),
 	}
 
 	ok, err := r.client.DBaas.UpdateDBaasScheduleBackup(

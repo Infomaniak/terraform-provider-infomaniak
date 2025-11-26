@@ -9,6 +9,7 @@ import (
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
 	"terraform-provider-infomaniak/internal/provider"
+	"terraform-provider-infomaniak/internal/utils"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -51,6 +52,9 @@ type DBaasModel struct {
 	Ca       types.String `tfsdk:"ca"`
 
 	AllowedCIDRs types.List `tfsdk:"allowed_cidrs"`
+
+	Configuration          types.Map `tfsdk:"configuration"`
+	EffectiveConfiguration types.Map `tfsdk:"effective_configuration"`
 }
 
 func (r *dbaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -136,6 +140,9 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	cidrs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
 	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &cidrs, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	allowedCIDRs := dbaas.AllowedCIDRs{
 		IpFilters: cidrs,
 	}
@@ -157,6 +164,45 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
+	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
+		configuration := make(map[string]string)
+		resp.Diagnostics.Append(data.Configuration.ElementsAs(ctx, &configuration, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ok, err = r.client.DBaas.PutConfiguration(
+			data.PublicCloudId.ValueInt64(),
+			data.PublicCloudProjectId.ValueInt64(),
+			data.Id.ValueInt64(),
+			configuration,
+		)
+		if !ok && err == nil {
+			resp.Diagnostics.AddError("Unknown Settings error", "")
+			return
+		}
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error when updating DBaaS Settings",
+				err.Error(),
+			)
+			return
+		}
+	} else {
+		data.Configuration = types.MapNull(types.StringType)
+	}
+
+	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
+		ctx,
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.Id.ValueInt64(),
+	)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	data.EffectiveConfiguration = newEffectiveConfig
 	data.fill(dbaasObject)
 	data.Password = types.StringValue(createInfos.RootPassword)
 
@@ -204,6 +250,33 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, filteredIps)
 	state.AllowedCIDRs = listFilteredIps
 	resp.Diagnostics.Append(diags...)
+
+	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
+		ctx,
+		state.PublicCloudId.ValueInt64(),
+		state.PublicCloudProjectId.ValueInt64(),
+		state.Id.ValueInt64(),
+	)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if !state.Configuration.IsNull() {
+		newEffectiveConfig, newConfig, diags := utils.StringMapStateManager(
+			ctx,
+			newEffectiveConfig,
+			state.EffectiveConfiguration,
+			state.Configuration,
+		)
+		resp.Diagnostics.Append(diags...)
+		state.EffectiveConfiguration = newEffectiveConfig
+		state.Configuration = newConfig
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	state.fill(dbaasObject)
 
@@ -287,6 +360,43 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	state.AllowedCIDRs = data.AllowedCIDRs
+
+	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
+		settings := make(map[string]string)
+		resp.Diagnostics.Append(data.Configuration.ElementsAs(ctx, &settings, false)...)
+		ok, err = r.client.DBaas.PutConfiguration(
+			state.PublicCloudId.ValueInt64(),
+			state.PublicCloudProjectId.ValueInt64(),
+			state.Id.ValueInt64(),
+			settings,
+		)
+		if !ok && err == nil {
+			resp.Diagnostics.AddError("Unknown Settings error", "")
+			return
+		}
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error when updating DBaaS Settings",
+				err.Error(),
+			)
+			return
+		}
+
+		state.Configuration = data.Configuration
+	}
+
+	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
+		ctx,
+		state.PublicCloudId.ValueInt64(),
+		state.PublicCloudProjectId.ValueInt64(),
+		state.Id.ValueInt64(),
+	)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	state.EffectiveConfiguration = newEffectiveConfig
 	state.fill(dbaasObject)
 
 	// Save updated data into Terraform state
@@ -380,6 +490,30 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
 		model.Password = types.StringValue(dbaas.Connection.Password)
 		model.Ca = types.StringValue(dbaas.Connection.Ca)
 	}
+}
+
+func (r *dbaasResource) refreshEffectiveConfiguration(ctx context.Context, publicCloudId, publicCloudProjectId, id int64) (types.Map, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	effectiveSettings, err := r.client.DBaas.GetConfiguration(
+		publicCloudId,
+		publicCloudProjectId,
+		id,
+	)
+	if err != nil {
+		diags.AddError(
+			"Error when reading DBaaS settings",
+			err.Error(),
+		)
+		return types.MapNull(types.StringType), diags
+	}
+
+	mapSettings, diag := types.MapValueFrom(ctx, types.StringType, effectiveSettings)
+	diags.Append(diag...)
+	if diags.HasError() {
+		return types.MapNull(types.StringType), diags
+	}
+
+	return mapSettings, diags
 }
 
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int64) (*dbaas.DBaaS, error) {

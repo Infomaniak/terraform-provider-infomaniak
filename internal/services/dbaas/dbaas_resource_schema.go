@@ -4,6 +4,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -101,6 +102,18 @@ func getDbaasResourceSchema() schema.Schema {
 			"kube_identifier": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "DbaaS kubernetes name",
+			},
+			"configuration": schema.MapAttribute{
+				Computed:    true,
+				Optional:    true,
+				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"effective_configuration": schema.MapAttribute{
+				Computed:    true,
+				ElementType: types.StringType,
 			},
 		},
 		MarkdownDescription: "The dbaas resource allows the user to manage a dbaas project",

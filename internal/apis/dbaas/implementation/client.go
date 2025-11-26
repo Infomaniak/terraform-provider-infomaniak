@@ -161,6 +161,49 @@ func (client *Client) PatchIpFilters(publicCloudId int64, publicCloudProjectId i
 	return result.Data, nil
 }
 
+func (client *Client) PutConfiguration(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, configuration map[string]string) (bool, error) {
+	var result helpers.NormalizedApiResponse[bool]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
+		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
+		SetBody(configuration).
+		SetResult(&result).
+		SetError(&result).
+		Put(EndpointDatabaseConfiguration)
+	if err != nil {
+		return false, err
+	}
+
+	if resp.IsError() {
+		return false, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) GetConfiguration(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) (map[string]string, error) {
+	var result helpers.NormalizedApiResponse[dbaas.StringMap]
+
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
+		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointDatabaseConfiguration)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	return result.Data, nil
+}
+
 func (client *Client) GetIpFilters(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) ([]string, error) {
 	var result helpers.NormalizedApiResponse[[]string]
 
