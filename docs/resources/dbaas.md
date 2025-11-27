@@ -78,7 +78,7 @@ resource "infomaniak_dbaas" "db-0" {
 - `version` (String) The version of the database to use.
 - `name` (String) The name of the DBaaS shown on the manager.
 - `allowed_cidrs` (List of String) The list of allowed cidrs to access to the database.
-- `configuration` (Map String => String) Key Value Map for specific engine params.
+- `configuration` (Map String => String) Key Value Map for specific engine params. For available params, please refer to [this documentation](https://developer.infomaniak.com/docs/api/put/1/public_clouds/%7Bpublic_cloud_id%7D/projects/%7Bpublic_cloud_project_id%7D/dbaas/%7Bdbaas_id%7D/configurations).
 
 ### Read-Only
 
