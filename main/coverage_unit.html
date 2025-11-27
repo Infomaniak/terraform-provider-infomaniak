@@ -611,6 +611,7 @@ func (client *Client) GetDbaasPack(params dbaas.PackFilter) (*dbaas.Pack, error)
 import (
         "encoding/json"
         "fmt"
+        "reflect"
         "strings"
 )
 
@@ -669,8 +670,10 @@ func (sm *StringMap) UnmarshalJSON(data []byte) error <span class="cov0" title="
                 switch v := value.(type) </span>{
                 case string:<span class="cov0" title="0">
                         (*sm)[key] = v</span>
+                case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:<span class="cov0" title="0">
+                        (*sm)[key] = fmt.Sprint(v)</span>
                 default:<span class="cov0" title="0">
-                        (*sm)[key] = fmt.Sprintf("%v", v)</span>
+                        return fmt.Errorf("unsupported type for key %v: (%v) %v", key, reflect.TypeOf(v), v)</span>
                 }
         }
         <span class="cov0" title="0">return nil</span>

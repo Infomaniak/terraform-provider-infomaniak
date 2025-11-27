@@ -665,6 +665,7 @@ func (client *Client) GetDbaasPack(params dbaas.PackFilter) (*dbaas.Pack, error)
 import (
         "encoding/json"
         "fmt"
+        "reflect"
         "strings"
 )
 
@@ -723,8 +724,10 @@ func (sm *StringMap) UnmarshalJSON(data []byte) error <span class="cov0" title="
                 switch v := value.(type) </span>{
                 case string:<span class="cov0" title="0">
                         (*sm)[key] = v</span>
+                case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:<span class="cov0" title="0">
+                        (*sm)[key] = fmt.Sprint(v)</span>
                 default:<span class="cov0" title="0">
-                        (*sm)[key] = fmt.Sprintf("%v", v)</span>
+                        return fmt.Errorf("unsupported type for key %v: (%v) %v", key, reflect.TypeOf(v), v)</span>
                 }
         }
         <span class="cov0" title="0">return nil</span>
@@ -1585,7 +1588,7 @@ func init() <span class="cov10" title="295">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="287">{
+        if err == nil </span><span class="cov9" title="286">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1595,17 +1598,17 @@ func init() <span class="cov10" title="295">{
 
         // Try to get cache
         <span class="cov10" title="295">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="287">{
+        if err == nil </span><span class="cov9" title="286">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov4" title="8">{
+                if err != nil </span><span class="cov4" title="9">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="287">return</span>
+                <span class="cov9" title="286">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov4" title="8">_, err = os.Create(mockedApiStatePath)
+        <span class="cov4" title="9">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
