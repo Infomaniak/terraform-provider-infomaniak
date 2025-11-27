@@ -161,7 +161,7 @@ func (client *Client) PatchIpFilters(publicCloudId int64, publicCloudProjectId i
 	return result.Data, nil
 }
 
-func (client *Client) PutConfiguration(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, configuration map[string]string) (bool, error) {
+func (client *Client) PutConfiguration(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, configuration map[string]any) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().
@@ -183,8 +183,8 @@ func (client *Client) PutConfiguration(publicCloudId int64, publicCloudProjectId
 	return result.Data, nil
 }
 
-func (client *Client) GetConfiguration(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) (map[string]string, error) {
-	var result helpers.NormalizedApiResponse[dbaas.StringMap]
+func (client *Client) GetConfiguration(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) (map[string]any, error) {
+	var result helpers.NormalizedApiResponse[map[string]any]
 
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
