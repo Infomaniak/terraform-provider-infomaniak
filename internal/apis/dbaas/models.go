@@ -3,6 +3,7 @@ package dbaas
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -61,8 +62,10 @@ func (sm *StringMap) UnmarshalJSON(data []byte) error {
 		switch v := value.(type) {
 		case string:
 			(*sm)[key] = v
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+			(*sm)[key] = fmt.Sprint(v)
 		default:
-			(*sm)[key] = fmt.Sprintf("%v", v)
+			return fmt.Errorf("unsupported type for key %v: (%v) %v", key, reflect.TypeOf(v), v)
 		}
 	}
 	return nil
