@@ -27,7 +27,7 @@ var _ = Describe("StringMapStateManager", func() {
 			stateEffective := types.MapNull(types.StringType)
 			userDefined := types.MapNull(types.StringType)
 
-			effectiveMap, localMap, diags := utils.StringMapStateManager(ctx, newEffective, stateEffective, userDefined)
+			effectiveMap, localMap, diags := utils.ObjectStateManager(ctx, newEffective, stateEffective, userDefined)
 
 			Expect(diags.HasError()).To(BeFalse())
 			Expect(effectiveMap.IsNull()).To(BeTrue())
@@ -54,7 +54,7 @@ var _ = Describe("StringMapStateManager", func() {
 			stateEffective, _ := types.MapValue(types.StringType, stateEffectiveMap)
 			userDefined, _ := types.MapValue(types.StringType, userDefinedMap)
 
-			effectiveMap, localMap, diags := utils.StringMapStateManager(ctx, newEffective, stateEffective, userDefined)
+			effectiveMap, localMap, diags := utils.ObjectStateManager(ctx, newEffective, stateEffective, userDefined)
 
 			Expect(diags.HasError()).To(BeFalse())
 
@@ -91,7 +91,7 @@ var _ = Describe("StringMapStateManager", func() {
 			stateEffective, _ := types.MapValue(types.StringType, stateEffectiveMap)
 			userDefined, _ := types.MapValue(types.StringType, userDefinedMap)
 
-			effectiveMap, localMap, diags := utils.StringMapStateManager(ctx, newEffective, stateEffective, userDefined)
+			effectiveMap, localMap, diags := utils.ObjectStateManager(ctx, newEffective, stateEffective, userDefined)
 
 			Expect(diags.HasError()).To(BeFalse())
 
@@ -129,7 +129,7 @@ var _ = Describe("StringMapStateManager", func() {
 			stateEffective, _ := types.MapValue(types.StringType, stateEffectiveMap)
 			userDefined, _ := types.MapValue(types.StringType, userDefinedMap)
 
-			effectiveMap, localMap, diags := utils.StringMapStateManager(ctx, newEffective, stateEffective, userDefined)
+			effectiveMap, localMap, diags := utils.ObjectStateManager(ctx, newEffective, stateEffective, userDefined)
 
 			Expect(diags.HasError()).To(BeFalse())
 
@@ -167,7 +167,7 @@ var _ = Describe("StringMapStateManager", func() {
 			stateEffective, _ := types.MapValue(types.StringType, stateEffectiveMap)
 			userDefined, _ := types.MapValue(types.StringType, userDefinedMap)
 
-			effectiveMap, localMap, diags := utils.StringMapStateManager(ctx, newEffective, stateEffective, userDefined)
+			effectiveMap, localMap, diags := utils.ObjectStateManager(ctx, newEffective, stateEffective, userDefined)
 
 			Expect(diags.HasError()).To(BeFalse())
 
@@ -204,7 +204,7 @@ var _ = Describe("StringMapStateManager", func() {
 			stateEffective, _ := types.MapValue(types.StringType, stateEffectiveMap)
 			userDefined, _ := types.MapValue(types.StringType, userDefinedMap)
 
-			effectiveMap, localMap, diags := utils.StringMapStateManager(ctx, newEffective, stateEffective, userDefined)
+			effectiveMap, localMap, diags := utils.ObjectStateManager(ctx, newEffective, stateEffective, userDefined)
 
 			Expect(diags.HasError()).To(BeFalse())
 
