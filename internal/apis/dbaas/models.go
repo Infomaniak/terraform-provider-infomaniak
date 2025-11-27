@@ -89,6 +89,52 @@ type AllowedCIDRs struct {
 	IpFilters []string `json:"ip_filters"`
 }
 
+type MySqlConfig struct {
+	AutoIncrementIncrement          *int64   `json:"auto_increment_increment,omitempty"`
+	AutoIncrementOffset             *int64   `json:"auto_increment_offset,omitempty"`
+	CharacterSetServer              *string  `json:"character_set_server,omitempty"`
+	ConnectTimeout                  *int64   `json:"connect_timeout,omitempty"`
+	GroupConcatMaxLen               *int64   `json:"group_concat_max_len,omitempty"`
+	InformationSchemaStatsExpiry    *int64   `json:"information_schema_stats_expiry,omitempty"`
+	InnodbChangeBufferMaxSize       *int64   `json:"innodb_change_buffer_max_size,omitempty"`
+	InnodbFlushNeighbors            *int64   `json:"innodb_flush_neighbors,omitempty"`
+	InnodbFtMaxTokenSize            *int64   `json:"innodb_ft_max_token_size,omitempty"`
+	InnodbFtMinTokenSize            *int64   `json:"innodb_ft_min_token_size,omitempty"`
+	InnodbFtServerStopwordTable     *string  `json:"innodb_ft_server_stopword_table,omitempty"`
+	InnodbLockWaitTimeout           *int64   `json:"innodb_lock_wait_timeout,omitempty"`
+	InnodbLogBufferSize             *int64   `json:"innodb_log_buffer_size,omitempty"`
+	InnodbOnlineAlterLogMaxSize     *int64   `json:"innodb_online_alter_log_max_size,omitempty"`
+	InnodbPrintAllDeadlocks         *string  `json:"innodb_print_all_deadlocks,omitempty"`
+	InnodbReadIoThreads             *int64   `json:"innodb_read_io_threads,omitempty"`
+	InnodbRollbackOnTimeout         *string  `json:"innodb_rollback_on_timeout,omitempty"`
+	InnodbStatsPersistentSamplePages *int64  `json:"innodb_stats_persistent_sample_pages,omitempty"`
+	InnodbThreadConcurrency         *int64   `json:"innodb_thread_concurrency,omitempty"`
+	InnodbWriteIoThreads            *int64   `json:"innodb_write_io_threads,omitempty"`
+	InteractiveTimeout              *int64   `json:"interactive_timeout,omitempty"`
+	LockWaitTimeout                 *int64   `json:"lock_wait_timeout,omitempty"`
+	LogBinTrustFunctionCreators     *string  `json:"log_bin_trust_function_creators,omitempty"`
+	LongQueryTime                   *float64 `json:"long_query_time,omitempty"`
+	MaxAllowedPacket                *int64   `json:"max_allowed_packet,omitempty"`
+	MaxConnections                  *int64   `json:"max_connections,omitempty"`
+	MaxDigestLength                 *int64   `json:"max_digest_length,omitempty"`
+	MaxHeapTableSize                *int64   `json:"max_heap_table_size,omitempty"`
+	MaxPreparedStmtCount            *int64   `json:"max_prepared_stmt_count,omitempty"`
+	MinExaminedRowLimit             *int64   `json:"min_examined_row_limit,omitempty"`
+	NetBufferLength                 *int64   `json:"net_buffer_length,omitempty"`
+	NetReadTimeout                  *int64   `json:"net_read_timeout,omitempty"`
+	NetWriteTimeout                 *int64   `json:"net_write_timeout,omitempty"`
+	PerformanceSchemaMaxDigestLength *int64  `json:"performance_schema_max_digest_length,omitempty"`
+	RequireSecureTransport          *string  `json:"require_secure_transport,omitempty"`
+	SortBufferSize                  *int64   `json:"sort_buffer_size,omitempty"`
+	SqlMode                         []string `json:"sql_mode,omitempty"`
+	TableDefinitionCache            *int64   `json:"table_definition_cache,omitempty"`
+	TableOpenCache                  *int64   `json:"table_open_cache,omitempty"`
+	TableOpenCacheInstances         *int64   `json:"table_open_cache_instances,omitempty"`
+	ThreadStack                     *int64   `json:"thread_stack,omitempty"`
+	TransactionIsolation            *string  `json:"transaction_isolation,omitempty"`
+	WaitTimeout                     *int64   `json:"wait_timeout,omitempty"`
+}
+
 // avoid crashes when the backend returns [] instead of null when connection is not yet avaialble
 func (d *DBaaS) UnmarshalJSON(data []byte) error {
 	type Alias DBaaS

@@ -9,7 +9,6 @@ import (
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
 	"terraform-provider-infomaniak/internal/provider"
-	"terraform-provider-infomaniak/internal/utils"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -53,8 +52,53 @@ type DBaasModel struct {
 
 	AllowedCIDRs types.List `tfsdk:"allowed_cidrs"`
 
-	Configuration          types.Map `tfsdk:"configuration"`
-	EffectiveConfiguration types.Map `tfsdk:"effective_configuration"`
+	MySqlConfiguration *MySqlConfig `tfsdk:"mysqlconfig"`
+}
+
+type MySqlConfig struct {
+	AutoIncrementIncrement           types.Int64   `tfsdk:"auto_increment_increment"`
+	AutoIncrementOffset              types.Int64   `tfsdk:"auto_increment_offset"`
+	CharacterSetServer               types.String  `tfsdk:"character_set_server"`
+	ConnectTimeout                   types.Int64   `tfsdk:"connect_timeout"`
+	GroupConcatMaxLen                types.Int64   `tfsdk:"group_concat_max_len"`
+	InformationSchemaStatsExpiry     types.Int64   `tfsdk:"information_schema_stats_expiry"`
+	InnodbChangeBufferMaxSize        types.Int64   `tfsdk:"innodb_change_buffer_max_size"`
+	InnodbFlushNeighbors             types.Int64   `tfsdk:"innodb_flush_neighbors"`
+	InnodbFtMaxTokenSize             types.Int64   `tfsdk:"innodb_ft_max_token_size"`
+	InnodbFtMinTokenSize             types.Int64   `tfsdk:"innodb_ft_min_token_size"`
+	InnodbFtServerStopwordTable      types.String  `tfsdk:"innodb_ft_server_stopword_table"`
+	InnodbLockWaitTimeout            types.Int64   `tfsdk:"innodb_lock_wait_timeout"`
+	InnodbLogBufferSize              types.Int64   `tfsdk:"innodb_log_buffer_size"`
+	InnodbOnlineAlterLogMaxSize      types.Int64   `tfsdk:"innodb_online_alter_log_max_size"`
+	InnodbPrintAllDeadlocks          types.String  `tfsdk:"innodb_print_all_deadlocks"`
+	InnodbReadIoThreads              types.Int64   `tfsdk:"innodb_read_io_threads"`
+	InnodbRollbackOnTimeout          types.String  `tfsdk:"innodb_rollback_on_timeout"`
+	InnodbStatsPersistentSamplePages types.Int64   `tfsdk:"innodb_stats_persistent_sample_pages"`
+	InnodbThreadConcurrency          types.Int64   `tfsdk:"innodb_thread_concurrency"`
+	InnodbWriteIoThreads             types.Int64   `tfsdk:"innodb_write_io_threads"`
+	InteractiveTimeout               types.Int64   `tfsdk:"interactive_timeout"`
+	LockWaitTimeout                  types.Int64   `tfsdk:"lock_wait_timeout"`
+	LogBinTrustFunctionCreators      types.String  `tfsdk:"log_bin_trust_function_creators"`
+	LongQueryTime                    types.Float64 `tfsdk:"long_query_time"`
+	MaxAllowedPacket                 types.Int64   `tfsdk:"max_allowed_packet"`
+	MaxConnections                   types.Int64   `tfsdk:"max_connections"`
+	MaxDigestLength                  types.Int64   `tfsdk:"max_digest_length"`
+	MaxHeapTableSize                 types.Int64   `tfsdk:"max_heap_table_size"`
+	MaxPreparedStmtCount             types.Int64   `tfsdk:"max_prepared_stmt_count"`
+	MinExaminedRowLimit              types.Int64   `tfsdk:"min_examined_row_limit"`
+	NetBufferLength                  types.Int64   `tfsdk:"net_buffer_length"`
+	NetReadTimeout                   types.Int64   `tfsdk:"net_read_timeout"`
+	NetWriteTimeout                  types.Int64   `tfsdk:"net_write_timeout"`
+	PerformanceSchemaMaxDigestLength types.Int64   `tfsdk:"performance_schema_max_digest_length"`
+	RequireSecureTransport           types.String  `tfsdk:"require_secure_transport"`
+	SortBufferSize                   types.Int64   `tfsdk:"sort_buffer_size"`
+	SqlMode                          types.List    `tfsdk:"sql_mode"`
+	TableDefinitionCache             types.Int64   `tfsdk:"table_definition_cache"`
+	TableOpenCache                   types.Int64   `tfsdk:"table_open_cache"`
+	TableOpenCacheInstances          types.Int64   `tfsdk:"table_open_cache_instances"`
+	ThreadStack                      types.Int64   `tfsdk:"thread_stack"`
+	TransactionIsolation             types.String  `tfsdk:"transaction_isolation"`
+	WaitTimeout                      types.Int64   `tfsdk:"wait_timeout"`
 }
 
 func (r *dbaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -164,45 +208,32 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
-		configuration := make(map[string]string)
-		resp.Diagnostics.Append(data.Configuration.ElementsAs(ctx, &configuration, false)...)
+	if data.MySqlConfiguration != nil {
+		mysqlConfig, diags := data.MySqlConfiguration.toAPIModel(ctx)
+		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-		ok, err = r.client.DBaas.PutConfiguration(
+
+		ok, err := r.client.DBaas.PutConfiguration(
 			data.PublicCloudId.ValueInt64(),
 			data.PublicCloudProjectId.ValueInt64(),
 			data.Id.ValueInt64(),
-			configuration,
+			*mysqlConfig,
 		)
 		if !ok && err == nil {
-			resp.Diagnostics.AddError("Unknown Settings error", "")
+			resp.Diagnostics.AddError("Unknown MySQL Settings error", "")
 			return
 		}
 		if err != nil {
 			resp.Diagnostics.AddError(
-				"Error when updating DBaaS Settings",
+				"Error when updating DBaaS MySQL Settings",
 				err.Error(),
 			)
 			return
 		}
-	} else {
-		data.Configuration = types.MapNull(types.StringType)
 	}
 
-	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
-		ctx,
-		data.PublicCloudId.ValueInt64(),
-		data.PublicCloudProjectId.ValueInt64(),
-		data.Id.ValueInt64(),
-	)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	data.EffectiveConfiguration = newEffectiveConfig
 	data.fill(dbaasObject)
 	data.Password = types.StringValue(createInfos.RootPassword)
 
@@ -215,7 +246,6 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -247,38 +277,39 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
+	state.fill(dbaasObject)
+
 	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, filteredIps)
 	state.AllowedCIDRs = listFilteredIps
 	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
-		ctx,
+	// Get current configuration
+	apiConfig, err := r.client.DBaas.GetConfiguration(
 		state.PublicCloudId.ValueInt64(),
 		state.PublicCloudProjectId.ValueInt64(),
 		state.Id.ValueInt64(),
 	)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if !state.Configuration.IsNull() {
-		newEffectiveConfig, newConfig, diags := utils.StringMapStateManager(
-			ctx,
-			newEffectiveConfig,
-			state.EffectiveConfiguration,
-			state.Configuration,
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error when reading DBaaS configuration",
+			err.Error(),
 		)
-		resp.Diagnostics.Append(diags...)
-		state.EffectiveConfiguration = newEffectiveConfig
-		state.Configuration = newConfig
-	}
-
-	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	state.fill(dbaasObject)
+	if apiConfig != nil {
+		if state.MySqlConfiguration == nil {
+			state.MySqlConfiguration = &MySqlConfig{}
+		}
+		diags = state.MySqlConfiguration.fromAPIModel(ctx, apiConfig)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -339,6 +370,9 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 
 	cidrs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
 	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &cidrs, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	allowedCIDRs := dbaas.AllowedCIDRs{
 		IpFilters: cidrs,
 	}
@@ -361,42 +395,34 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 
 	state.AllowedCIDRs = data.AllowedCIDRs
 
-	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
-		settings := make(map[string]string)
-		resp.Diagnostics.Append(data.Configuration.ElementsAs(ctx, &settings, false)...)
+	if data.MySqlConfiguration != nil {
+		mysqlConfig, diags := data.MySqlConfiguration.toAPIModel(ctx)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
 		ok, err = r.client.DBaas.PutConfiguration(
 			state.PublicCloudId.ValueInt64(),
 			state.PublicCloudProjectId.ValueInt64(),
 			state.Id.ValueInt64(),
-			settings,
+			*mysqlConfig,
 		)
 		if !ok && err == nil {
-			resp.Diagnostics.AddError("Unknown Settings error", "")
+			resp.Diagnostics.AddError("Unknown MySQL Settings error", "")
 			return
 		}
 		if err != nil {
 			resp.Diagnostics.AddError(
-				"Error when updating DBaaS Settings",
+				"Error when updating DBaaS MySQL Settings",
 				err.Error(),
 			)
 			return
 		}
 
-		state.Configuration = data.Configuration
+		state.MySqlConfiguration = data.MySqlConfiguration
 	}
 
-	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
-		ctx,
-		state.PublicCloudId.ValueInt64(),
-		state.PublicCloudProjectId.ValueInt64(),
-		state.Id.ValueInt64(),
-	)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	state.EffectiveConfiguration = newEffectiveConfig
 	state.fill(dbaasObject)
 
 	// Save updated data into Terraform state
@@ -492,30 +518,6 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
 	}
 }
 
-func (r *dbaasResource) refreshEffectiveConfiguration(ctx context.Context, publicCloudId, publicCloudProjectId, id int64) (types.Map, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	effectiveSettings, err := r.client.DBaas.GetConfiguration(
-		publicCloudId,
-		publicCloudProjectId,
-		id,
-	)
-	if err != nil {
-		diags.AddError(
-			"Error when reading DBaaS settings",
-			err.Error(),
-		)
-		return types.MapNull(types.StringType), diags
-	}
-
-	mapSettings, diag := types.MapValueFrom(ctx, types.StringType, effectiveSettings)
-	diags.Append(diag...)
-	if diags.HasError() {
-		return types.MapNull(types.StringType), diags
-	}
-
-	return mapSettings, diags
-}
-
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int64) (*dbaas.DBaaS, error) {
 	t := time.NewTicker(5 * time.Second)
 	for {
@@ -537,4 +539,289 @@ func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS,
 			}
 		}
 	}
+}
+
+func (config *MySqlConfig) toAPIModel(ctx context.Context) (*dbaas.MySqlConfig, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	apiConfig := &dbaas.MySqlConfig{}
+
+	if !config.AutoIncrementIncrement.IsUnknown() {
+		apiConfig.AutoIncrementIncrement = config.AutoIncrementIncrement.ValueInt64Pointer()
+	} else {
+		config.AutoIncrementIncrement = types.Int64Null()
+	}
+	if !config.AutoIncrementOffset.IsUnknown() {
+		apiConfig.AutoIncrementOffset = config.AutoIncrementOffset.ValueInt64Pointer()
+	} else {
+		config.AutoIncrementOffset = types.Int64Null()
+	}
+	if !config.CharacterSetServer.IsUnknown() {
+		apiConfig.CharacterSetServer = config.CharacterSetServer.ValueStringPointer()
+	} else {
+		config.CharacterSetServer = types.StringNull()
+	}
+	if !config.ConnectTimeout.IsUnknown() {
+		apiConfig.ConnectTimeout = config.ConnectTimeout.ValueInt64Pointer()
+	} else {
+		config.ConnectTimeout = types.Int64Null()
+	}
+	if !config.GroupConcatMaxLen.IsUnknown() {
+		apiConfig.GroupConcatMaxLen = config.GroupConcatMaxLen.ValueInt64Pointer()
+	} else {
+		config.GroupConcatMaxLen = types.Int64Null()
+	}
+	if !config.InformationSchemaStatsExpiry.IsUnknown() {
+		apiConfig.InformationSchemaStatsExpiry = config.InformationSchemaStatsExpiry.ValueInt64Pointer()
+	} else {
+		config.InformationSchemaStatsExpiry = types.Int64Null()
+	}
+	if !config.InnodbChangeBufferMaxSize.IsUnknown() {
+		apiConfig.InnodbChangeBufferMaxSize = config.InnodbChangeBufferMaxSize.ValueInt64Pointer()
+	} else {
+		config.InnodbChangeBufferMaxSize = types.Int64Null()
+	}
+	if !config.InnodbFlushNeighbors.IsUnknown() {
+		apiConfig.InnodbFlushNeighbors = config.InnodbFlushNeighbors.ValueInt64Pointer()
+	} else {
+		config.InnodbFlushNeighbors = types.Int64Null()
+	}
+	if !config.InnodbFtMaxTokenSize.IsUnknown() {
+		apiConfig.InnodbFtMaxTokenSize = config.InnodbFtMaxTokenSize.ValueInt64Pointer()
+	} else {
+		config.InnodbFtMaxTokenSize = types.Int64Null()
+	}
+	if !config.InnodbFtMinTokenSize.IsUnknown() {
+		apiConfig.InnodbFtMinTokenSize = config.InnodbFtMinTokenSize.ValueInt64Pointer()
+	} else {
+		config.InnodbFtMinTokenSize = types.Int64Null()
+	}
+	if !config.InnodbFtServerStopwordTable.IsUnknown() {
+		apiConfig.InnodbFtServerStopwordTable = config.InnodbFtServerStopwordTable.ValueStringPointer()
+	} else {
+		config.InnodbFtServerStopwordTable = types.StringNull()
+	}
+	if !config.InnodbLockWaitTimeout.IsUnknown() {
+		apiConfig.InnodbLockWaitTimeout = config.InnodbLockWaitTimeout.ValueInt64Pointer()
+	} else {
+		config.InnodbLockWaitTimeout = types.Int64Null()
+	}
+	if !config.InnodbLogBufferSize.IsUnknown() {
+		apiConfig.InnodbLogBufferSize = config.InnodbLogBufferSize.ValueInt64Pointer()
+	} else {
+		config.InnodbLogBufferSize = types.Int64Null()
+	}
+	if !config.InnodbOnlineAlterLogMaxSize.IsUnknown() {
+		apiConfig.InnodbOnlineAlterLogMaxSize = config.InnodbOnlineAlterLogMaxSize.ValueInt64Pointer()
+	} else {
+		config.InnodbOnlineAlterLogMaxSize = types.Int64Null()
+	}
+	if !config.InnodbPrintAllDeadlocks.IsUnknown() {
+		apiConfig.InnodbPrintAllDeadlocks = config.InnodbPrintAllDeadlocks.ValueStringPointer()
+	} else {
+		config.InnodbPrintAllDeadlocks = types.StringNull()
+	}
+	if !config.InnodbReadIoThreads.IsUnknown() {
+		apiConfig.InnodbReadIoThreads = config.InnodbReadIoThreads.ValueInt64Pointer()
+	} else {
+		config.InnodbReadIoThreads = types.Int64Null()
+	}
+	if !config.InnodbRollbackOnTimeout.IsUnknown() {
+		apiConfig.InnodbRollbackOnTimeout = config.InnodbRollbackOnTimeout.ValueStringPointer()
+	} else {
+		config.InnodbRollbackOnTimeout = types.StringNull()
+	}
+	if !config.InnodbStatsPersistentSamplePages.IsUnknown() {
+		apiConfig.InnodbStatsPersistentSamplePages = config.InnodbStatsPersistentSamplePages.ValueInt64Pointer()
+	} else {
+		config.InnodbStatsPersistentSamplePages = types.Int64Null()
+	}
+	if !config.InnodbThreadConcurrency.IsUnknown() {
+		apiConfig.InnodbThreadConcurrency = config.InnodbThreadConcurrency.ValueInt64Pointer()
+	} else {
+		config.InnodbThreadConcurrency = types.Int64Null()
+	}
+	if !config.InnodbWriteIoThreads.IsUnknown() {
+		apiConfig.InnodbWriteIoThreads = config.InnodbWriteIoThreads.ValueInt64Pointer()
+	} else {
+		config.InnodbWriteIoThreads = types.Int64Null()
+	}
+	if !config.InteractiveTimeout.IsUnknown() {
+		apiConfig.InteractiveTimeout = config.InteractiveTimeout.ValueInt64Pointer()
+	} else {
+		config.InteractiveTimeout = types.Int64Null()
+	}
+	if !config.LockWaitTimeout.IsUnknown() {
+		apiConfig.LockWaitTimeout = config.LockWaitTimeout.ValueInt64Pointer()
+	} else {
+		config.LockWaitTimeout = types.Int64Null()
+	}
+	if !config.LogBinTrustFunctionCreators.IsUnknown() {
+		apiConfig.LogBinTrustFunctionCreators = config.LogBinTrustFunctionCreators.ValueStringPointer()
+	} else {
+		config.LogBinTrustFunctionCreators = types.StringNull()
+	}
+	if !config.LongQueryTime.IsUnknown() {
+		apiConfig.LongQueryTime = config.LongQueryTime.ValueFloat64Pointer()
+	} else {
+		config.LongQueryTime = types.Float64Null()
+	}
+	if !config.MaxAllowedPacket.IsUnknown() {
+		apiConfig.MaxAllowedPacket = config.MaxAllowedPacket.ValueInt64Pointer()
+	} else {
+		config.MaxAllowedPacket = types.Int64Null()
+	}
+	if !config.MaxConnections.IsUnknown() {
+		apiConfig.MaxConnections = config.MaxConnections.ValueInt64Pointer()
+	} else {
+		config.MaxConnections = types.Int64Null()
+	}
+	if !config.MaxDigestLength.IsUnknown() {
+		apiConfig.MaxDigestLength = config.MaxDigestLength.ValueInt64Pointer()
+	} else {
+		config.MaxDigestLength = types.Int64Null()
+	}
+	if !config.MaxHeapTableSize.IsUnknown() {
+		apiConfig.MaxHeapTableSize = config.MaxHeapTableSize.ValueInt64Pointer()
+	} else {
+		config.MaxHeapTableSize = types.Int64Null()
+	}
+	if !config.MaxPreparedStmtCount.IsUnknown() {
+		apiConfig.MaxPreparedStmtCount = config.MaxPreparedStmtCount.ValueInt64Pointer()
+	} else {
+		config.MaxPreparedStmtCount = types.Int64Null()
+	}
+	if !config.MinExaminedRowLimit.IsUnknown() {
+		apiConfig.MinExaminedRowLimit = config.MinExaminedRowLimit.ValueInt64Pointer()
+	} else {
+		config.MinExaminedRowLimit = types.Int64Null()
+	}
+	if !config.NetBufferLength.IsUnknown() {
+		apiConfig.NetBufferLength = config.NetBufferLength.ValueInt64Pointer()
+	} else {
+		config.NetBufferLength = types.Int64Null()
+	}
+	if !config.NetReadTimeout.IsUnknown() {
+		apiConfig.NetReadTimeout = config.NetReadTimeout.ValueInt64Pointer()
+	} else {
+		config.NetReadTimeout = types.Int64Null()
+	}
+	if !config.NetWriteTimeout.IsUnknown() {
+		apiConfig.NetWriteTimeout = config.NetWriteTimeout.ValueInt64Pointer()
+	} else {
+		config.NetWriteTimeout = types.Int64Null()
+	}
+	if !config.PerformanceSchemaMaxDigestLength.IsUnknown() {
+		apiConfig.PerformanceSchemaMaxDigestLength = config.PerformanceSchemaMaxDigestLength.ValueInt64Pointer()
+	} else {
+		config.PerformanceSchemaMaxDigestLength = types.Int64Null()
+	}
+	if !config.RequireSecureTransport.IsUnknown() {
+		apiConfig.RequireSecureTransport = config.RequireSecureTransport.ValueStringPointer()
+	} else {
+		config.RequireSecureTransport = types.StringNull()
+	}
+	if !config.SortBufferSize.IsUnknown() {
+		apiConfig.SortBufferSize = config.SortBufferSize.ValueInt64Pointer()
+	} else {
+		config.SortBufferSize = types.Int64Null()
+	}
+
+	if !config.SqlMode.IsNull() && !config.SqlMode.IsUnknown() {
+		var sqlModes []string
+		diags.Append(config.SqlMode.ElementsAs(ctx, &sqlModes, false)...)
+		apiConfig.SqlMode = sqlModes
+	} else {
+		config.SqlMode = types.ListNull(types.StringType)
+	}
+
+	if !config.TableDefinitionCache.IsUnknown() {
+		apiConfig.TableDefinitionCache = config.TableDefinitionCache.ValueInt64Pointer()
+	} else {
+		config.TableDefinitionCache = types.Int64Null()
+	}
+	if !config.TableOpenCache.IsUnknown() {
+		apiConfig.TableOpenCache = config.TableOpenCache.ValueInt64Pointer()
+	} else {
+		config.TableOpenCache = types.Int64Null()
+	}
+	if !config.TableOpenCacheInstances.IsUnknown() {
+		apiConfig.TableOpenCacheInstances = config.TableOpenCacheInstances.ValueInt64Pointer()
+	} else {
+		config.TableOpenCacheInstances = types.Int64Null()
+	}
+	if !config.ThreadStack.IsUnknown() {
+		apiConfig.ThreadStack = config.ThreadStack.ValueInt64Pointer()
+	} else {
+		config.ThreadStack = types.Int64Null()
+	}
+	if !config.TransactionIsolation.IsUnknown() {
+		apiConfig.TransactionIsolation = config.TransactionIsolation.ValueStringPointer()
+	} else {
+		config.TransactionIsolation = types.StringNull()
+	}
+	if !config.WaitTimeout.IsUnknown() {
+		apiConfig.WaitTimeout = config.WaitTimeout.ValueInt64Pointer()
+	} else {
+		config.WaitTimeout = types.Int64Null()
+	}
+
+	return apiConfig, diags
+}
+
+func (config *MySqlConfig) fromAPIModel(ctx context.Context, apiConfig *dbaas.MySqlConfig) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	config.AutoIncrementIncrement = types.Int64PointerValue(apiConfig.AutoIncrementIncrement)
+	config.AutoIncrementOffset = types.Int64PointerValue(apiConfig.AutoIncrementOffset)
+	config.CharacterSetServer = types.StringPointerValue(apiConfig.CharacterSetServer)
+	config.ConnectTimeout = types.Int64PointerValue(apiConfig.ConnectTimeout)
+	config.GroupConcatMaxLen = types.Int64PointerValue(apiConfig.GroupConcatMaxLen)
+	config.InformationSchemaStatsExpiry = types.Int64PointerValue(apiConfig.InformationSchemaStatsExpiry)
+	config.InnodbChangeBufferMaxSize = types.Int64PointerValue(apiConfig.InnodbChangeBufferMaxSize)
+	config.InnodbFlushNeighbors = types.Int64PointerValue(apiConfig.InnodbFlushNeighbors)
+	config.InnodbFtMaxTokenSize = types.Int64PointerValue(apiConfig.InnodbFtMaxTokenSize)
+	config.InnodbFtMinTokenSize = types.Int64PointerValue(apiConfig.InnodbFtMinTokenSize)
+	config.InnodbFtServerStopwordTable = types.StringPointerValue(apiConfig.InnodbFtServerStopwordTable)
+	config.InnodbLockWaitTimeout = types.Int64PointerValue(apiConfig.InnodbLockWaitTimeout)
+	config.InnodbLogBufferSize = types.Int64PointerValue(apiConfig.InnodbLogBufferSize)
+	config.InnodbOnlineAlterLogMaxSize = types.Int64PointerValue(apiConfig.InnodbOnlineAlterLogMaxSize)
+	config.InnodbPrintAllDeadlocks = types.StringPointerValue(apiConfig.InnodbPrintAllDeadlocks)
+	config.InnodbReadIoThreads = types.Int64PointerValue(apiConfig.InnodbReadIoThreads)
+	config.InnodbRollbackOnTimeout = types.StringPointerValue(apiConfig.InnodbRollbackOnTimeout)
+	config.InnodbStatsPersistentSamplePages = types.Int64PointerValue(apiConfig.InnodbStatsPersistentSamplePages)
+	config.InnodbThreadConcurrency = types.Int64PointerValue(apiConfig.InnodbThreadConcurrency)
+	config.InnodbWriteIoThreads = types.Int64PointerValue(apiConfig.InnodbWriteIoThreads)
+	config.InteractiveTimeout = types.Int64PointerValue(apiConfig.InteractiveTimeout)
+	config.LockWaitTimeout = types.Int64PointerValue(apiConfig.LockWaitTimeout)
+	config.LogBinTrustFunctionCreators = types.StringPointerValue(apiConfig.LogBinTrustFunctionCreators)
+	config.LongQueryTime = types.Float64PointerValue(apiConfig.LongQueryTime)
+	config.MaxAllowedPacket = types.Int64PointerValue(apiConfig.MaxAllowedPacket)
+	config.MaxConnections = types.Int64PointerValue(apiConfig.MaxConnections)
+	config.MaxDigestLength = types.Int64PointerValue(apiConfig.MaxDigestLength)
+	config.MaxHeapTableSize = types.Int64PointerValue(apiConfig.MaxHeapTableSize)
+	config.MaxPreparedStmtCount = types.Int64PointerValue(apiConfig.MaxPreparedStmtCount)
+	config.MinExaminedRowLimit = types.Int64PointerValue(apiConfig.MinExaminedRowLimit)
+	config.NetBufferLength = types.Int64PointerValue(apiConfig.NetBufferLength)
+	config.NetReadTimeout = types.Int64PointerValue(apiConfig.NetReadTimeout)
+	config.NetWriteTimeout = types.Int64PointerValue(apiConfig.NetWriteTimeout)
+	config.PerformanceSchemaMaxDigestLength = types.Int64PointerValue(apiConfig.PerformanceSchemaMaxDigestLength)
+	config.RequireSecureTransport = types.StringPointerValue(apiConfig.RequireSecureTransport)
+	config.SortBufferSize = types.Int64PointerValue(apiConfig.SortBufferSize)
+
+	if len(apiConfig.SqlMode) > 0 {
+		sqlModeList, diags := types.ListValueFrom(ctx, types.StringType, apiConfig.SqlMode)
+		config.SqlMode = sqlModeList
+		diags.Append(diags...)
+	} else {
+		config.SqlMode = types.ListNull(types.StringType)
+	}
+
+	config.TableDefinitionCache = types.Int64PointerValue(apiConfig.TableDefinitionCache)
+	config.TableOpenCache = types.Int64PointerValue(apiConfig.TableOpenCache)
+	config.TableOpenCacheInstances = types.Int64PointerValue(apiConfig.TableOpenCacheInstances)
+	config.ThreadStack = types.Int64PointerValue(apiConfig.ThreadStack)
+	config.TransactionIsolation = types.StringPointerValue(apiConfig.TransactionIsolation)
+	config.WaitTimeout = types.Int64PointerValue(apiConfig.WaitTimeout)
+
+	return diags
 }

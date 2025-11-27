@@ -40,8 +40,8 @@ resource "infomaniak_dbaas" "db-0" {
     "2345:425:2CA1:0000:0000:567:5673:23b5/64",
   ]
 
-  configuration = {
-    "connect_timeout": "10",
+  mysqlconfig = {
+    connect_timeout = 10
   }
 }
 ```
@@ -60,8 +60,8 @@ resource "infomaniak_dbaas" "db-0" {
 
   allowed_cidrs = [] // If you set an empty list here, it means no one can access it ! Even you !
 
-  configuration = {
-    "connect_timeout": "10",
+  mysqlconfig = {
+    connect_timeout = 10
   }
 }
 ```
@@ -78,7 +78,7 @@ resource "infomaniak_dbaas" "db-0" {
 - `version` (String) The version of the database to use.
 - `name` (String) The name of the DBaaS shown on the manager.
 - `allowed_cidrs` (List of String) The list of allowed cidrs to access to the database.
-- `configuration` (Map String => String) Key Value Map for specific engine params.
+- `mysqlconfig` (Object) MySQL configuration parameters. Please refer to [this section](#mysql-configuration-attributes)
 
 ### Read-Only
 
@@ -89,4 +89,51 @@ resource "infomaniak_dbaas" "db-0" {
 - `user` (String) The user to access the Database.
 - `password` (String, Sensitive) The password to access the Database.
 - `ca` (String) The database CA certificate.
-- `effective_configuration` (Map String => String) Key Value Map for specific engine params, including defaulted one (not set by `configuration`)
+
+## MySQL Configuration Attributes
+
+The `mysqlconfig` block supports the following attributes:
+
+- `auto_increment_increment` (Integer) AUTO_INCREMENT increment value.
+- `auto_increment_offset` (Integer) AUTO_INCREMENT offset value.
+- `character_set_server` (String) Default character set for the server.
+- `connect_timeout` (Integer) Timeout for establishing a connection.
+- `group_concat_max_len` (Integer) Maximum length of GROUP_CONCAT() result.
+- `information_schema_stats_expiry` (Integer) Expiration time for information schema statistics.
+- `innodb_change_buffer_max_size` (Integer) Maximum size of the InnoDB change buffer.
+- `innodb_flush_neighbors` (Integer) Whether to flush neighbor pages when flushing a page.
+- `innodb_ft_max_token_size` (Integer) Maximum token size for InnoDB full-text search.
+- `innodb_ft_min_token_size` (Integer) Minimum token size for InnoDB full-text search.
+- `innodb_ft_server_stopword_table` (String) Server-wide stopword table for InnoDB full-text search.
+- `innodb_lock_wait_timeout` (Integer) Timeout for InnoDB lock waits.
+- `innodb_log_buffer_size` (Integer) Size of the InnoDB log buffer.
+- `innodb_online_alter_log_max_size` (Integer) Maximum size of the online alter log.
+- `innodb_print_all_deadlocks` (String) Whether to print all deadlocks to the error log.
+- `innodb_read_io_threads` (Integer) Number of InnoDB read I/O threads.
+- `innodb_rollback_on_timeout` (String) Whether to rollback transactions on lock wait timeout.
+- `innodb_stats_persistent_sample_pages` (Integer) Number of index pages sampled for persistent stats.
+- `innodb_thread_concurrency` (Integer) Maximum number of concurrent threads.
+- `innodb_write_io_threads` (Integer) Number of InnoDB write I/O threads.
+- `interactive_timeout` (Integer) Timeout for interactive connections.
+- `lock_wait_timeout` (Integer) Timeout for all lock waits.
+- `log_bin_trust_function_creators` (String) Whether to trust function creators for binary logging.
+- `long_query_time` (Float) Threshold for slow query logging.
+- `max_allowed_packet` (Integer) Maximum packet size allowed.
+- `max_connections` (Integer) Maximum number of simultaneous connections.
+- `max_digest_length` (Integer) Maximum digest length for statement digest.
+- `max_heap_table_size` (Integer) Maximum size of user-created MEMORY tables.
+- `max_prepared_stmt_count` (Integer) Maximum number of prepared statements.
+- `min_examined_row_limit` (Integer) Minimum examined row limit for query logging.
+- `net_buffer_length` (Integer) Buffer size for TCP/IP and socket communication.
+- `net_read_timeout` (Integer) Timeout for reading from a connection.
+- `net_write_timeout` (Integer) Timeout for writing to a connection.
+- `performance_schema_max_digest_length` (Integer) Maximum digest length for Performance Schema.
+- `require_secure_transport` (String) Whether secure transport is required.
+- `sort_buffer_size` (Integer) Sort buffer size per session.
+- `sql_mode` (List of String) SQL mode settings.
+- `table_definition_cache` (Integer) Number of table definitions that can be cached.
+- `table_open_cache` (Integer) Number of open tables cache instances.
+- `table_open_cache_instances` (Integer) Number of table open cache instances.
+- `thread_stack` (Integer) Stack size for each thread.
+- `transaction_isolation` (String) Default transaction isolation level.
+- `wait_timeout` (Integer) Timeout for non-interactive connections.

@@ -161,7 +161,7 @@ func (client *Client) PatchIpFilters(publicCloudId int64, publicCloudProjectId i
 	return result.Data, nil
 }
 
-func (client *Client) PutConfiguration(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, configuration map[string]string) (bool, error) {
+func (client *Client) PutConfiguration(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, configuration dbaas.MySqlConfig) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 
 	resp, err := client.resty.R().
@@ -171,6 +171,7 @@ func (client *Client) PutConfiguration(publicCloudId int64, publicCloudProjectId
 		SetBody(configuration).
 		SetResult(&result).
 		SetError(&result).
+		SetDebug(true).
 		Put(EndpointDatabaseConfiguration)
 	if err != nil {
 		return false, err
@@ -183,13 +184,14 @@ func (client *Client) PutConfiguration(publicCloudId int64, publicCloudProjectId
 	return result.Data, nil
 }
 
-func (client *Client) GetConfiguration(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) (map[string]string, error) {
-	var result helpers.NormalizedApiResponse[dbaas.StringMap]
+func (client *Client) GetConfiguration(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) (*dbaas.MySqlConfig, error) {
+	var result helpers.NormalizedApiResponse[*dbaas.MySqlConfig]
 
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
+		SetDebug(true).
 		SetResult(&result).
 		SetError(&result).
 		Get(EndpointDatabaseConfiguration)
@@ -200,6 +202,8 @@ func (client *Client) GetConfiguration(publicCloudId int64, publicCloudProjectId
 	if resp.IsError() {
 		return nil, result.Error
 	}
+
+	fmt.Printf("icilastruct %+#v \n", result.Data)
 
 	return result.Data, nil
 }
