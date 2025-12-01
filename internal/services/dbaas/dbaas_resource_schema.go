@@ -104,7 +104,6 @@ func getDbaasResourceSchema() schema.Schema {
 				MarkdownDescription: "DbaaS kubernetes name",
 			},
 			"configuration": schema.DynamicAttribute{
-				Computed: true,
 				Optional: true,
 				PlanModifiers: []planmodifier.Dynamic{
 					dynamicplanmodifier.UseStateForUnknown(),

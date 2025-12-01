@@ -165,7 +165,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
-		configuration, d := utils.ConvertToMap(data.Configuration)
+		_, configuration, d := utils.ConvertDynamicObjectToMap(data.Configuration)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -363,7 +363,7 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	state.AllowedCIDRs = data.AllowedCIDRs
 
 	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
-		configuration, d := utils.ConvertToMap(data.Configuration)
+		_, configuration, d := utils.ConvertDynamicObjectToMap(data.Configuration)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -388,6 +388,8 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		}
 
 		state.Configuration = data.Configuration
+	} else {
+		state.Configuration = types.DynamicNull()
 	}
 
 	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
@@ -512,7 +514,7 @@ func (r *dbaasResource) refreshEffectiveConfiguration(ctx context.Context, publi
 		return types.DynamicNull(), diags
 	}
 
-	return utils.ConvertMap(ctx, effectiveSettings)
+	return utils.ConvertMapToDynamicObject(ctx, effectiveSettings)
 }
 
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int64) (*dbaas.DBaaS, error) {
