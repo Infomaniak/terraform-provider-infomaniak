@@ -1592,7 +1592,7 @@ func init() <span class="cov10" title="295">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="286">{
+        if err == nil </span><span class="cov9" title="290">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1602,17 +1602,17 @@ func init() <span class="cov10" title="295">{
 
         // Try to get cache
         <span class="cov10" title="295">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="286">{
+        if err == nil </span><span class="cov9" title="290">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov4" title="9">{
+                if err != nil </span><span class="cov3" title="5">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="286">return</span>
+                <span class="cov9" title="290">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov4" title="9">_, err = os.Create(mockedApiStatePath)
+        <span class="cov3" title="5">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -3821,7 +3821,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
         }</span>
 
         <span class="cov0" title="0">if !data.Configuration.IsNull() &amp;&amp; !data.Configuration.IsUnknown() </span><span class="cov0" title="0">{
-                _, configuration, d := utils.ConvertDynamicObjectToMap(data.Configuration)
+                configuration, d := utils.ConvertDynamicObjectToMapAny(data.Configuration)
                 resp.Diagnostics.Append(d...)
                 if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                         return
@@ -4017,7 +4017,7 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
         <span class="cov0" title="0">state.AllowedCIDRs = data.AllowedCIDRs
 
         if !data.Configuration.IsNull() &amp;&amp; !data.Configuration.IsUnknown() </span><span class="cov0" title="0">{
-                _, configuration, d := utils.ConvertDynamicObjectToMap(data.Configuration)
+                configuration, d := utils.ConvertDynamicObjectToMapAny(data.Configuration)
                 resp.Diagnostics.Append(d...)
                 if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                         return
@@ -6821,13 +6821,13 @@ import (
 func ObjectStateManager(ctx context.Context, newEffective types.Dynamic, stateEffective types.Dynamic, userDefined types.Dynamic) (types.Dynamic, types.Dynamic, diag.Diagnostics) <span class="cov0" title="0">{
         var diags diag.Diagnostics
 
-        incomingFromApi, _, d := ConvertDynamicObjectToMap(newEffective)
+        incomingFromApi, d := ConvertDynamicObjectToTerraformMap(newEffective)
         diags.Append(d...)
 
-        incomingFromState, _, d := ConvertDynamicObjectToMap(stateEffective)
+        incomingFromState, d := ConvertDynamicObjectToTerraformMap(stateEffective)
         diags.Append(d...)
 
-        local, _, d := ConvertDynamicObjectToMap(userDefined)
+        local, d := ConvertDynamicObjectToTerraformMap(userDefined)
         diags.Append(d...)
 
         for incomingEffectiveKey, incomingEffectiveValue := range incomingFromApi </span><span class="cov0" title="0">{
@@ -6843,11 +6843,11 @@ func ObjectStateManager(ctx context.Context, newEffective types.Dynamic, stateEf
                         // The user changed the value from an other source than terraform
                         stateEffectiveTfValue, err := stateEffectiveValue.ToTerraformValue(ctx)
                         if err != nil </span><span class="cov0" title="0">{
-                                diags.AddError("could not get terraform value", "a state effective value could not be got")
+                                diags.AddError("could not get terraform value", "could not get a state effective value")
                         }</span>
                         <span class="cov0" title="0">incomingEffectiveTfValue, err := incomingEffectiveValue.ToTerraformValue(ctx)
                         if err != nil </span><span class="cov0" title="0">{
-                                diags.AddError("could not get terraform value", "an incoming from api effective value could not be got")
+                                diags.AddError("could not get terraform value", "could not get an incoming from api effective value")
                         }</span>
                         <span class="cov0" title="0">if !stateEffectiveTfValue.Equal(incomingEffectiveTfValue) </span><span class="cov0" title="0">{
                                 local[incomingEffectiveKey] = incomingEffectiveValue
@@ -6865,13 +6865,11 @@ func ObjectStateManager(ctx context.Context, newEffective types.Dynamic, stateEf
         return effectiveMap, localMap, diags</span>
 }
 
-func ConvertDynamicObjectToMap(dyn types.Dynamic) (map[string]attr.Value, map[string]any, diag.Diagnostics) <span class="cov0" title="0">{
+func ConvertDynamicObjectToTerraformMap(dyn types.Dynamic) (map[string]attr.Value, diag.Diagnostics) <span class="cov0" title="0">{
         var diags diag.Diagnostics
 
-        converted := make(map[string]any)
-
         if dyn.IsNull() || dyn.IsUnknown() </span><span class="cov0" title="0">{
-                return make(map[string]attr.Value), converted, diags
+                return make(map[string]attr.Value), diags
         }</span>
 
         <span class="cov0" title="0">objVal, ok := dyn.UnderlyingValue().(basetypes.ObjectValue)
@@ -6880,11 +6878,22 @@ func ConvertDynamicObjectToMap(dyn types.Dynamic) (map[string]attr.Value, map[st
                         "Invalid type",
                         fmt.Sprintf("dynamic should be an object, got %T", dyn.UnderlyingValue()),
                 )
-                return nil, nil, diags
+                return nil, diags
         }</span>
         <span class="cov0" title="0">elems := objVal.Attributes()
+        return elems, diags</span>
+}
 
-        body, err := dynamic.ToJSON(dyn)
+func ConvertDynamicObjectToMapAny(dyn types.Dynamic) (map[string]any, diag.Diagnostics) <span class="cov0" title="0">{
+        var diags diag.Diagnostics
+
+        converted := make(map[string]any)
+
+        if dyn.IsNull() || dyn.IsUnknown() </span><span class="cov0" title="0">{
+                return converted, diags
+        }</span>
+
+        <span class="cov0" title="0">body, err := dynamic.ToJSON(dyn)
         if err != nil </span><span class="cov0" title="0">{
                 diags.AddError("error", "error")
         }</span>
@@ -6894,7 +6903,7 @@ func ConvertDynamicObjectToMap(dyn types.Dynamic) (map[string]attr.Value, map[st
                 diags.AddError("error", "error")
         }</span>
 
-        <span class="cov0" title="0">return elems, converted, diags</span>
+        <span class="cov0" title="0">return converted, diags</span>
 }
 
 func ConvertMapToDynamicObject(toconvert map[string]attr.Value) (types.Dynamic, diag.Diagnostics) <span class="cov0" title="0">{
