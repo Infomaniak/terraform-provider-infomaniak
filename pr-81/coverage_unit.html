@@ -6867,10 +6867,10 @@ func ObjectStateManager(ctx context.Context, newEffective types.Dynamic, stateEf
                 <span class="cov8" title="1">incomingFromState[incomingEffectiveKey] = incomingEffectiveValue</span>
         }
 
-        <span class="cov8" title="1">localMap, d := ConvertMapToDynamicObject(ctx, local)
+        <span class="cov8" title="1">localMap, d := ConvertMapToDynamicObject(local)
         diags.Append(d...)
 
-        effectiveMap, d := ConvertMapToDynamicObject(ctx, incomingFromState)
+        effectiveMap, d := ConvertMapToDynamicObject(incomingFromState)
         diags.Append(d...)
 
         return effectiveMap, localMap, diags</span>
@@ -6908,7 +6908,7 @@ func ConvertDynamicObjectToMap(dyn types.Dynamic) (map[string]attr.Value, map[st
         <span class="cov8" title="1">return elems, converted, diags</span>
 }
 
-func ConvertMapToDynamicObject(ctx context.Context, toconvert map[string]attr.Value) (types.Dynamic, diag.Diagnostics) <span class="cov8" title="1">{
+func ConvertMapToDynamicObject(toconvert map[string]attr.Value) (types.Dynamic, diag.Diagnostics) <span class="cov8" title="1">{
         var diags diag.Diagnostics
 
         if len(toconvert) == 0 </span><span class="cov8" title="1">{
