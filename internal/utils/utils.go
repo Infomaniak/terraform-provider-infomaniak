@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
+// ObjectStateManager will keep the state of stateEffective up to date with newEffective.
+// It will also keep userDefined up to date (prevents changes when API set default values)
 func ObjectStateManager(ctx context.Context, newEffective types.Dynamic, stateEffective types.Dynamic, userDefined types.Dynamic) (types.Dynamic, types.Dynamic, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -50,15 +52,16 @@ func ObjectStateManager(ctx context.Context, newEffective types.Dynamic, stateEf
 		incomingFromState[incomingEffectiveKey] = incomingEffectiveValue
 	}
 
-	localMap, d := ConvertMapToDynamicObject(local)
+	localMap, d := ConvertMapToDynamicObject(ctx, local)
 	diags.Append(d...)
 
-	effectiveMap, d := ConvertMapToDynamicObject(incomingFromState)
+	effectiveMap, d := ConvertMapToDynamicObject(ctx, incomingFromState)
 	diags.Append(d...)
 
 	return effectiveMap, localMap, diags
 }
 
+// ConvertDynamicObjectToTerraformMap will transform a Dynamic terraform object into a map of terraform values
 func ConvertDynamicObjectToTerraformMap(dyn types.Dynamic) (map[string]attr.Value, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -78,6 +81,7 @@ func ConvertDynamicObjectToTerraformMap(dyn types.Dynamic) (map[string]attr.Valu
 	return elems, diags
 }
 
+// ConvertDynamicObjectToMapAny will transform a Dynamic terraform object into a map of any go values
 func ConvertDynamicObjectToMapAny(dyn types.Dynamic) (map[string]any, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -89,18 +93,19 @@ func ConvertDynamicObjectToMapAny(dyn types.Dynamic) (map[string]any, diag.Diagn
 
 	body, err := dynamic.ToJSON(dyn)
 	if err != nil {
-		diags.AddError("error", "error")
+		diags.AddError("json error", fmt.Sprintf("could not convert dynamic to json: %v", err))
 	}
 
 	err = json.Unmarshal(body, &converted)
 	if err != nil {
-		diags.AddError("error", "error")
+		diags.AddError("json error", fmt.Sprintf("could not unmarshall json: %v", err))
 	}
 
 	return converted, diags
 }
 
-func ConvertMapToDynamicObject(toconvert map[string]attr.Value) (types.Dynamic, diag.Diagnostics) {
+// ConvertMapToDynamicObject will transform a map of terraform values into a terraform dynamic object
+func ConvertMapToDynamicObject(ctx context.Context, toconvert map[string]attr.Value) (types.Dynamic, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if len(toconvert) == 0 {
@@ -111,9 +116,8 @@ func ConvertMapToDynamicObject(toconvert map[string]attr.Value) (types.Dynamic, 
 	valuesMap := make(map[string]attr.Value)
 
 	for k, v := range toconvert {
-		val := types.DynamicValue(v)
-		typesMap[k] = types.DynamicType
-		valuesMap[k] = val
+		typesMap[k] = v.Type(ctx)
+		valuesMap[k] = v
 	}
 
 	obj, d := types.ObjectValue(typesMap, valuesMap)
@@ -124,18 +128,20 @@ func ConvertMapToDynamicObject(toconvert map[string]attr.Value) (types.Dynamic, 
 	return dyn, diags
 }
 
+// ConvertIntsToStrings will transform comparable types
+// E.g: 100 = "100"
 func ConvertIntsToStrings(input map[string]any) map[string]any {
 	output := make(map[string]any)
 	for key, value := range input {
 		switch typedValue := value.(type) {
 		case uint, uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
-			input[key] = fmt.Sprint(typedValue)
+			output[key] = fmt.Sprint(typedValue)
 		case map[string]any:
 			newOutput := make(map[string]any)
 			ConvertIntsToStrings(typedValue)
 			output[key] = newOutput
 		default:
-			input[key] = typedValue
+			output[key] = typedValue
 		}
 	}
 	return output

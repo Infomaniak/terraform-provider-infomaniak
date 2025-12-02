@@ -366,7 +366,6 @@ func attrValueFromJSONImplied(b []byte) (attr.Type, attr.Value, error) {
 	}
 }
 
-
 // IsFullyKnown returns true if `val` is known. If `val` is an aggregate type,
 // IsFullyKnown only returns true if all elements and attributes are known, as
 // well.

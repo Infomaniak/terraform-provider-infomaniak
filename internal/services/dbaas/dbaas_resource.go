@@ -12,6 +12,7 @@ import (
 	"terraform-provider-infomaniak/internal/apis/dbaas"
 	"terraform-provider-infomaniak/internal/dynamic"
 	"terraform-provider-infomaniak/internal/provider"
+	dbaasmigration "terraform-provider-infomaniak/internal/services/dbaas/dbaas_migration"
 	"terraform-provider-infomaniak/internal/utils"
 	"time"
 
@@ -23,9 +24,10 @@ import (
 )
 
 var (
-	_ resource.Resource                = &dbaasResource{}
-	_ resource.ResourceWithConfigure   = &dbaasResource{}
-	_ resource.ResourceWithImportState = &dbaasResource{}
+	_ resource.Resource                 = &dbaasResource{}
+	_ resource.ResourceWithConfigure    = &dbaasResource{}
+	_ resource.ResourceWithImportState  = &dbaasResource{}
+	_ resource.ResourceWithUpgradeState = &dbaasResource{}
 )
 
 func NewDBaasResource() resource.Resource {
@@ -82,6 +84,15 @@ func (r *dbaasResource) Configure(ctx context.Context, req resource.ConfigureReq
 	}
 
 	r.client = client
+}
+
+func (r *dbaasResource) UpgradeState(context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		0: {
+			PriorSchema:   dbaasmigration.GetV0Schema(),
+			StateUpgrader: dbaasmigration.StateUpgrader,
+		},
+	}
 }
 
 func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
