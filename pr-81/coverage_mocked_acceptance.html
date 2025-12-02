@@ -1592,7 +1592,7 @@ func init() <span class="cov10" title="295">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="290">{
+        if err == nil </span><span class="cov9" title="292">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1602,17 +1602,17 @@ func init() <span class="cov10" title="295">{
 
         // Try to get cache
         <span class="cov10" title="295">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="290">{
+        if err == nil </span><span class="cov9" title="292">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov3" title="5">{
+                if err != nil </span><span class="cov2" title="3">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="290">return</span>
+                <span class="cov9" title="292">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov3" title="5">_, err = os.Create(mockedApiStatePath)
+        <span class="cov2" title="3">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -3659,6 +3659,7 @@ import (
         "encoding/json"
         "errors"
         "fmt"
+        "reflect"
         "strconv"
         "strings"
         "terraform-provider-infomaniak/internal/apis"
@@ -3906,13 +3907,15 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
         <span class="cov0" title="0">listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, filteredIps)
         state.AllowedCIDRs = listFilteredIps
         resp.Diagnostics.Append(diags...)
+        if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
+                return
+        }</span>
 
-        newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
+        <span class="cov0" title="0">newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
                 state.PublicCloudId.ValueInt64(),
                 state.PublicCloudProjectId.ValueInt64(),
                 state.Id.ValueInt64(),
         )
-
         resp.Diagnostics.Append(diags...)
         if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                 return
@@ -3925,15 +3928,33 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
                 state.Configuration,
         )
         resp.Diagnostics.Append(diags...)
-
-        state.EffectiveConfiguration = newEffectiveConfig
-        state.Configuration = newConfig
-
         if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                 return
         }</span>
 
-        <span class="cov0" title="0">state.fill(dbaasObject)
+        <span class="cov0" title="0">newConfigMap, diags := utils.ConvertDynamicObjectToMapAny(newConfig)
+        resp.Diagnostics.Append(diags...)
+        if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov0" title="0">newConfigConverted := utils.ConvertIntsToStrings(newConfigMap)
+
+        stateConfigMap, diags := utils.ConvertDynamicObjectToMapAny(state.Configuration)
+        resp.Diagnostics.Append(diags...)
+        if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov0" title="0">stateConfigConverted := utils.ConvertIntsToStrings(stateConfigMap)
+
+        if !reflect.DeepEqual(newConfigConverted, stateConfigConverted) </span><span class="cov0" title="0">{
+                state.Configuration = newConfig
+        }</span>
+
+        <span class="cov0" title="0">state.EffectiveConfiguration = newEffectiveConfig
+
+        state.fill(dbaasObject)
 
         // Save updated data into Terraform state
         resp.Diagnostics.Append(resp.State.Set(ctx, &amp;state)...)</span>
@@ -6928,6 +6949,23 @@ func ConvertMapToDynamicObject(toconvert map[string]attr.Value) (types.Dynamic, 
         dyn := types.DynamicValue(obj)
 
         return dyn, diags</span>
+}
+
+func ConvertIntsToStrings(input map[string]any) map[string]any <span class="cov0" title="0">{
+        output := make(map[string]any)
+        for key, value := range input </span><span class="cov0" title="0">{
+                switch typedValue := value.(type) </span>{
+                case uint, uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:<span class="cov0" title="0">
+                        input[key] = fmt.Sprint(typedValue)</span>
+                case map[string]any:<span class="cov0" title="0">
+                        newOutput := make(map[string]any)
+                        ConvertIntsToStrings(typedValue)
+                        output[key] = newOutput</span>
+                default:<span class="cov0" title="0">
+                        input[key] = typedValue</span>
+                }
+        }
+        <span class="cov0" title="0">return output</span>
 }
 </pre>
 		
