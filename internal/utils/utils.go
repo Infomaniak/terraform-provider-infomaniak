@@ -123,3 +123,20 @@ func ConvertMapToDynamicObject(toconvert map[string]attr.Value) (types.Dynamic, 
 
 	return dyn, diags
 }
+
+func ConvertIntsToStrings(input map[string]any) map[string]any {
+	output := make(map[string]any)
+	for key, value := range input {
+		switch typedValue := value.(type) {
+		case uint, uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
+			input[key] = fmt.Sprint(typedValue)
+		case map[string]any:
+			newOutput := make(map[string]any)
+			ConvertIntsToStrings(typedValue)
+			output[key] = newOutput
+		default:
+			input[key] = typedValue
+		}
+	}
+	return output
+}

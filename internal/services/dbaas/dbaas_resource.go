@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
@@ -252,13 +253,15 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, filteredIps)
 	state.AllowedCIDRs = listFilteredIps
 	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
 		state.PublicCloudId.ValueInt64(),
 		state.PublicCloudProjectId.ValueInt64(),
 		state.Id.ValueInt64(),
 	)
-
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -271,13 +274,31 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		state.Configuration,
 	)
 	resp.Diagnostics.Append(diags...)
-
-	state.EffectiveConfiguration = newEffectiveConfig
-	state.Configuration = newConfig
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	newConfigMap, diags := utils.ConvertDynamicObjectToMapAny(newConfig)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	newConfigConverted := utils.ConvertIntsToStrings(newConfigMap)
+
+	stateConfigMap, diags := utils.ConvertDynamicObjectToMapAny(state.Configuration)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	stateConfigConverted := utils.ConvertIntsToStrings(stateConfigMap)
+
+	if !reflect.DeepEqual(newConfigConverted, stateConfigConverted) {
+		state.Configuration = newConfig
+	}
+
+	state.EffectiveConfiguration = newEffectiveConfig
 
 	state.fill(dbaasObject)
 
