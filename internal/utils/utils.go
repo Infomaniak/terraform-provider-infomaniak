@@ -2,7 +2,9 @@ package utils
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"terraform-provider-infomaniak/internal/dynamic"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -13,13 +15,13 @@ import (
 func ObjectStateManager(ctx context.Context, newEffective types.Dynamic, stateEffective types.Dynamic, userDefined types.Dynamic) (types.Dynamic, types.Dynamic, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	incomingFromApi, _, d := ConvertDynamicObjectToMap(newEffective)
+	incomingFromApi, d := ConvertDynamicObjectToTerraformMap(newEffective)
 	diags.Append(d...)
 
-	incomingFromState, _, d := ConvertDynamicObjectToMap(stateEffective)
+	incomingFromState, d := ConvertDynamicObjectToTerraformMap(stateEffective)
 	diags.Append(d...)
 
-	local, _, d := ConvertDynamicObjectToMap(userDefined)
+	local, d := ConvertDynamicObjectToTerraformMap(userDefined)
 	diags.Append(d...)
 
 	for incomingEffectiveKey, incomingEffectiveValue := range incomingFromApi {
@@ -35,11 +37,11 @@ func ObjectStateManager(ctx context.Context, newEffective types.Dynamic, stateEf
 			// The user changed the value from an other source than terraform
 			stateEffectiveTfValue, err := stateEffectiveValue.ToTerraformValue(ctx)
 			if err != nil {
-				diags.AddError("could not get terraform value", "a state effective value could not be got")
+				diags.AddError("could not get terraform value", "could not get a state effective value")
 			}
 			incomingEffectiveTfValue, err := incomingEffectiveValue.ToTerraformValue(ctx)
 			if err != nil {
-				diags.AddError("could not get terraform value", "an incoming from api effective value could not be got")
+				diags.AddError("could not get terraform value", "could not get an incoming from api effective value")
 			}
 			if !stateEffectiveTfValue.Equal(incomingEffectiveTfValue) {
 				local[incomingEffectiveKey] = incomingEffectiveValue
@@ -48,20 +50,20 @@ func ObjectStateManager(ctx context.Context, newEffective types.Dynamic, stateEf
 		incomingFromState[incomingEffectiveKey] = incomingEffectiveValue
 	}
 
-	localMap, d := ConvertMapToDynamicObject(ctx, local)
+	localMap, d := ConvertMapToDynamicObject(local)
 	diags.Append(d...)
 
-	effectiveMap, d := ConvertMapToDynamicObject(ctx, incomingFromState)
+	effectiveMap, d := ConvertMapToDynamicObject(incomingFromState)
 	diags.Append(d...)
 
 	return effectiveMap, localMap, diags
 }
 
-func ConvertDynamicObjectToMap(dyn types.Dynamic) (map[string]attr.Value, map[string]any, diag.Diagnostics) {
+func ConvertDynamicObjectToTerraformMap(dyn types.Dynamic) (map[string]attr.Value, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if dyn.IsNull() || dyn.IsUnknown() {
-		return nil, nil, diags
+		return make(map[string]attr.Value), diags
 	}
 
 	objVal, ok := dyn.UnderlyingValue().(basetypes.ObjectValue)
@@ -70,28 +72,35 @@ func ConvertDynamicObjectToMap(dyn types.Dynamic) (map[string]attr.Value, map[st
 			"Invalid type",
 			fmt.Sprintf("dynamic should be an object, got %T", dyn.UnderlyingValue()),
 		)
-		return nil, nil, diags
+		return nil, diags
 	}
+	elems := objVal.Attributes()
+	return elems, diags
+}
+
+func ConvertDynamicObjectToMapAny(dyn types.Dynamic) (map[string]any, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	converted := make(map[string]any)
 
-	elems := objVal.Attributes()
-
-	for k, v := range elems {
-		decoded, err := decodeValue(v)
-		if err != nil {
-			diags.AddError(
-				"Failed to decode dynamic object",
-				err.Error(),
-			)
-		}
-		converted[k] = decoded
+	if dyn.IsNull() || dyn.IsUnknown() {
+		return converted, diags
 	}
 
-	return elems, converted, diags
+	body, err := dynamic.ToJSON(dyn)
+	if err != nil {
+		diags.AddError("error", "error")
+	}
+
+	err = json.Unmarshal(body, &converted)
+	if err != nil {
+		diags.AddError("error", "error")
+	}
+
+	return converted, diags
 }
 
-func ConvertMapToDynamicObject[T any](ctx context.Context, toconvert map[string]T) (types.Dynamic, diag.Diagnostics) {
+func ConvertMapToDynamicObject(toconvert map[string]attr.Value) (types.Dynamic, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if len(toconvert) == 0 {
@@ -102,8 +111,7 @@ func ConvertMapToDynamicObject[T any](ctx context.Context, toconvert map[string]
 	valuesMap := make(map[string]attr.Value)
 
 	for k, v := range toconvert {
-		val, d := convertToDynamic(ctx, v)
-		diags.Append(d...)
+		val := types.DynamicValue(v)
 		typesMap[k] = types.DynamicType
 		valuesMap[k] = val
 	}
@@ -111,108 +119,7 @@ func ConvertMapToDynamicObject[T any](ctx context.Context, toconvert map[string]
 	obj, d := types.ObjectValue(typesMap, valuesMap)
 
 	diags.Append(d...)
-	dynamic := types.DynamicValue(obj)
+	dyn := types.DynamicValue(obj)
 
-	return dynamic, diags
-}
-
-func convertToDynamic(ctx context.Context, v any) (types.Dynamic, diag.Diagnostics) {
-	switch t := v.(type) {
-	case attr.Value:
-		return types.DynamicValue(t), nil
-	case nil:
-		return types.DynamicNull(), nil
-	case string:
-		return types.DynamicValue(types.StringValue(t)), nil
-	case bool:
-		return types.DynamicValue(types.BoolValue(t)), nil
-	case int:
-		return types.DynamicValue(types.Int64Value(int64(t))), nil
-	case int64:
-		return types.DynamicValue(types.Int64Value(t)), nil
-	case float64:
-		return types.DynamicValue(types.Float64Value(t)), nil
-	case []any:
-		lv, diags := types.ListValueFrom(ctx, types.StringType, t)
-		return types.DynamicValue(lv), diags
-	case map[string]any:
-		attrTypes := map[string]attr.Type{}
-		for k := range t {
-			attrTypes[k] = types.DynamicType
-		}
-		ov, diags := types.ObjectValueFrom(ctx, attrTypes, t)
-		if diags.HasError() {
-			return types.Dynamic{}, diags
-		}
-		return types.DynamicValue(ov), nil
-	default:
-		return types.DynamicValue(types.StringValue(fmt.Sprint(v))), nil
-	}
-}
-
-func decodeValue(v attr.Value) (any, error) {
-	if v.IsNull() || v.IsUnknown() {
-		return nil, nil
-	}
-
-	switch val := v.(type) {
-
-	case types.Dynamic:
-		underlying := val.UnderlyingValue()
-		return decodeValue(underlying)
-
-	case types.String:
-		return val.ValueString(), nil
-
-	case types.Int64:
-		return val.ValueInt64(), nil
-
-	case types.Float64:
-		return val.ValueFloat64(), nil
-
-	case types.Bool:
-		return val.ValueBool(), nil
-
-	case types.Number:
-		return val.ValueBigFloat(), nil
-
-	case types.Tuple:
-		var result []any
-		elems := val.Elements()
-		for _, e := range elems {
-			decoded, err := decodeValue(e)
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, decoded)
-		}
-		return result, nil
-
-	case types.List:
-		var result []any
-		elems := val.Elements()
-		for _, e := range elems {
-			decoded, err := decodeValue(e)
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, decoded)
-		}
-		return result, nil
-
-	case types.Map:
-		result := make(map[string]any)
-		elems := val.Elements()
-		for key, e := range elems {
-			decoded, err := decodeValue(e)
-			if err != nil {
-				return nil, err
-			}
-			result[key] = decoded
-		}
-		return result, nil
-
-	default:
-		return nil, fmt.Errorf("unsupported attr.Value type: %T", v)
-	}
+	return dyn, diags
 }

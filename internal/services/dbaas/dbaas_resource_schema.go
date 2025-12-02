@@ -1,12 +1,15 @@
 package dbaas
 
 import (
+	"terraform-provider-infomaniak/internal/dynamic"
+
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/dynamicplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -108,12 +111,12 @@ func getDbaasResourceSchema() schema.Schema {
 				PlanModifiers: []planmodifier.Dynamic{
 					dynamicplanmodifier.UseStateForUnknown(),
 				},
+				Validators: []validator.Dynamic{
+					dynamic.NewDynamicObjectValidator(),
+				},
 			},
 			"effective_configuration": schema.DynamicAttribute{
 				Computed: true,
-				PlanModifiers: []planmodifier.Dynamic{
-					dynamicplanmodifier.UseStateForUnknown(),
-				},
 			},
 		},
 		MarkdownDescription: "The dbaas resource allows the user to manage a dbaas project",

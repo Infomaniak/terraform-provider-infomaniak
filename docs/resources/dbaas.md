@@ -63,18 +63,11 @@ resource "infomaniak_dbaas" "db-0" {
   configuration = {
     connect_timeout = 300,
     max_connections = 300,
-    sql_mode = var.sql_mode // Needs to be inside a variable.tf file since it is a complex type (configuration is a dynamic object and the provider needs a precise type)
+    sql_mode = [
+      "ERROR_FOR_DIVISION_BY_ZERO"
+    ]
   }
 }
-
-```hcl
-variable "sql_mode" {
-  type    = list(string) // Imperative to work
-  default = [
-    "ERROR_FOR_DIVISION_BY_ZERO"
-  ]
-}
-```
 
 ## Schema
 
@@ -88,8 +81,9 @@ variable "sql_mode" {
 - `version` (String) The version of the database to use.
 - `name` (String) The name of the DBaaS shown on the manager.
 - `allowed_cidrs` (List of String) The list of allowed cidrs to access to the database.
-- `configuration` (DynamicObject) DynamicObject to represent every possible configurations. For available params, please refer to [this documentation](https://developer.infomaniak.com/docs/api/put/1/public_clouds/%7Bpublic_cloud_id%7D/projects/%7Bpublic_cloud_project_id%7D/dbaas/%7Bdbaas_id%7D/configurations).
-  - Dynamic Complex Attributes : if one of your attributes is a complex type (e.g: list(string)) please use a `variable.tf` file to specify the type, else the provider might see changes that don't exist because he may think the list is a set.
+- `configuration` (DynamicObject) DynamicObject to represent every possible configurations. For available params, please refer to [this documentation](https://developer.infomaniak.com/docs/api/put/1/public_clouds/%7Bpublic_cloud_id%7D/projects/%7Bpublic_cloud_project_id%7D/dbaas/%7Bdbaas_id%7D/configurations). 
+  - It needs to have at least one element
+  - Deleting the entire object means stopping managing configuration from terraform
 
 ### Read-Only
 

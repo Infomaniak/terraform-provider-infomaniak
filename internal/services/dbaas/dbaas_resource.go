@@ -2,12 +2,14 @@ package dbaas
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
+	"terraform-provider-infomaniak/internal/dynamic"
 	"terraform-provider-infomaniak/internal/provider"
 	"terraform-provider-infomaniak/internal/utils"
 	"time"
@@ -165,7 +167,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
-		_, configuration, d := utils.ConvertDynamicObjectToMap(data.Configuration)
+		configuration, d := utils.ConvertDynamicObjectToMapAny(data.Configuration)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -193,7 +195,6 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
-		ctx,
 		data.PublicCloudId.ValueInt64(),
 		data.PublicCloudProjectId.ValueInt64(),
 		data.Id.ValueInt64(),
@@ -203,7 +204,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
-	data.EffectiveConfiguration = types.DynamicValue(newEffectiveConfig)
+	data.EffectiveConfiguration = newEffectiveConfig
 	data.fill(dbaasObject)
 	data.Password = types.StringValue(createInfos.RootPassword)
 
@@ -253,7 +254,6 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	resp.Diagnostics.Append(diags...)
 
 	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
-		ctx,
 		state.PublicCloudId.ValueInt64(),
 		state.PublicCloudProjectId.ValueInt64(),
 		state.Id.ValueInt64(),
@@ -363,7 +363,7 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	state.AllowedCIDRs = data.AllowedCIDRs
 
 	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
-		_, configuration, d := utils.ConvertDynamicObjectToMap(data.Configuration)
+		configuration, d := utils.ConvertDynamicObjectToMapAny(data.Configuration)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -393,7 +393,6 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
-		ctx,
 		state.PublicCloudId.ValueInt64(),
 		state.PublicCloudProjectId.ValueInt64(),
 		state.Id.ValueInt64(),
@@ -403,7 +402,7 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	state.EffectiveConfiguration = types.DynamicValue(newEffectiveConfig)
+	state.EffectiveConfiguration = newEffectiveConfig
 	state.fill(dbaasObject)
 
 	// Save updated data into Terraform state
@@ -499,7 +498,7 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
 	}
 }
 
-func (r *dbaasResource) refreshEffectiveConfiguration(ctx context.Context, publicCloudId, publicCloudProjectId, id int64) (types.Dynamic, diag.Diagnostics) {
+func (r *dbaasResource) refreshEffectiveConfiguration(publicCloudId, publicCloudProjectId, id int64) (types.Dynamic, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	effectiveSettings, err := r.client.DBaas.GetConfiguration(
 		publicCloudId,
@@ -514,7 +513,16 @@ func (r *dbaasResource) refreshEffectiveConfiguration(ctx context.Context, publi
 		return types.DynamicNull(), diags
 	}
 
-	return utils.ConvertMapToDynamicObject(ctx, effectiveSettings)
+	jsonEffectiveSettigs, err := json.Marshal(effectiveSettings)
+	if err != nil {
+		diags.AddError("could not marshall", "effective settings json marshall fail")
+	}
+	dynamicObj, err := dynamic.FromJSONImplied(jsonEffectiveSettigs)
+	if err != nil {
+		diags.AddError("could not create dynamic object", "effective settings dynamic object from json creation failure")
+	}
+
+	return dynamicObj, diags
 }
 
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int64) (*dbaas.DBaaS, error) {

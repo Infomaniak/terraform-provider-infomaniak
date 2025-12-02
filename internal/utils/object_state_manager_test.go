@@ -77,15 +77,15 @@ var _ = Describe("ObjectStateManager", func() {
 			localUnderlying := localMap.UnderlyingValue().(basetypes.ObjectValue)
 			localElements := localUnderlying.Attributes()
 			Expect(localElements).To(HaveLen(2))
-			Expect(localElements["setting1"]).To(Equal(types.StringValue("value1")))
-			Expect(localElements["setting2"]).To(Equal(types.StringValue("value2")))
+			Expect(localElements["setting1"]).To(Equal(types.DynamicValue(types.StringValue("value1"))))
+			Expect(localElements["setting2"]).To(Equal(types.DynamicValue(types.StringValue("value2"))))
 
 			// Check effectiveMap (stateEffective updated)
 			effectiveUnderlying := effectiveMap.UnderlyingValue().(basetypes.ObjectValue)
 			effectiveElements := effectiveUnderlying.Attributes()
 			Expect(effectiveElements).To(HaveLen(2))
-			Expect(effectiveElements["setting1"]).To(Equal(types.StringValue("value1")))
-			Expect(effectiveElements["setting2"]).To(Equal(types.StringValue("value2")))
+			Expect(effectiveElements["setting1"]).To(Equal(types.DynamicValue(types.StringValue("value1"))))
+			Expect(effectiveElements["setting2"]).To(Equal(types.DynamicValue(types.StringValue("value2"))))
 		})
 	})
 
@@ -130,15 +130,15 @@ var _ = Describe("ObjectStateManager", func() {
 			localUnderlying := localMap.UnderlyingValue().(basetypes.ObjectValue)
 			localElements := localUnderlying.Attributes()
 			Expect(localElements).To(HaveLen(2))
-			Expect(localElements["setting1"]).To(Equal(types.StringValue("new_value1"))) // Updated
-			Expect(localElements["setting2"]).To(Equal(types.StringValue("value2")))
+			Expect(localElements["setting1"]).To(Equal(types.DynamicValue(types.StringValue("new_value1")))) // Updated
+			Expect(localElements["setting2"]).To(Equal(types.DynamicValue(types.StringValue("value2"))))
 
 			// Check effectiveMap (stateEffective updated)
 			effectiveUnderlying := effectiveMap.UnderlyingValue().(basetypes.ObjectValue)
 			effectiveElements := effectiveUnderlying.Attributes()
 			Expect(effectiveElements).To(HaveLen(2))
-			Expect(effectiveElements["setting1"]).To(Equal(types.StringValue("new_value1"))) // Updated
-			Expect(effectiveElements["setting2"]).To(Equal(types.StringValue("value2")))
+			Expect(effectiveElements["setting1"]).To(Equal(types.DynamicValue(types.StringValue("new_value1")))) // Updated
+			Expect(effectiveElements["setting2"]).To(Equal(types.DynamicValue(types.StringValue("value2"))))
 		})
 	})
 
@@ -185,15 +185,15 @@ var _ = Describe("ObjectStateManager", func() {
 			localUnderlying := localMap.UnderlyingValue().(basetypes.ObjectValue)
 			localElements := localUnderlying.Attributes()
 			Expect(localElements).To(HaveLen(1)) // Only setting1
-			Expect(localElements["setting1"]).To(Equal(types.StringValue("value1")))
+			Expect(localElements["setting1"]).To(Equal(types.DynamicValue(types.StringValue("value1"))))
 
 			// Check effectiveMap (stateEffective updated)
 			effectiveUnderlying := effectiveMap.UnderlyingValue().(basetypes.ObjectValue)
 			effectiveElements := effectiveUnderlying.Attributes()
 			Expect(effectiveElements).To(HaveLen(3)) // All settings
-			Expect(effectiveElements["setting1"]).To(Equal(types.StringValue("value1")))
-			Expect(effectiveElements["setting2"]).To(Equal(types.StringValue("value2")))
-			Expect(effectiveElements["setting3"]).To(Equal(types.StringValue("value3")))
+			Expect(effectiveElements["setting1"]).To(Equal(types.DynamicValue(types.StringValue("value1"))))
+			Expect(effectiveElements["setting2"]).To(Equal(types.DynamicValue(types.StringValue("value2"))))
+			Expect(effectiveElements["setting3"]).To(Equal(types.DynamicValue(types.StringValue("value3"))))
 		})
 	})
 
@@ -240,16 +240,16 @@ var _ = Describe("ObjectStateManager", func() {
 			localUnderlying := localMap.UnderlyingValue().(basetypes.ObjectValue)
 			localElements := localUnderlying.Attributes()
 			Expect(localElements).To(HaveLen(3))
-			Expect(localElements["setting1"]).To(Equal(types.StringValue("value1")))
-			Expect(localElements["setting2"]).To(Equal(types.StringValue("value2")))
-			Expect(localElements["setting3"]).To(Equal(types.StringValue("user_value3")))
+			Expect(localElements["setting1"]).To(Equal(types.DynamicValue(types.StringValue("value1"))))
+			Expect(localElements["setting2"]).To(Equal(types.DynamicValue(types.StringValue("value2"))))
+			Expect(localElements["setting3"]).To(Equal(types.DynamicValue(types.StringValue("user_value3"))))
 
 			// Check effectiveMap (stateEffective updated)
 			effectiveUnderlying := effectiveMap.UnderlyingValue().(basetypes.ObjectValue)
 			effectiveElements := effectiveUnderlying.Attributes()
 			Expect(effectiveElements).To(HaveLen(2)) // Only API known settings
-			Expect(effectiveElements["setting1"]).To(Equal(types.StringValue("value1")))
-			Expect(effectiveElements["setting2"]).To(Equal(types.StringValue("value2")))
+			Expect(effectiveElements["setting1"]).To(Equal(types.DynamicValue(types.StringValue("value1"))))
+			Expect(effectiveElements["setting2"]).To(Equal(types.DynamicValue(types.StringValue("value2"))))
 		})
 	})
 
@@ -292,15 +292,15 @@ var _ = Describe("ObjectStateManager", func() {
 			localUnderlying := localMap.UnderlyingValue().(basetypes.ObjectValue)
 			localElements := localUnderlying.Attributes()
 			Expect(localElements).To(HaveLen(2))
-			Expect(localElements["setting1"]).To(Equal(types.StringValue("api_changed_value"))) // Updated
-			Expect(localElements["setting2"]).To(Equal(types.StringValue("value2")))
+			Expect(localElements["setting1"]).To(Equal(types.DynamicValue(types.StringValue("api_changed_value")))) // Updated
+			Expect(localElements["setting2"]).To(Equal(types.DynamicValue(types.StringValue("value2"))))
 
 			// Check effectiveMap (stateEffective updated) - should also be updated with API changed value
 			effectiveUnderlying := effectiveMap.UnderlyingValue().(basetypes.ObjectValue)
 			effectiveElements := effectiveUnderlying.Attributes()
 			Expect(effectiveElements).To(HaveLen(2))
-			Expect(effectiveElements["setting1"]).To(Equal(types.StringValue("api_changed_value"))) // Updated
-			Expect(effectiveElements["setting2"]).To(Equal(types.StringValue("value2")))
+			Expect(effectiveElements["setting1"]).To(Equal(types.DynamicValue(types.StringValue("api_changed_value")))) // Updated
+			Expect(effectiveElements["setting2"]).To(Equal(types.DynamicValue(types.StringValue("value2"))))
 		})
 	})
 })
