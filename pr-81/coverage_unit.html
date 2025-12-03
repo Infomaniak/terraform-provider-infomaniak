@@ -4118,7 +4118,6 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
         <span class="cov0" title="0">stateConfigConverted := utils.ConvertIntsToStrings(stateConfigMap)
 
         if !reflect.DeepEqual(newConfigConverted, stateConfigConverted) </span><span class="cov0" title="0">{
-                fmt.Printf("NOT EQUAL %+#v %+#v \n", newConfigConverted, stateConfigConverted)
                 state.Configuration = newConfig
         }</span>
 

@@ -109,7 +109,7 @@
 				
 				<option value="file26">terraform-provider-infomaniak/internal/services/dbaas/dbaas_pack_data_source_schema.go (100.0%)</option>
 				
-				<option value="file27">terraform-provider-infomaniak/internal/services/dbaas/dbaas_resource.go (1.3%)</option>
+				<option value="file27">terraform-provider-infomaniak/internal/services/dbaas/dbaas_resource.go (1.4%)</option>
 				
 				<option value="file28">terraform-provider-infomaniak/internal/services/dbaas/dbaas_resource_schema.go (100.0%)</option>
 				
@@ -1594,7 +1594,7 @@ func init() <span class="cov10" title="295">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="292">{
+        if err == nil </span><span class="cov9" title="286">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1604,17 +1604,17 @@ func init() <span class="cov10" title="295">{
 
         // Try to get cache
         <span class="cov10" title="295">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="292">{
+        if err == nil </span><span class="cov9" title="286">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov2" title="3">{
+                if err != nil </span><span class="cov4" title="9">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="292">return</span>
+                <span class="cov9" title="286">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov2" title="3">_, err = os.Create(mockedApiStatePath)
+        <span class="cov4" title="9">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -4172,7 +4172,6 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
         <span class="cov0" title="0">stateConfigConverted := utils.ConvertIntsToStrings(stateConfigMap)
 
         if !reflect.DeepEqual(newConfigConverted, stateConfigConverted) </span><span class="cov0" title="0">{
-                fmt.Printf("NOT EQUAL %+#v %+#v \n", newConfigConverted, stateConfigConverted)
                 state.Configuration = newConfig
         }</span>
 
