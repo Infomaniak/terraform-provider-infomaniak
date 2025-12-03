@@ -617,7 +617,6 @@ func (client *Client) GetDbaasPack(params dbaas.PackFilter) (*dbaas.Pack, error)
 import (
         "encoding/json"
         "fmt"
-        "reflect"
         "strings"
 )
 
@@ -663,28 +662,6 @@ type Pricing struct {
         HourInclTax float64 `json:"hour_incl_tax,omitempty"`
 }
 
-type StringMap map[string]string
-
-func (sm *StringMap) UnmarshalJSON(data []byte) error <span class="cov0" title="0">{
-        var raw map[string]any
-        if err := json.Unmarshal(data, &amp;raw); err != nil </span><span class="cov0" title="0">{
-                return err
-        }</span>
-
-        <span class="cov0" title="0">*sm = make(StringMap)
-        for key, value := range raw </span><span class="cov0" title="0">{
-                switch v := value.(type) </span>{
-                case string:<span class="cov0" title="0">
-                        (*sm)[key] = v</span>
-                case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:<span class="cov0" title="0">
-                        (*sm)[key] = fmt.Sprint(v)</span>
-                default:<span class="cov0" title="0">
-                        return fmt.Errorf("unsupported type for key %v: (%v) %v", key, reflect.TypeOf(v), v)</span>
-                }
-        }
-        <span class="cov0" title="0">return nil</span>
-}
-
 type DBaaS struct {
         Id         int64                `json:"id,omitempty"`
         Project    DBaaSProject         `json:"project,omitzero"`
@@ -698,8 +675,6 @@ type DBaaS struct {
         KubernetesIdentifier string `json:"kube_identifier,omitempty"`
         Region               string `json:"region,omitempty"`
         Status               string `json:"status,omitempty"`
-
-        Settings StringMap
 }
 
 type AllowedCIDRs struct {
@@ -3991,8 +3966,8 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
         }</span>
 
         <span class="cov0" title="0">if !data.Configuration.IsNull() &amp;&amp; !data.Configuration.IsUnknown() </span><span class="cov0" title="0">{
-                configuration, d := utils.ConvertDynamicObjectToMapAny(data.Configuration)
-                resp.Diagnostics.Append(d...)
+                configuration, diags := utils.ConvertDynamicObjectToMapAny(data.Configuration)
+                resp.Diagnostics.Append(diags...)
                 if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                         return
                 }</span>
@@ -4090,6 +4065,7 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
                 return
         }</span>
 
+        // Update values of configuration and effective_configuration
         <span class="cov0" title="0">newEffectiveConfig, newConfig, diags := utils.ObjectStateManager(
                 ctx,
                 newEffectiveConfig,
@@ -4101,23 +4077,12 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
                 return
         }</span>
 
-        <span class="cov0" title="0">newConfigMap, diags := utils.ConvertDynamicObjectToMapAny(newConfig)
+        <span class="cov0" title="0">shouldUpdateConfiguration, diags := compareStateAndNewConfig(state.Configuration, newConfig)
         resp.Diagnostics.Append(diags...)
         if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                 return
         }</span>
-
-        <span class="cov0" title="0">newConfigConverted := utils.ConvertIntsToStrings(newConfigMap)
-
-        stateConfigMap, diags := utils.ConvertDynamicObjectToMapAny(state.Configuration)
-        resp.Diagnostics.Append(diags...)
-        if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
-                return
-        }</span>
-
-        <span class="cov0" title="0">stateConfigConverted := utils.ConvertIntsToStrings(stateConfigMap)
-
-        if !reflect.DeepEqual(newConfigConverted, stateConfigConverted) </span><span class="cov0" title="0">{
+        <span class="cov0" title="0">if shouldUpdateConfiguration </span><span class="cov0" title="0">{
                 state.Configuration = newConfig
         }</span>
 
@@ -4207,8 +4172,8 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
         <span class="cov0" title="0">state.AllowedCIDRs = data.AllowedCIDRs
 
         if !data.Configuration.IsNull() &amp;&amp; !data.Configuration.IsUnknown() </span><span class="cov0" title="0">{
-                configuration, d := utils.ConvertDynamicObjectToMapAny(data.Configuration)
-                resp.Diagnostics.Append(d...)
+                configuration, diags := utils.ConvertDynamicObjectToMapAny(data.Configuration)
+                resp.Diagnostics.Append(diags...)
                 if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                         return
                 }</span>
@@ -4371,6 +4336,24 @@ func (r *dbaasResource) refreshEffectiveConfiguration(publicCloudId, publicCloud
 
         <span class="cov0" title="0">return dynamicObj, diags</span>
 }
+
+// compareStateAndNewConfig convert the state configuration and newly generated configuration
+// It then compares equivalent values ("100" is equal to 100) and tells if we need to update the state
+func compareStateAndNewConfig(stateConfig types.Dynamic, newConfig types.Dynamic) (bool, diag.Diagnostics) <span class="cov0" title="0">{
+        var diags diag.Diagnostics
+
+        newConfigMap, d := utils.ConvertDynamicObjectToMapAny(newConfig)
+        diags.Append(d...)
+
+        newConfigConverted := utils.ConvertIntsToStrings(newConfigMap)
+
+        stateConfigMap, d := utils.ConvertDynamicObjectToMapAny(stateConfig)
+        diags.Append(d...)
+
+        stateConfigConverted := utils.ConvertIntsToStrings(stateConfigMap)
+
+        return !reflect.DeepEqual(newConfigConverted, stateConfigConverted), diags
+}</span>
 
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int64) (*dbaas.DBaaS, error) <span class="cov0" title="0">{
         t := time.NewTicker(5 * time.Second)
