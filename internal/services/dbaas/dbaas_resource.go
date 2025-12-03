@@ -179,8 +179,8 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
-		configuration, d := utils.ConvertDynamicObjectToMapAny(data.Configuration)
-		resp.Diagnostics.Append(d...)
+		configuration, diags := utils.ConvertDynamicObjectToMapAny(data.Configuration)
+		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -278,6 +278,7 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
+	// Update values of configuration and effective_configuration
 	newEffectiveConfig, newConfig, diags := utils.ObjectStateManager(
 		ctx,
 		newEffectiveConfig,
@@ -289,23 +290,12 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	newConfigMap, diags := utils.ConvertDynamicObjectToMapAny(newConfig)
+	shouldUpdateConfiguration, diags := hasObjectChanged(state.Configuration, newConfig)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	newConfigConverted := utils.ConvertIntsToStrings(newConfigMap)
-
-	stateConfigMap, diags := utils.ConvertDynamicObjectToMapAny(state.Configuration)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	stateConfigConverted := utils.ConvertIntsToStrings(stateConfigMap)
-
-	if !reflect.DeepEqual(newConfigConverted, stateConfigConverted) {
+	if shouldUpdateConfiguration {
 		state.Configuration = newConfig
 	}
 
@@ -395,8 +385,8 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	state.AllowedCIDRs = data.AllowedCIDRs
 
 	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
-		configuration, d := utils.ConvertDynamicObjectToMapAny(data.Configuration)
-		resp.Diagnostics.Append(d...)
+		configuration, diags := utils.ConvertDynamicObjectToMapAny(data.Configuration)
+		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -558,6 +548,24 @@ func (r *dbaasResource) refreshEffectiveConfiguration(publicCloudId, publicCloud
 	}
 
 	return dynamicObj, diags
+}
+
+// hasObjectChanged convert the state configuration and newly generated configuration
+// It then compares equivalent values ("100" is equal to 100) and tells if we need to update the state
+func hasObjectChanged(stateConfig, newConfig types.Dynamic) (bool, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	newConfigMap, d := utils.ConvertDynamicObjectToMapAny(newConfig)
+	diags.Append(d...)
+
+	newConfigConverted := utils.ConvertIntsToStrings(newConfigMap)
+
+	stateConfigMap, d := utils.ConvertDynamicObjectToMapAny(stateConfig)
+	diags.Append(d...)
+
+	stateConfigConverted := utils.ConvertIntsToStrings(stateConfigMap)
+
+	return !reflect.DeepEqual(newConfigConverted, stateConfigConverted), diags
 }
 
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int64) (*dbaas.DBaaS, error) {

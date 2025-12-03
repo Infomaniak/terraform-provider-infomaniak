@@ -81,9 +81,7 @@ resource "infomaniak_dbaas" "db-0" {
 - `version` (String) The version of the database to use.
 - `name` (String) The name of the DBaaS shown on the manager.
 - `allowed_cidrs` (List of String) The list of allowed cidrs to access to the database.
-- `configuration` (DynamicObject) DynamicObject to represent every possible configurations. For available params, please refer to [this documentation](https://developer.infomaniak.com/docs/api/put/1/public_clouds/%7Bpublic_cloud_id%7D/projects/%7Bpublic_cloud_project_id%7D/dbaas/%7Bdbaas_id%7D/configurations). 
-  - It needs to have at least one element
-  - Deleting the entire object means stopping managing configuration from terraform
+- `configuration` (DynamicObject) Specific MySQL engine parameters. For available parameters, please refer to [this documentation](https://developer.infomaniak.com/docs/api/put/1/public_clouds/%7Bpublic_cloud_id%7D/projects/%7Bpublic_cloud_project_id%7D/dbaas/%7Bdbaas_id%7D/configurations). It needs to have at least one element.
 
 ### Read-Only
 
@@ -94,4 +92,4 @@ resource "infomaniak_dbaas" "db-0" {
 - `user` (String) The user to access the Database.
 - `password` (String, Sensitive) The password to access the Database.
 - `ca` (String) The database CA certificate.
-- `effective_configuration` (DynamicObject) Specific engine params, including defaulted one (not set by `configuration`)
+- `effective_configuration` (DynamicObject) Specific MySQL engine parameters on the API side, this is to account for defaulted values.
