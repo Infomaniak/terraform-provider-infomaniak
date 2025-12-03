@@ -4393,7 +4393,7 @@ func (r *dbaasResource) refreshEffectiveConfiguration(publicCloudId, publicCloud
 
 // compareStateAndNewConfig convert the state configuration and newly generated configuration
 // It then compares equivalent values ("100" is equal to 100) and tells if we need to update the state
-func compareStateAndNewConfig(stateConfig types.Dynamic, newConfig types.Dynamic) (bool, diag.Diagnostics) <span class="cov0" title="0">{
+func compareStateAndNewConfig(stateConfig, newConfig types.Dynamic) (bool, diag.Diagnostics) <span class="cov0" title="0">{
         var diags diag.Diagnostics
 
         newConfigMap, d := utils.ConvertDynamicObjectToMapAny(newConfig)
