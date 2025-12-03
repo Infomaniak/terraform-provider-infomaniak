@@ -134,7 +134,7 @@ func ConvertIntsToStrings(input map[string]any) map[string]any {
 	output := make(map[string]any)
 	for key, value := range input {
 		switch typedValue := value.(type) {
-		case uint, uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
+		case uint, uint8, uint16, uint32, uint64, int, int8, int16, int32, int64, float32, float64:
 			output[key] = fmt.Sprint(typedValue)
 		case map[string]any:
 			newOutput := make(map[string]any)

@@ -525,8 +525,11 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
 		model.Host = types.StringValue(dbaas.Connection.Host)
 		model.Port = types.StringValue(dbaas.Connection.Port)
 		model.User = types.StringValue(dbaas.Connection.User)
-		model.Password = types.StringValue(dbaas.Connection.Password)
 		model.Ca = types.StringValue(dbaas.Connection.Ca)
+
+		if model.Password == types.StringNull() || model.Password == types.StringUnknown() {
+			model.Password = types.StringValue(dbaas.Connection.Password)
+		}
 	}
 }
 
