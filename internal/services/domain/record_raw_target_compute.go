@@ -10,87 +10,151 @@ import (
 	"github.com/miekg/dns"
 )
 
-func (model *RecordModel) ComputeRawTarget() string {
-	// don't do anything if it's already set
-	if !model.Target.IsUnknown() && !model.Target.IsNull() {
-		return model.Target.ValueString()
+type Unknowable interface {
+	IsUnknown() bool
+}
+
+func (model *RecordModel) ComputeRawTarget() (value string, isKnown bool) {
+	// If user explicitly set target, return it directly
+	if !model.Target.IsNull() {
+		return model.Target.ValueString(), !model.Target.IsUnknown()
+	}
+
+	isAnyFieldUnknown := func(vals ...Unknowable) bool {
+		for _, v := range vals {
+			if v.IsUnknown() {
+				return true
+			}
+		}
+		return false
 	}
 
 	var record dns.RR
+	isFullyKnown := true
 
 	switch model.Type.ValueString() {
+
 	case domain.RecordA:
-		record = &dns.A{
-			A: net.ParseIP(model.Data.IP.ValueString()),
+		isFullyKnown = !model.Data.IP.IsUnknown()
+		if isFullyKnown {
+			record = &dns.A{A: net.ParseIP(model.Data.IP.ValueString())}
 		}
+
 	case domain.RecordAAAA:
-		record = &dns.AAAA{
-			AAAA: net.ParseIP(model.Data.IP.ValueString()),
+		isFullyKnown = !model.Data.IP.IsUnknown()
+		if isFullyKnown {
+			record = &dns.AAAA{AAAA: net.ParseIP(model.Data.IP.ValueString())}
 		}
+
 	case domain.RecordCAA:
-		record = &dns.CAA{
-			Flag:  uint8(model.Data.Flags.ValueInt64()),
-			Tag:   model.Data.Tag.ValueString(),
-			Value: model.Data.Value.ValueString(),
+		isFullyKnown = !isAnyFieldUnknown(model.Data.Flags, model.Data.Tag, model.Data.Value)
+		if isFullyKnown {
+			record = &dns.CAA{
+				Flag:  uint8(model.Data.Flags.ValueInt64()),
+				Tag:   model.Data.Tag.ValueString(),
+				Value: model.Data.Value.ValueString(),
+			}
 		}
+
 	case domain.RecordCNAME:
-		record = &dns.CNAME{
-			Target: dns.Fqdn(model.Data.Target.ValueString()),
+		isFullyKnown = !model.Data.Target.IsUnknown()
+		if isFullyKnown {
+			record = &dns.CNAME{Target: dns.Fqdn(model.Data.Target.ValueString())}
 		}
+
 	case domain.RecordDNAME:
-		record = &dns.DNAME{
-			Target: dns.Fqdn(model.Data.Target.ValueString()),
+		isFullyKnown = !model.Data.Target.IsUnknown()
+		if isFullyKnown {
+			record = &dns.DNAME{Target: dns.Fqdn(model.Data.Target.ValueString())}
 		}
+
 	case domain.RecordDS:
-		record = &dns.DS{
-			KeyTag:     uint16(model.Data.KeyTag.ValueInt64()),
-			Algorithm:  uint8(model.Data.Algorithm.ValueInt64()),
-			DigestType: uint8(model.Data.DigestType.ValueInt64()),
-			Digest:     model.Data.Digest.ValueString(),
+		isFullyKnown = !isAnyFieldUnknown(model.Data.KeyTag, model.Data.Algorithm, model.Data.DigestType, model.Data.Digest)
+		if isFullyKnown {
+			record = &dns.DS{
+				KeyTag:     uint16(model.Data.KeyTag.ValueInt64()),
+				Algorithm:  uint8(model.Data.Algorithm.ValueInt64()),
+				DigestType: uint8(model.Data.DigestType.ValueInt64()),
+				Digest:     model.Data.Digest.ValueString(),
+			}
 		}
+
 	case domain.RecordMX:
-		record = &dns.MX{
-			Preference: uint16(model.Data.Priority.ValueInt64()),
-			Mx:         dns.Fqdn(model.Data.Target.ValueString()),
+		isFullyKnown = !isAnyFieldUnknown(model.Data.Priority, model.Data.Target)
+		if isFullyKnown {
+			record = &dns.MX{
+				Preference: uint16(model.Data.Priority.ValueInt64()),
+				Mx:         dns.Fqdn(model.Data.Target.ValueString()),
+			}
 		}
+
 	case domain.RecordNS:
-		record = &dns.NS{
-			Ns: dns.Fqdn(model.Data.Target.ValueString()),
+		isFullyKnown = !model.Data.Target.IsUnknown()
+		if isFullyKnown {
+			record = &dns.NS{
+				Ns: dns.Fqdn(model.Data.Target.ValueString()),
+			}
 		}
+
 	case domain.RecordSMIMEA:
-		record = &dns.SMIMEA{
-			Usage:        uint8(model.Data.Priority.ValueInt64()),
-			Selector:     uint8(model.Data.Selector.ValueInt64()),
-			MatchingType: uint8(model.Data.MatchingType.ValueInt64()),
-			Certificate:  model.Data.CertAssocData.ValueString(),
+		isFullyKnown = !isAnyFieldUnknown(model.Data.Priority, model.Data.Selector, model.Data.MatchingType, model.Data.CertAssocData)
+		if isFullyKnown {
+			record = &dns.SMIMEA{
+				Usage:        uint8(model.Data.Priority.ValueInt64()),
+				Selector:     uint8(model.Data.Selector.ValueInt64()),
+				MatchingType: uint8(model.Data.MatchingType.ValueInt64()),
+				Certificate:  model.Data.CertAssocData.ValueString(),
+			}
 		}
+
 	case domain.RecordSRV:
-		record = &dns.SRV{
-			Priority: uint16(model.Data.Priority.ValueInt64()),
-			Weight:   uint16(model.Data.Weight.ValueInt64()),
-			Port:     uint16(model.Data.Port.ValueInt64()),
-			Target:   dns.Fqdn(model.Data.Target.ValueString()),
+		isFullyKnown = !isAnyFieldUnknown(model.Data.Priority, model.Data.Weight, model.Data.Port, model.Data.Target)
+		if isFullyKnown {
+			record = &dns.SRV{
+				Priority: uint16(model.Data.Priority.ValueInt64()),
+				Weight:   uint16(model.Data.Weight.ValueInt64()),
+				Port:     uint16(model.Data.Port.ValueInt64()),
+				Target:   dns.Fqdn(model.Data.Target.ValueString()),
+			}
 		}
+
 	case domain.RecordSSHFP:
-		record = &dns.SSHFP{
-			Algorithm:   uint8(model.Data.FingerprintAlgorithm.ValueInt64()),
-			Type:        uint8(model.Data.FingerprintType.ValueInt64()),
-			FingerPrint: model.Data.Fingerprint.ValueString(),
+		isFullyKnown = !isAnyFieldUnknown(model.Data.FingerprintAlgorithm, model.Data.FingerprintType, model.Data.Fingerprint)
+		if isFullyKnown {
+			record = &dns.SSHFP{
+				Algorithm:   uint8(model.Data.FingerprintAlgorithm.ValueInt64()),
+				Type:        uint8(model.Data.FingerprintType.ValueInt64()),
+				FingerPrint: model.Data.Fingerprint.ValueString(),
+			}
 		}
+
 	case domain.RecordTLSA:
-		record = &dns.TLSA{
-			Usage:        uint8(model.Data.Priority.ValueInt64()),
-			Selector:     uint8(model.Data.Selector.ValueInt64()),
-			MatchingType: uint8(model.Data.MatchingType.ValueInt64()),
-			Certificate:  model.Data.CertAssocData.ValueString(),
+		isFullyKnown = !isAnyFieldUnknown(model.Data.Priority, model.Data.Selector, model.Data.MatchingType, model.Data.CertAssocData)
+		if isFullyKnown {
+			record = &dns.TLSA{
+				Usage:        uint8(model.Data.Priority.ValueInt64()),
+				Selector:     uint8(model.Data.Selector.ValueInt64()),
+				MatchingType: uint8(model.Data.MatchingType.ValueInt64()),
+				Certificate:  model.Data.CertAssocData.ValueString(),
+			}
 		}
+
 	case domain.RecordTXT:
-		record = &dns.TXT{
-			Txt: []string{model.Data.Value.ValueString()},
+		isFullyKnown = !model.Data.Value.IsUnknown()
+		if isFullyKnown {
+			record = &dns.TXT{
+				Txt: []string{model.Data.Value.ValueString()},
+			}
 		}
 	}
 
-	return strings.TrimPrefix(record.String(), record.Header().String())
+	// If any referenced value is still unknown, return unknown
+	if !isFullyKnown || record == nil {
+		return "", false
+	}
+
+	raw := strings.TrimPrefix(record.String(), record.Header().String())
+	return raw, true
 }
 
 func (model *RecordModel) ParseRawTarget(raw string) error {
