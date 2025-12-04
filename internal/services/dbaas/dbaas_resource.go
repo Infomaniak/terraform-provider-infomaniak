@@ -2,13 +2,17 @@ package dbaas
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
+	"terraform-provider-infomaniak/internal/dynamic"
 	"terraform-provider-infomaniak/internal/provider"
+	dbaasmigration "terraform-provider-infomaniak/internal/services/dbaas/dbaas_migration"
 	"terraform-provider-infomaniak/internal/utils"
 	"time"
 
@@ -20,9 +24,10 @@ import (
 )
 
 var (
-	_ resource.Resource                = &dbaasResource{}
-	_ resource.ResourceWithConfigure   = &dbaasResource{}
-	_ resource.ResourceWithImportState = &dbaasResource{}
+	_ resource.Resource                 = &dbaasResource{}
+	_ resource.ResourceWithConfigure    = &dbaasResource{}
+	_ resource.ResourceWithImportState  = &dbaasResource{}
+	_ resource.ResourceWithUpgradeState = &dbaasResource{}
 )
 
 func NewDBaasResource() resource.Resource {
@@ -53,8 +58,8 @@ type DBaasModel struct {
 
 	AllowedCIDRs types.List `tfsdk:"allowed_cidrs"`
 
-	Configuration          types.Map `tfsdk:"configuration"`
-	EffectiveConfiguration types.Map `tfsdk:"effective_configuration"`
+	Configuration          types.Dynamic `tfsdk:"configuration"`
+	EffectiveConfiguration types.Dynamic `tfsdk:"effective_configuration"`
 }
 
 func (r *dbaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -79,6 +84,15 @@ func (r *dbaasResource) Configure(ctx context.Context, req resource.ConfigureReq
 	}
 
 	r.client = client
+}
+
+func (r *dbaasResource) UpgradeState(context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		0: {
+			PriorSchema:   dbaasmigration.GetV0Schema(),
+			StateUpgrader: dbaasmigration.StateUpgrader,
+		},
+	}
 }
 
 func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -165,11 +179,12 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
-		configuration := make(map[string]string)
-		resp.Diagnostics.Append(data.Configuration.ElementsAs(ctx, &configuration, false)...)
+		configuration, diags := utils.ConvertDynamicObjectToMapAny(data.Configuration)
+		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
+
 		ok, err = r.client.DBaas.PutConfiguration(
 			data.PublicCloudId.ValueInt64(),
 			data.PublicCloudProjectId.ValueInt64(),
@@ -188,11 +203,10 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 			return
 		}
 	} else {
-		data.Configuration = types.MapNull(types.StringType)
+		data.Configuration = types.DynamicNull()
 	}
 
 	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
-		ctx,
 		data.PublicCloudId.ValueInt64(),
 		data.PublicCloudProjectId.ValueInt64(),
 		data.Id.ValueInt64(),
@@ -250,9 +264,11 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, filteredIps)
 	state.AllowedCIDRs = listFilteredIps
 	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
-		ctx,
 		state.PublicCloudId.ValueInt64(),
 		state.PublicCloudProjectId.ValueInt64(),
 		state.Id.ValueInt64(),
@@ -262,21 +278,28 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	if !state.Configuration.IsNull() {
-		newEffectiveConfig, newConfig, diags := utils.StringMapStateManager(
-			ctx,
-			newEffectiveConfig,
-			state.EffectiveConfiguration,
-			state.Configuration,
-		)
-		resp.Diagnostics.Append(diags...)
-		state.EffectiveConfiguration = newEffectiveConfig
-		state.Configuration = newConfig
-	}
-
+	// Update values of configuration and effective_configuration
+	newEffectiveConfig, newConfig, diags := utils.ObjectStateManager(
+		ctx,
+		newEffectiveConfig,
+		state.EffectiveConfiguration,
+		state.Configuration,
+	)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	shouldUpdateConfiguration, diags := hasObjectChanged(state.Configuration, newConfig)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if shouldUpdateConfiguration {
+		state.Configuration = newConfig
+	}
+
+	state.EffectiveConfiguration = newEffectiveConfig
 
 	state.fill(dbaasObject)
 
@@ -362,13 +385,17 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	state.AllowedCIDRs = data.AllowedCIDRs
 
 	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
-		settings := make(map[string]string)
-		resp.Diagnostics.Append(data.Configuration.ElementsAs(ctx, &settings, false)...)
+		configuration, diags := utils.ConvertDynamicObjectToMapAny(data.Configuration)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
 		ok, err = r.client.DBaas.PutConfiguration(
 			state.PublicCloudId.ValueInt64(),
 			state.PublicCloudProjectId.ValueInt64(),
 			state.Id.ValueInt64(),
-			settings,
+			configuration,
 		)
 		if !ok && err == nil {
 			resp.Diagnostics.AddError("Unknown Settings error", "")
@@ -383,10 +410,11 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		}
 
 		state.Configuration = data.Configuration
+	} else {
+		state.Configuration = types.DynamicNull()
 	}
 
 	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
-		ctx,
 		state.PublicCloudId.ValueInt64(),
 		state.PublicCloudProjectId.ValueInt64(),
 		state.Id.ValueInt64(),
@@ -487,12 +515,15 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
 		model.Host = types.StringValue(dbaas.Connection.Host)
 		model.Port = types.StringValue(dbaas.Connection.Port)
 		model.User = types.StringValue(dbaas.Connection.User)
-		model.Password = types.StringValue(dbaas.Connection.Password)
 		model.Ca = types.StringValue(dbaas.Connection.Ca)
+
+		if model.Password == types.StringNull() || model.Password == types.StringUnknown() {
+			model.Password = types.StringValue(dbaas.Connection.Password)
+		}
 	}
 }
 
-func (r *dbaasResource) refreshEffectiveConfiguration(ctx context.Context, publicCloudId, publicCloudProjectId, id int64) (types.Map, diag.Diagnostics) {
+func (r *dbaasResource) refreshEffectiveConfiguration(publicCloudId, publicCloudProjectId, id int64) (types.Dynamic, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	effectiveSettings, err := r.client.DBaas.GetConfiguration(
 		publicCloudId,
@@ -504,16 +535,37 @@ func (r *dbaasResource) refreshEffectiveConfiguration(ctx context.Context, publi
 			"Error when reading DBaaS settings",
 			err.Error(),
 		)
-		return types.MapNull(types.StringType), diags
+		return types.DynamicNull(), diags
 	}
 
-	mapSettings, diag := types.MapValueFrom(ctx, types.StringType, effectiveSettings)
-	diags.Append(diag...)
-	if diags.HasError() {
-		return types.MapNull(types.StringType), diags
+	jsonEffectiveSettigs, err := json.Marshal(effectiveSettings)
+	if err != nil {
+		diags.AddError("could not marshall", "effective settings json marshall fail")
+	}
+	dynamicObj, err := dynamic.FromJSONImplied(jsonEffectiveSettigs)
+	if err != nil {
+		diags.AddError("could not create dynamic object", "effective settings dynamic object from json creation failure")
 	}
 
-	return mapSettings, diags
+	return dynamicObj, diags
+}
+
+// hasObjectChanged convert the state configuration and newly generated configuration
+// It then compares equivalent values ("100" is equal to 100) and tells if we need to update the state
+func hasObjectChanged(stateConfig, newConfig types.Dynamic) (bool, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	newConfigMap, d := utils.ConvertDynamicObjectToMapAny(newConfig)
+	diags.Append(d...)
+
+	newConfigConverted := utils.ConvertIntsToStrings(newConfigMap)
+
+	stateConfigMap, d := utils.ConvertDynamicObjectToMapAny(stateConfig)
+	diags.Append(d...)
+
+	stateConfigConverted := utils.ConvertIntsToStrings(stateConfigMap)
+
+	return !reflect.DeepEqual(newConfigConverted, stateConfigConverted), diags
 }
 
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int64) (*dbaas.DBaaS, error) {

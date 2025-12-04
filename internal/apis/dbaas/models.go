@@ -3,7 +3,6 @@ package dbaas
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strings"
 )
 
@@ -49,28 +48,6 @@ type Pricing struct {
 	HourInclTax float64 `json:"hour_incl_tax,omitempty"`
 }
 
-type StringMap map[string]string
-
-func (sm *StringMap) UnmarshalJSON(data []byte) error {
-	var raw map[string]any
-	if err := json.Unmarshal(data, &raw); err != nil {
-		return err
-	}
-
-	*sm = make(StringMap)
-	for key, value := range raw {
-		switch v := value.(type) {
-		case string:
-			(*sm)[key] = v
-		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
-			(*sm)[key] = fmt.Sprint(v)
-		default:
-			return fmt.Errorf("unsupported type for key %v: (%v) %v", key, reflect.TypeOf(v), v)
-		}
-	}
-	return nil
-}
-
 type DBaaS struct {
 	Id         int64                `json:"id,omitempty"`
 	Project    DBaaSProject         `json:"project,omitzero"`
@@ -84,8 +61,6 @@ type DBaaS struct {
 	KubernetesIdentifier string `json:"kube_identifier,omitempty"`
 	Region               string `json:"region,omitempty"`
 	Status               string `json:"status,omitempty"`
-
-	Settings StringMap
 }
 
 type AllowedCIDRs struct {

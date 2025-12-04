@@ -1,21 +1,69 @@
-package dbaas
+package dbaasmigration
 
 import (
-	"terraform-provider-infomaniak/internal/dynamic"
+	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/dynamicplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func getDbaasResourceSchema() schema.Schema {
-	return schema.Schema{
-		Version: 1,
+type DBaasModelV0 struct {
+	PublicCloudId        types.Int64  `tfsdk:"public_cloud_id"`
+	PublicCloudProjectId types.Int64  `tfsdk:"public_cloud_project_id"`
+	Id                   types.Int64  `tfsdk:"id"`
+	KubernetesIdentifier types.String `tfsdk:"kube_identifier"`
+
+	Name     types.String `tfsdk:"name"`
+	PackName types.String `tfsdk:"pack_name"`
+	Region   types.String `tfsdk:"region"`
+	Type     types.String `tfsdk:"type"`
+	Version  types.String `tfsdk:"version"`
+
+	Host     types.String `tfsdk:"host"`
+	Port     types.String `tfsdk:"port"`
+	User     types.String `tfsdk:"user"`
+	Password types.String `tfsdk:"password"`
+	Ca       types.String `tfsdk:"ca"`
+
+	AllowedCIDRs types.List `tfsdk:"allowed_cidrs"`
+
+	Configuration          types.Map `tfsdk:"configuration"`
+	EffectiveConfiguration types.Map `tfsdk:"effective_configuration"`
+}
+
+type DBaasModelV1 struct {
+	PublicCloudId        types.Int64  `tfsdk:"public_cloud_id"`
+	PublicCloudProjectId types.Int64  `tfsdk:"public_cloud_project_id"`
+	Id                   types.Int64  `tfsdk:"id"`
+	KubernetesIdentifier types.String `tfsdk:"kube_identifier"`
+
+	Name     types.String `tfsdk:"name"`
+	PackName types.String `tfsdk:"pack_name"`
+	Region   types.String `tfsdk:"region"`
+	Type     types.String `tfsdk:"type"`
+	Version  types.String `tfsdk:"version"`
+
+	Host     types.String `tfsdk:"host"`
+	Port     types.String `tfsdk:"port"`
+	User     types.String `tfsdk:"user"`
+	Password types.String `tfsdk:"password"`
+	Ca       types.String `tfsdk:"ca"`
+
+	AllowedCIDRs types.List `tfsdk:"allowed_cidrs"`
+
+	Configuration          types.Dynamic `tfsdk:"configuration"`
+	EffectiveConfiguration types.Dynamic `tfsdk:"effective_configuration"`
+}
+
+func GetV0Schema() *schema.Schema {
+	return &schema.Schema{
+		Version: 0,
 		Attributes: map[string]schema.Attribute{
 			"public_cloud_id": schema.Int64Attribute{
 				Required:            true,
@@ -107,19 +155,55 @@ func getDbaasResourceSchema() schema.Schema {
 				Computed:            true,
 				MarkdownDescription: "DbaaS kubernetes name",
 			},
-			"configuration": schema.DynamicAttribute{
-				Optional: true,
-				PlanModifiers: []planmodifier.Dynamic{
-					dynamicplanmodifier.UseStateForUnknown(),
-				},
-				Validators: []validator.Dynamic{
-					dynamic.NewDynamicObjectValidator(),
+			"configuration": schema.MapAttribute{
+				Computed:    true,
+				Optional:    true,
+				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"effective_configuration": schema.DynamicAttribute{
-				Computed: true,
+			"effective_configuration": schema.MapAttribute{
+				Computed:    true,
+				ElementType: types.StringType,
 			},
 		},
 		MarkdownDescription: "The dbaas resource allows the user to manage a dbaas project",
 	}
+}
+
+func StateUpgrader(ctx context.Context, request resource.UpgradeStateRequest, response *resource.UpgradeStateResponse) {
+	var state DBaasModelV0
+
+	// Read Terraform plan data into the model
+	response.Diagnostics.Append(request.State.Get(ctx, &state)...)
+
+	var newState DBaasModelV1
+
+	newState.PublicCloudId = state.PublicCloudId
+	newState.PublicCloudProjectId = state.PublicCloudProjectId
+	newState.Id = state.Id
+	newState.KubernetesIdentifier = state.KubernetesIdentifier
+
+	newState.Name = state.Name
+	newState.PackName = state.PackName
+	newState.Region = state.Region
+	newState.Type = state.Type
+	newState.Version = state.Version
+
+	newState.Host = state.Host
+	newState.Port = state.Port
+	newState.User = state.User
+	newState.Password = state.Password
+	newState.Ca = state.Ca
+
+	newState.AllowedCIDRs = state.AllowedCIDRs
+
+	newState.EffectiveConfiguration = types.DynamicNull()
+	if state.Configuration.IsUnknown() {
+		newState.Configuration = types.DynamicUnknown()
+		return
+	}
+	newState.Configuration = types.DynamicNull()
+	response.Diagnostics.Append(response.State.Set(ctx, &newState)...)
 }
