@@ -2440,8 +2440,9 @@ func (dv *DynamicObjectValidator) ValidateDynamic(ctx context.Context, req valid
         }</span>
         <span class="cov0" title="0">for _, value := range elems </span><span class="cov0" title="0">{
                 _, isList := value.(basetypes.ListValue)
-                if isList </span><span class="cov0" title="0">{
-                        res.Diagnostics.AddAttributeError(req.Path, "Wrong type", "please use tuple when using a list inside a dynamic object")
+                _, isSet := value.(basetypes.SetValue)
+                if isList || isSet </span><span class="cov0" title="0">{
+                        res.Diagnostics.AddAttributeError(req.Path, "Wrong type", "please use tuple when using a list or set inside a dynamic object")
                 }</span>
         }
 }
