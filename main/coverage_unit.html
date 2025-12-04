@@ -3858,87 +3858,151 @@ import (
         "github.com/miekg/dns"
 )
 
-func (model *RecordModel) ComputeRawTarget() string <span class="cov0" title="0">{
-        // don't do anything if it's already set
-        if !model.Target.IsUnknown() &amp;&amp; !model.Target.IsNull() </span><span class="cov0" title="0">{
-                return model.Target.ValueString()
+type Unknowable interface {
+        IsUnknown() bool
+}
+
+func (model *RecordModel) ComputeRawTarget() (value string, isKnown bool) <span class="cov0" title="0">{
+        // If user explicitly set target, return it directly
+        if !model.Target.IsNull() </span><span class="cov0" title="0">{
+                return model.Target.ValueString(), !model.Target.IsUnknown()
         }</span>
 
+        <span class="cov0" title="0">isAnyFieldUnknown := func(vals ...Unknowable) bool </span><span class="cov0" title="0">{
+                for _, v := range vals </span><span class="cov0" title="0">{
+                        if v.IsUnknown() </span><span class="cov0" title="0">{
+                                return true
+                        }</span>
+                }
+                <span class="cov0" title="0">return false</span>
+        }
+
         <span class="cov0" title="0">var record dns.RR
+        isFullyKnown := true
 
         switch model.Type.ValueString() </span>{
+
         case domain.RecordA:<span class="cov0" title="0">
-                record = &amp;dns.A{
-                        A: net.ParseIP(model.Data.IP.ValueString()),
+                isFullyKnown = !model.Data.IP.IsUnknown()
+                if isFullyKnown </span><span class="cov0" title="0">{
+                        record = &amp;dns.A{A: net.ParseIP(model.Data.IP.ValueString())}
                 }</span>
+
         case domain.RecordAAAA:<span class="cov0" title="0">
-                record = &amp;dns.AAAA{
-                        AAAA: net.ParseIP(model.Data.IP.ValueString()),
+                isFullyKnown = !model.Data.IP.IsUnknown()
+                if isFullyKnown </span><span class="cov0" title="0">{
+                        record = &amp;dns.AAAA{AAAA: net.ParseIP(model.Data.IP.ValueString())}
                 }</span>
+
         case domain.RecordCAA:<span class="cov0" title="0">
-                record = &amp;dns.CAA{
-                        Flag:  uint8(model.Data.Flags.ValueInt64()),
-                        Tag:   model.Data.Tag.ValueString(),
-                        Value: model.Data.Value.ValueString(),
+                isFullyKnown = !isAnyFieldUnknown(model.Data.Flags, model.Data.Tag, model.Data.Value)
+                if isFullyKnown </span><span class="cov0" title="0">{
+                        record = &amp;dns.CAA{
+                                Flag:  uint8(model.Data.Flags.ValueInt64()),
+                                Tag:   model.Data.Tag.ValueString(),
+                                Value: model.Data.Value.ValueString(),
+                        }
                 }</span>
+
         case domain.RecordCNAME:<span class="cov0" title="0">
-                record = &amp;dns.CNAME{
-                        Target: dns.Fqdn(model.Data.Target.ValueString()),
+                isFullyKnown = !model.Data.Target.IsUnknown()
+                if isFullyKnown </span><span class="cov0" title="0">{
+                        record = &amp;dns.CNAME{Target: dns.Fqdn(model.Data.Target.ValueString())}
                 }</span>
+
         case domain.RecordDNAME:<span class="cov0" title="0">
-                record = &amp;dns.DNAME{
-                        Target: dns.Fqdn(model.Data.Target.ValueString()),
+                isFullyKnown = !model.Data.Target.IsUnknown()
+                if isFullyKnown </span><span class="cov0" title="0">{
+                        record = &amp;dns.DNAME{Target: dns.Fqdn(model.Data.Target.ValueString())}
                 }</span>
+
         case domain.RecordDS:<span class="cov0" title="0">
-                record = &amp;dns.DS{
-                        KeyTag:     uint16(model.Data.KeyTag.ValueInt64()),
-                        Algorithm:  uint8(model.Data.Algorithm.ValueInt64()),
-                        DigestType: uint8(model.Data.DigestType.ValueInt64()),
-                        Digest:     model.Data.Digest.ValueString(),
+                isFullyKnown = !isAnyFieldUnknown(model.Data.KeyTag, model.Data.Algorithm, model.Data.DigestType, model.Data.Digest)
+                if isFullyKnown </span><span class="cov0" title="0">{
+                        record = &amp;dns.DS{
+                                KeyTag:     uint16(model.Data.KeyTag.ValueInt64()),
+                                Algorithm:  uint8(model.Data.Algorithm.ValueInt64()),
+                                DigestType: uint8(model.Data.DigestType.ValueInt64()),
+                                Digest:     model.Data.Digest.ValueString(),
+                        }
                 }</span>
+
         case domain.RecordMX:<span class="cov0" title="0">
-                record = &amp;dns.MX{
-                        Preference: uint16(model.Data.Priority.ValueInt64()),
-                        Mx:         dns.Fqdn(model.Data.Target.ValueString()),
+                isFullyKnown = !isAnyFieldUnknown(model.Data.Priority, model.Data.Target)
+                if isFullyKnown </span><span class="cov0" title="0">{
+                        record = &amp;dns.MX{
+                                Preference: uint16(model.Data.Priority.ValueInt64()),
+                                Mx:         dns.Fqdn(model.Data.Target.ValueString()),
+                        }
                 }</span>
+
         case domain.RecordNS:<span class="cov0" title="0">
-                record = &amp;dns.NS{
-                        Ns: dns.Fqdn(model.Data.Target.ValueString()),
+                isFullyKnown = !model.Data.Target.IsUnknown()
+                if isFullyKnown </span><span class="cov0" title="0">{
+                        record = &amp;dns.NS{
+                                Ns: dns.Fqdn(model.Data.Target.ValueString()),
+                        }
                 }</span>
+
         case domain.RecordSMIMEA:<span class="cov0" title="0">
-                record = &amp;dns.SMIMEA{
-                        Usage:        uint8(model.Data.Priority.ValueInt64()),
-                        Selector:     uint8(model.Data.Selector.ValueInt64()),
-                        MatchingType: uint8(model.Data.MatchingType.ValueInt64()),
-                        Certificate:  model.Data.CertAssocData.ValueString(),
+                isFullyKnown = !isAnyFieldUnknown(model.Data.Priority, model.Data.Selector, model.Data.MatchingType, model.Data.CertAssocData)
+                if isFullyKnown </span><span class="cov0" title="0">{
+                        record = &amp;dns.SMIMEA{
+                                Usage:        uint8(model.Data.Priority.ValueInt64()),
+                                Selector:     uint8(model.Data.Selector.ValueInt64()),
+                                MatchingType: uint8(model.Data.MatchingType.ValueInt64()),
+                                Certificate:  model.Data.CertAssocData.ValueString(),
+                        }
                 }</span>
+
         case domain.RecordSRV:<span class="cov0" title="0">
-                record = &amp;dns.SRV{
-                        Priority: uint16(model.Data.Priority.ValueInt64()),
-                        Weight:   uint16(model.Data.Weight.ValueInt64()),
-                        Port:     uint16(model.Data.Port.ValueInt64()),
-                        Target:   dns.Fqdn(model.Data.Target.ValueString()),
+                isFullyKnown = !isAnyFieldUnknown(model.Data.Priority, model.Data.Weight, model.Data.Port, model.Data.Target)
+                if isFullyKnown </span><span class="cov0" title="0">{
+                        record = &amp;dns.SRV{
+                                Priority: uint16(model.Data.Priority.ValueInt64()),
+                                Weight:   uint16(model.Data.Weight.ValueInt64()),
+                                Port:     uint16(model.Data.Port.ValueInt64()),
+                                Target:   dns.Fqdn(model.Data.Target.ValueString()),
+                        }
                 }</span>
+
         case domain.RecordSSHFP:<span class="cov0" title="0">
-                record = &amp;dns.SSHFP{
-                        Algorithm:   uint8(model.Data.FingerprintAlgorithm.ValueInt64()),
-                        Type:        uint8(model.Data.FingerprintType.ValueInt64()),
-                        FingerPrint: model.Data.Fingerprint.ValueString(),
+                isFullyKnown = !isAnyFieldUnknown(model.Data.FingerprintAlgorithm, model.Data.FingerprintType, model.Data.Fingerprint)
+                if isFullyKnown </span><span class="cov0" title="0">{
+                        record = &amp;dns.SSHFP{
+                                Algorithm:   uint8(model.Data.FingerprintAlgorithm.ValueInt64()),
+                                Type:        uint8(model.Data.FingerprintType.ValueInt64()),
+                                FingerPrint: model.Data.Fingerprint.ValueString(),
+                        }
                 }</span>
+
         case domain.RecordTLSA:<span class="cov0" title="0">
-                record = &amp;dns.TLSA{
-                        Usage:        uint8(model.Data.Priority.ValueInt64()),
-                        Selector:     uint8(model.Data.Selector.ValueInt64()),
-                        MatchingType: uint8(model.Data.MatchingType.ValueInt64()),
-                        Certificate:  model.Data.CertAssocData.ValueString(),
+                isFullyKnown = !isAnyFieldUnknown(model.Data.Priority, model.Data.Selector, model.Data.MatchingType, model.Data.CertAssocData)
+                if isFullyKnown </span><span class="cov0" title="0">{
+                        record = &amp;dns.TLSA{
+                                Usage:        uint8(model.Data.Priority.ValueInt64()),
+                                Selector:     uint8(model.Data.Selector.ValueInt64()),
+                                MatchingType: uint8(model.Data.MatchingType.ValueInt64()),
+                                Certificate:  model.Data.CertAssocData.ValueString(),
+                        }
                 }</span>
+
         case domain.RecordTXT:<span class="cov0" title="0">
-                record = &amp;dns.TXT{
-                        Txt: []string{model.Data.Value.ValueString()},
+                isFullyKnown = !model.Data.Value.IsUnknown()
+                if isFullyKnown </span><span class="cov0" title="0">{
+                        record = &amp;dns.TXT{
+                                Txt: []string{model.Data.Value.ValueString()},
+                        }
                 }</span>
         }
 
-        <span class="cov0" title="0">return strings.TrimPrefix(record.String(), record.Header().String())</span>
+        // If any referenced value is still unknown, return unknown
+        <span class="cov0" title="0">if !isFullyKnown || record == nil </span><span class="cov0" title="0">{
+                return "", false
+        }</span>
+
+        <span class="cov0" title="0">raw := strings.TrimPrefix(record.String(), record.Header().String())
+        return raw, true</span>
 }
 
 func (model *RecordModel) ParseRawTarget(raw string) error <span class="cov0" title="0">{
@@ -4126,11 +4190,14 @@ func (r *recordResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
                 return
         }</span>
 
-        <span class="cov0" title="0">computedTarget := plan.ComputeRawTarget()
-        plan.ComputedTarget = types.StringValue(computedTarget)
+        <span class="cov0" title="0">computedTarget, isKnown := plan.ComputeRawTarget()
+        plan.ComputedTarget = types.StringUnknown()
+        if isKnown </span><span class="cov0" title="0">{
+                plan.ComputedTarget = types.StringValue(computedTarget)
+        }</span>
 
         // Set the modified plan back
-        resp.Diagnostics.Append(resp.Plan.Set(ctx, &amp;plan)...)</span>
+        <span class="cov0" title="0">resp.Diagnostics.Append(resp.Plan.Set(ctx, &amp;plan)...)</span>
 }
 
 func (r *recordResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) <span class="cov0" title="0">{
@@ -4143,7 +4210,7 @@ func (r *recordResource) Create(ctx context.Context, req resource.CreateRequest,
                 return
         }</span>
 
-        <span class="cov0" title="0">rawTarget := data.ComputeRawTarget()
+        <span class="cov0" title="0">rawTarget, _ := data.ComputeRawTarget()
 
         record, err := r.client.Domain.CreateRecord(
                 data.ZoneFqdn.ValueString(),
@@ -4213,7 +4280,7 @@ func (r *recordResource) Update(ctx context.Context, req resource.UpdateRequest,
                 return
         }</span>
 
-        <span class="cov0" title="0">rawTarget := data.ComputeRawTarget()
+        <span class="cov0" title="0">rawTarget, _ := data.ComputeRawTarget()
 
         record, err := r.client.Domain.UpdateRecord(
                 data.ZoneFqdn.ValueString(),
