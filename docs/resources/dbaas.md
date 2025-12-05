@@ -41,7 +41,11 @@ resource "infomaniak_dbaas" "db-0" {
   ]
 
   configuration = {
-    "connect_timeout": "10",
+    connect_timeout = 300,
+    max_connections = 300,
+    sql_mode = [
+      "ERROR_FOR_DIVISION_BY_ZERO"
+    ]
   }
 }
 ```
@@ -68,6 +72,7 @@ resource "infomaniak_dbaas" "db-0" {
     ]
   }
 }
+```
 
 ## Schema
 
