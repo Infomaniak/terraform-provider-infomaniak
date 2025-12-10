@@ -136,6 +136,10 @@ func (dbaas *DBaaS) Key() string {
 	return fmt.Sprintf("%d-%d-%d", dbaas.Project.PublicCloudId, dbaas.Project.ProjectId, dbaas.Id)
 }
 
+func (dbaas *DBaasBackupSchedule) Key() string {
+	return fmt.Sprintf("%d", *dbaas.Id)
+}
+
 type DBaaSProject struct {
 	PublicCloudId int64 `json:"public_cloud_id,omitempty"`
 	ProjectId     int64 `json:"id,omitempty"`
