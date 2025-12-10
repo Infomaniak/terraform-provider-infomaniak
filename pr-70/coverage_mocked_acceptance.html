@@ -1670,7 +1670,7 @@ func init() <span class="cov10" title="336">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="330">{
+        if err == nil </span><span class="cov9" title="327">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1680,17 +1680,17 @@ func init() <span class="cov10" title="336">{
 
         // Try to get cache
         <span class="cov10" title="336">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="330">{
+        if err == nil </span><span class="cov9" title="327">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov3" title="6">{
+                if err != nil </span><span class="cov4" title="9">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="330">return</span>
+                <span class="cov9" title="327">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov3" title="6">_, err = os.Create(mockedApiStatePath)
+        <span class="cov4" title="9">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -6172,7 +6172,7 @@ func (d *kaasInstancePoolFlavorDataSource) Configure(_ context.Context, req data
 }
 
 // Schema defines the schema for the data source.
-func (d *kaasInstancePoolFlavorDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="184">{
+func (d *kaasInstancePoolFlavorDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="184">{
         resp.Schema = getKaasInstancePoolFlavorDataSourceSchema()
 }</span>
 
@@ -6317,7 +6317,7 @@ import (
 type NameOrResourcesValidator struct {
 }
 
-func (v NameOrResourcesValidator) Description(ctx context.Context) string <span class="cov10" title="35">{
+func (v NameOrResourcesValidator) Description(_ context.Context) string <span class="cov10" title="35">{
         return "either 'name' or at least one of 'cpu', 'ram', 'storage' must be specified"
 }</span>
 
@@ -6867,7 +6867,7 @@ func (d *kaasPackDataSource) Configure(_ context.Context, req datasource.Configu
 }
 
 // Schema defines the schema for the data source.
-func (d *kaasPackDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="167">{
+func (d *kaasPackDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="167">{
         resp.Schema = getKaasPackDataSourceSchema()
 }</span>
 
@@ -7041,7 +7041,7 @@ func (d *kaasRegionsDataSource) Configure(_ context.Context, req datasource.Conf
 }
 
 // Schema defines the schema for the data source.
-func (d *kaasRegionsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="167">{
+func (d *kaasRegionsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="167">{
         resp.Schema = getKaasRegionDataSourceSchema()
 }</span>
 
@@ -7877,7 +7877,7 @@ func (d *kaasVersionsDataSource) Configure(_ context.Context, req datasource.Con
 }
 
 // Schema defines the schema for the data source.
-func (d *kaasVersionsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="167">{
+func (d *kaasVersionsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="167">{
         resp.Schema = getKaasVersionsDataSourceSchema()
 }</span>
 
