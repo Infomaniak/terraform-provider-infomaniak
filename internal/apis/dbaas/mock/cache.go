@@ -106,7 +106,7 @@ func init() {
 	// Check cache age
 	stat, err := os.Stat(mockedApiStatePath)
 	if err == nil {
-		// DeleteKaas cache if old
+		// Delete DBaaS cache if old
 		if time.Since(stat.ModTime()) > 24*time.Hour {
 			os.Remove(mockedApiStatePath)
 			return
@@ -124,7 +124,7 @@ func init() {
 		return
 	}
 
-	// Create Kaas tmp file for caching
+	// Create DBaaS tmp file for caching
 	_, err = os.Create(mockedApiStatePath)
 	if err != nil {
 		panic(err)
