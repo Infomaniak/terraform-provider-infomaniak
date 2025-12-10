@@ -13,7 +13,7 @@ provider "infomaniak" {
   token = "fake-token"
 }
 
-data "infomaniak_kaas_instance_pool_flavor" "create_instance_pool_flavor" {
+data "infomaniak_kaas_instance_pool_flavor" "my_flavor" {
   public_cloud_id         = 42
   public_cloud_project_id = 54
   region                  = "dc4-a"

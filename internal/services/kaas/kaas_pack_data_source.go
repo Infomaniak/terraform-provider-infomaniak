@@ -36,7 +36,7 @@ type KaasPackRatesModel struct {
 	EUR types.Float64 `tfsdk:"eur"`
 }
 
-// NewDBaasDataSource is a helper function to simplify the provider implementation.
+// NewKaasPackDataSource is a helper function to simplify the provider implementation.
 func NewKaasPackDataSource() datasource.DataSource {
 	return &kaasPackDataSource{}
 }

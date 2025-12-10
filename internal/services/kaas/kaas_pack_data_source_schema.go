@@ -39,6 +39,6 @@ func getKaasPackDataSourceSchema() schema.Schema {
 				MarkdownDescription: "Is the pack currently active for use in Kubernetes service creations.",
 			},
 		},
-		MarkdownDescription: "The kaas instance pool flavor data source allows the user to manage a kaas instance pool flavor.",
+		MarkdownDescription: "The kaas pack data source allows the user to retrieve information about a kaas pack.",
 	}
 }

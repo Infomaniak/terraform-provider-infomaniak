@@ -23,7 +23,7 @@ type KaasRegionModel struct {
 	Items types.List `tfsdk:"items"`
 }
 
-// NewDBaasDataSource is a helper function to simplify the provider implementation.
+// NewKaasRegionsDataSource is a helper function to simplify the provider implementation.
 func NewKaasRegionsDataSource() datasource.DataSource {
 	return &kaasRegionsDataSource{}
 }

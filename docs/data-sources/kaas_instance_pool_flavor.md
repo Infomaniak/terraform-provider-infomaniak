@@ -2,12 +2,12 @@
 page_title: "infomaniak_kaas_instance_pool_flavor"
 subcategory: "KaaS"
 description: |-
-  The KaaS Instance Pool Flavor Data Source allows users to read informations about a instance pool flavor.
+  The KaaS Instance Pool Flavor Data Source allows users to read information about a instance pool flavor.
 ---
 
 # infomaniak_kaas_instance_pool_flavor
 
-The KaaS Instance Pool Flavor Data Source allows users to read informations about a instance pool flavor.
+The KaaS Instance Pool Flavor Data Source allows users to read information about a instance pool flavor.
 
 ## Example Usage
 ### Using the Name Argument

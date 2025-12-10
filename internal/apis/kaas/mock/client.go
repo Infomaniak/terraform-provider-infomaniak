@@ -64,7 +64,7 @@ func (client *Client) GetFlavor(publicCloudId int64, publicCloudProjectId int64,
 	}
 
 	if params.Cpu != nil {
-		flavor.Cpu = *params.Ram
+		flavor.Cpu = *params.Cpu
 	}
 
 	if params.Ram != nil {

@@ -40,7 +40,7 @@ type PricingModel struct {
 	HourInclTax types.Float64 `tfsdk:"hour_incl_tax"`
 }
 
-// NewDBaasDataSource is a helper function to simplify the provider implementation.
+// NewKaasInstancePoolFlavorDataSource is a helper function to simplify the provider implementation.
 func NewKaasInstancePoolFlavorDataSource() datasource.DataSource {
 	return &kaasInstancePoolFlavorDataSource{}
 }
@@ -107,6 +107,10 @@ func (d *kaasInstancePoolFlavorDataSource) Read(ctx context.Context, req datasou
 	data.IsMemoryOptimized = types.BoolValue(obj.IsMemoryOptimized)
 	data.IsIopsOptimized = types.BoolValue(obj.IsIopsOptimized)
 	data.IsGpuOptimized = types.BoolValue(obj.IsGpuOptimized)
+	data.Rates = &PricingModel{
+		HourExclTax: types.Float64Value(obj.Rates.HourlyExcludingTaxes),
+		HourInclTax: types.Float64Value(obj.Rates.HourlyIncludingTaxes),
+	}
 
 	// Set state
 	diags := resp.State.Set(ctx, &data)

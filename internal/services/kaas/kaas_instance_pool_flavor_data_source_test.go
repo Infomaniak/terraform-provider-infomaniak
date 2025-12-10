@@ -17,7 +17,7 @@ func TestKaasInstancePoolFlavorDatasourceSchema(t *testing.T) {
 				{
 					Config: test.MustGetTestFile("schema", "data_source_kaas_instance_pool_flavor_good.tf"),
 					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttrSet("data.infomaniak_kaas_instance_pool_flavor.create_instance_pool_flavor", "name"),
+						resource.TestCheckResourceAttrSet("data.infomaniak_kaas_instance_pool_flavor.my_flavor", "name"),
 					),
 				},
 			},
@@ -27,7 +27,7 @@ func TestKaasInstancePoolFlavorDatasourceSchema(t *testing.T) {
 			Steps: []resource.TestStep{
 				{
 					Config: test.MustGetTestFile("schema", "data_source_kaas_instance_pool_flavor_only_name.tf"),
-					Check:  resource.ComposeTestCheckFunc(resource.TestCheckResourceAttrSet("data.infomaniak_kaas_instance_pool_flavor.create_instance_pool_flavor", "cpu")),
+					Check:  resource.ComposeTestCheckFunc(resource.TestCheckResourceAttrSet("data.infomaniak_kaas_instance_pool_flavor.my_flavor", "cpu")),
 				},
 			},
 		},
