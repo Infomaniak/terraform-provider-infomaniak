@@ -26,7 +26,7 @@ func (c *Client) getPacks() map[string][]*dbaas.Pack {
 				Group:     "essential-db",
 				Instances: 1,
 				CPU:       1,
-				RAM:       1,
+				RAM:       4,
 				Storage:   80,
 			},
 			{
@@ -210,7 +210,7 @@ func (c *Client) GetDbaasPack(params dbaas.PackFilter) (*dbaas.Pack, error) {
 		return nil, fmt.Errorf("The selected filter.type is invalid.")
 	}
 
-	pack, ok := lo.Find(packs, func(pack *dbaas.Pack) bool {
+	filteredPacks := lo.Filter(packs, func(pack *dbaas.Pack, _ int) bool {
 		found := true
 
 		if params.Group != nil && pack.Group != *params.Group {
@@ -240,11 +240,15 @@ func (c *Client) GetDbaasPack(params dbaas.PackFilter) (*dbaas.Pack, error) {
 		return found
 	})
 
-	if !ok {
+	if len(filteredPacks) == 0 {
 		return nil, fmt.Errorf("pack not found")
 	}
 
-	return pack, nil
+	if len(filteredPacks) > 1 {
+		return nil, fmt.Errorf("multiple packs found, please refine your search")
+	}
+
+	return filteredPacks[0], nil
 }
 
 // GetDbaasRegions implements dbaas.Api.
