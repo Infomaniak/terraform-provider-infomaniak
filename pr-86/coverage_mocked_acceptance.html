@@ -779,7 +779,7 @@ func init() <span class="cov10" title="343">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="339">{
+        if err == nil </span><span class="cov9" title="340">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -789,17 +789,17 @@ func init() <span class="cov10" title="343">{
 
         // Try to get cache
         <span class="cov10" title="343">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="339">{
+        if err == nil </span><span class="cov9" title="340">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
                 if err != nil </span><span class="cov2" title="3">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="339">return</span>
+                <span class="cov9" title="340">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov3" title="4">_, err = os.Create(mockedApiStatePath)
+        <span class="cov2" title="3">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -1922,7 +1922,7 @@ func init() <span class="cov10" title="343">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="336">{
+        if err == nil </span><span class="cov9" title="337">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1932,17 +1932,17 @@ func init() <span class="cov10" title="343">{
 
         // Try to get cache
         <span class="cov10" title="343">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="336">{
+        if err == nil </span><span class="cov9" title="337">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov4" title="7">{
+                if err != nil </span><span class="cov3" title="6">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="336">return</span>
+                <span class="cov9" title="337">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov4" title="7">_, err = os.Create(mockedApiStatePath)
+        <span class="cov3" title="6">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
