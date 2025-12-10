@@ -1670,7 +1670,7 @@ func init() <span class="cov10" title="336">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="331">{
+        if err == nil </span><span class="cov9" title="330">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1680,17 +1680,17 @@ func init() <span class="cov10" title="336">{
 
         // Try to get cache
         <span class="cov10" title="336">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="331">{
+        if err == nil </span><span class="cov9" title="330">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov3" title="5">{
+                if err != nil </span><span class="cov3" title="6">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="331">return</span>
+                <span class="cov9" title="330">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov3" title="5">_, err = os.Create(mockedApiStatePath)
+        <span class="cov3" title="6">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -7851,7 +7851,7 @@ type KaasVersionsModel struct {
         Items types.List `tfsdk:"items"`
 }
 
-// NewDBaasDataSource is a helper function to simplify the provider implementation.
+// NewKaasVersionsDataSource is a helper function to simplify the provider implementation.
 func NewKaasVersionsDataSource() datasource.DataSource <span class="cov10" title="362">{
         return &amp;kaasVersionsDataSource{}
 }</span>
