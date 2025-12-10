@@ -49,7 +49,7 @@ func (d *kaasRegionsDataSource) Configure(_ context.Context, req datasource.Conf
 }
 
 // Schema defines the schema for the data source.
-func (d *kaasRegionsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *kaasRegionsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = getKaasRegionDataSourceSchema()
 }
 

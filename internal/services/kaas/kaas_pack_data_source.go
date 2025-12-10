@@ -62,7 +62,7 @@ func (d *kaasPackDataSource) Configure(_ context.Context, req datasource.Configu
 }
 
 // Schema defines the schema for the data source.
-func (d *kaasPackDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *kaasPackDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = getKaasPackDataSourceSchema()
 }
 

@@ -9,7 +9,7 @@ import (
 type NameOrResourcesValidator struct {
 }
 
-func (v NameOrResourcesValidator) Description(ctx context.Context) string {
+func (v NameOrResourcesValidator) Description(_ context.Context) string {
 	return "either 'name' or at least one of 'cpu', 'ram', 'storage' must be specified"
 }
 

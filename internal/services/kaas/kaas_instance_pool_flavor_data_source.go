@@ -66,7 +66,7 @@ func (d *kaasInstancePoolFlavorDataSource) Configure(_ context.Context, req data
 }
 
 // Schema defines the schema for the data source.
-func (d *kaasInstancePoolFlavorDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *kaasInstancePoolFlavorDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = getKaasInstancePoolFlavorDataSourceSchema()
 }
 
