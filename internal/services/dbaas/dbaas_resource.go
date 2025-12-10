@@ -206,7 +206,8 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		data.Configuration = types.DynamicNull()
 	}
 
-	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
+	newEffectiveConfig, diags := refreshEffectiveConfiguration(
+		r.client.DBaas,
 		data.PublicCloudId.ValueInt64(),
 		data.PublicCloudProjectId.ValueInt64(),
 		data.Id.ValueInt64(),
@@ -268,7 +269,8 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
+	newEffectiveConfig, diags := refreshEffectiveConfiguration(
+		r.client.DBaas,
 		state.PublicCloudId.ValueInt64(),
 		state.PublicCloudProjectId.ValueInt64(),
 		state.Id.ValueInt64(),
@@ -414,7 +416,8 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		state.Configuration = types.DynamicNull()
 	}
 
-	newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
+	newEffectiveConfig, diags := refreshEffectiveConfiguration(
+		r.client.DBaas,
 		state.PublicCloudId.ValueInt64(),
 		state.PublicCloudProjectId.ValueInt64(),
 		state.Id.ValueInt64(),
@@ -523,9 +526,9 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
 	}
 }
 
-func (r *dbaasResource) refreshEffectiveConfiguration(publicCloudId, publicCloudProjectId, id int64) (types.Dynamic, diag.Diagnostics) {
+func refreshEffectiveConfiguration(apiClient dbaas.Api, publicCloudId, publicCloudProjectId, id int64) (types.Dynamic, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	effectiveSettings, err := r.client.DBaas.GetConfiguration(
+	effectiveSettings, err := apiClient.GetConfiguration(
 		publicCloudId,
 		publicCloudProjectId,
 		id,

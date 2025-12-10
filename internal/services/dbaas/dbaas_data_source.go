@@ -2,13 +2,9 @@ package dbaas
 
 import (
 	"context"
-	"encoding/json"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
-	"terraform-provider-infomaniak/internal/dynamic"
 	"terraform-provider-infomaniak/internal/provider"
-
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -111,7 +107,8 @@ func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	newEffectiveConfig, diags := d.refreshEffectiveConfiguration(
+	newEffectiveConfig, diags := refreshEffectiveConfiguration(
+		d.client.DBaas,
 		data.PublicCloudId.ValueInt64(),
 		data.PublicCloudProjectId.ValueInt64(),
 		data.Id.ValueInt64(),
@@ -152,31 +149,4 @@ func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 // Metadata returns the data source type name.
 func (d *dbaasDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_dbaas"
-}
-
-func (r *dbaasDataSource) refreshEffectiveConfiguration(publicCloudId, publicCloudProjectId, id int64) (types.Dynamic, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	effectiveSettings, err := r.client.DBaas.GetConfiguration(
-		publicCloudId,
-		publicCloudProjectId,
-		id,
-	)
-	if err != nil {
-		diags.AddError(
-			"Error when reading DBaaS settings",
-			err.Error(),
-		)
-		return types.DynamicNull(), diags
-	}
-
-	jsonEffectiveSettigs, err := json.Marshal(effectiveSettings)
-	if err != nil {
-		diags.AddError("could not marshall", "effective settings json marshall fail")
-	}
-	dynamicObj, err := dynamic.FromJSONImplied(jsonEffectiveSettigs)
-	if err != nil {
-		diags.AddError("could not create dynamic object", "effective settings dynamic object from json creation failure")
-	}
-
-	return dynamicObj, diags
 }
