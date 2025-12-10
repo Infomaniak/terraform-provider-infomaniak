@@ -2,7 +2,7 @@ package dbaas
 
 import (
 	"os"
-	mockKaas "terraform-provider-infomaniak/internal/apis/kaas/mock"
+	mockDBaas "terraform-provider-infomaniak/internal/apis/dbaas/mock"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -10,7 +10,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	mockKaas.ResetCache()
+	mockDBaas.ResetCache()
 	Register()
 
 	os.Exit(m.Run())
@@ -19,5 +19,5 @@ func TestMain(m *testing.M) {
 func TestControllers(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecs(t, "KaaS Service Suite")
+	RunSpecs(t, "DBaaS Service Suite")
 }

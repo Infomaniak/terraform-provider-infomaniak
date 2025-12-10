@@ -5,7 +5,7 @@ REPORT_DIR=$1
 export TF_TESTS_MOCKED="true"
 
 echo "=== Running acceptance mocked tests with coverage ==="
-GOCOVERDIR="$REPORT_DIR/covcounters" go test ./...
+TF_ACC=1 GOCOVERDIR="$REPORT_DIR/covcounters" go test ./...
 go tool covdata merge -i="$REPORT_DIR/covcounters" -o="$REPORT_DIR/covcounters/merged"
 go tool covdata textfmt -i="$REPORT_DIR/covcounters" -o="$REPORT_DIR/acceptance/coverage.out"
 echo "Exported covcounters at $REPORT_DIR/covcounters"
