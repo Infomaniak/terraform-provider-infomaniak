@@ -23,7 +23,7 @@ type KaasVersionsModel struct {
 	Items types.List `tfsdk:"items"`
 }
 
-// NewDBaasDataSource is a helper function to simplify the provider implementation.
+// NewKaasVersionsDataSource is a helper function to simplify the provider implementation.
 func NewKaasVersionsDataSource() datasource.DataSource {
 	return &kaasVersionsDataSource{}
 }
