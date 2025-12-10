@@ -103,7 +103,7 @@
 				
 				<option value="file23">terraform-provider-infomaniak/internal/services/dbaas/dbaas_constants_data_source_schema.go (100.0%)</option>
 				
-				<option value="file24">terraform-provider-infomaniak/internal/services/dbaas/dbaas_data_source.go (78.9%)</option>
+				<option value="file24">terraform-provider-infomaniak/internal/services/dbaas/dbaas_data_source.go (82.2%)</option>
 				
 				<option value="file25">terraform-provider-infomaniak/internal/services/dbaas/dbaas_data_source_schema.go (100.0%)</option>
 				
@@ -1922,7 +1922,7 @@ func init() <span class="cov10" title="343">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="337">{
+        if err == nil </span><span class="cov9" title="334">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1932,17 +1932,17 @@ func init() <span class="cov10" title="343">{
 
         // Try to get cache
         <span class="cov10" title="343">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="337">{
+        if err == nil </span><span class="cov9" title="334">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov3" title="6">{
+                if err != nil </span><span class="cov4" title="9">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="337">return</span>
+                <span class="cov9" title="334">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov3" title="6">_, err = os.Create(mockedApiStatePath)
+        <span class="cov4" title="9">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -3600,13 +3600,9 @@ func getDbaasConstantsDataSourceSchema() schema.Schema <span class="cov10" title
 
 import (
         "context"
-        "encoding/json"
         "terraform-provider-infomaniak/internal/apis"
         "terraform-provider-infomaniak/internal/apis/dbaas"
-        "terraform-provider-infomaniak/internal/dynamic"
         "terraform-provider-infomaniak/internal/provider"
-
-        "github.com/hashicorp/terraform-plugin-framework/diag"
 
         "github.com/hashicorp/terraform-plugin-framework/datasource"
         "github.com/hashicorp/terraform-plugin-framework/types"
@@ -3709,7 +3705,8 @@ func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
                 return
         }</span>
 
-        <span class="cov2" title="3">newEffectiveConfig, diags := d.refreshEffectiveConfiguration(
+        <span class="cov2" title="3">newEffectiveConfig, diags := refreshEffectiveConfiguration(
+                d.client.DBaas,
                 data.PublicCloudId.ValueInt64(),
                 data.PublicCloudProjectId.ValueInt64(),
                 data.Id.ValueInt64(),
@@ -3751,33 +3748,6 @@ func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 func (d *dbaasDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) <span class="cov8" title="198">{
         resp.TypeName = req.ProviderTypeName + "_dbaas"
 }</span>
-
-func (r *dbaasDataSource) refreshEffectiveConfiguration(publicCloudId, publicCloudProjectId, id int64) (types.Dynamic, diag.Diagnostics) <span class="cov2" title="3">{
-        var diags diag.Diagnostics
-        effectiveSettings, err := r.client.DBaas.GetConfiguration(
-                publicCloudId,
-                publicCloudProjectId,
-                id,
-        )
-        if err != nil </span><span class="cov0" title="0">{
-                diags.AddError(
-                        "Error when reading DBaaS settings",
-                        err.Error(),
-                )
-                return types.DynamicNull(), diags
-        }</span>
-
-        <span class="cov2" title="3">jsonEffectiveSettigs, err := json.Marshal(effectiveSettings)
-        if err != nil </span><span class="cov0" title="0">{
-                diags.AddError("could not marshall", "effective settings json marshall fail")
-        }</span>
-        <span class="cov2" title="3">dynamicObj, err := dynamic.FromJSONImplied(jsonEffectiveSettigs)
-        if err != nil </span><span class="cov0" title="0">{
-                diags.AddError("could not create dynamic object", "effective settings dynamic object from json creation failure")
-        }</span>
-
-        <span class="cov2" title="3">return dynamicObj, diags</span>
-}
 </pre>
 		
 		<pre class="file" id="file25" style="display: none">package dbaas
@@ -4448,7 +4418,8 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
                 data.Configuration = types.DynamicNull()
         }</span>
 
-        <span class="cov1" title="1">newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
+        <span class="cov1" title="1">newEffectiveConfig, diags := refreshEffectiveConfiguration(
+                r.client.DBaas,
                 data.PublicCloudId.ValueInt64(),
                 data.PublicCloudProjectId.ValueInt64(),
                 data.Id.ValueInt64(),
@@ -4510,7 +4481,8 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
                 return
         }</span>
 
-        <span class="cov1" title="1">newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
+        <span class="cov1" title="1">newEffectiveConfig, diags := refreshEffectiveConfiguration(
+                r.client.DBaas,
                 state.PublicCloudId.ValueInt64(),
                 state.PublicCloudProjectId.ValueInt64(),
                 state.Id.ValueInt64(),
@@ -4656,7 +4628,8 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
                 state.Configuration = types.DynamicNull()
         }</span>
 
-        <span class="cov0" title="0">newEffectiveConfig, diags := r.refreshEffectiveConfiguration(
+        <span class="cov0" title="0">newEffectiveConfig, diags := refreshEffectiveConfiguration(
+                r.client.DBaas,
                 state.PublicCloudId.ValueInt64(),
                 state.PublicCloudProjectId.ValueInt64(),
                 state.Id.ValueInt64(),
@@ -4765,9 +4738,9 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) <span class="cov1" title="2">{
         }
 }
 
-func (r *dbaasResource) refreshEffectiveConfiguration(publicCloudId, publicCloudProjectId, id int64) (types.Dynamic, diag.Diagnostics) <span class="cov1" title="2">{
+func refreshEffectiveConfiguration(apiClient dbaas.Api, publicCloudId, publicCloudProjectId, id int64) (types.Dynamic, diag.Diagnostics) <span class="cov3" title="5">{
         var diags diag.Diagnostics
-        effectiveSettings, err := r.client.DBaas.GetConfiguration(
+        effectiveSettings, err := apiClient.GetConfiguration(
                 publicCloudId,
                 publicCloudProjectId,
                 id,
@@ -4780,16 +4753,16 @@ func (r *dbaasResource) refreshEffectiveConfiguration(publicCloudId, publicCloud
                 return types.DynamicNull(), diags
         }</span>
 
-        <span class="cov1" title="2">jsonEffectiveSettigs, err := json.Marshal(effectiveSettings)
+        <span class="cov3" title="5">jsonEffectiveSettigs, err := json.Marshal(effectiveSettings)
         if err != nil </span><span class="cov0" title="0">{
                 diags.AddError("could not marshall", "effective settings json marshall fail")
         }</span>
-        <span class="cov1" title="2">dynamicObj, err := dynamic.FromJSONImplied(jsonEffectiveSettigs)
+        <span class="cov3" title="5">dynamicObj, err := dynamic.FromJSONImplied(jsonEffectiveSettigs)
         if err != nil </span><span class="cov0" title="0">{
                 diags.AddError("could not create dynamic object", "effective settings dynamic object from json creation failure")
         }</span>
 
-        <span class="cov1" title="2">return dynamicObj, diags</span>
+        <span class="cov3" title="5">return dynamicObj, diags</span>
 }
 
 // hasObjectChanged convert the state configuration and newly generated configuration
