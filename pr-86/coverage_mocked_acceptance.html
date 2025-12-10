@@ -133,7 +133,7 @@
 				
 				<option value="file38">terraform-provider-infomaniak/internal/services/domain/zone_resource_schema.go (100.0%)</option>
 				
-				<option value="file39">terraform-provider-infomaniak/internal/services/kaas/kaas_data_source.go (69.7%)</option>
+				<option value="file39">terraform-provider-infomaniak/internal/services/kaas/kaas_data_source.go (9.1%)</option>
 				
 				<option value="file40">terraform-provider-infomaniak/internal/services/kaas/kaas_data_source_schema.go (100.0%)</option>
 				
@@ -197,7 +197,7 @@ var (
         // https://goreleaser.com/cookbooks/using-main.version/
 )
 
-func main() <span class="cov10" title="343">{
+func main() <span class="cov10" title="319">{
         var debug bool
 
         flag.BoolVar(&amp;debug, "debug", false, "set to true to run the kaas with support for debuggers like delve")
@@ -244,7 +244,7 @@ type Client struct {
 
 // NewMockClient defines the mock client for Infomaniak's API,
 // It is used for testing or dryrunning
-func NewMockClient() *Client <span class="cov10" title="299">{
+func NewMockClient() *Client <span class="cov10" title="281">{
         return &amp;Client{
                 Kaas:  mock_kaas.New(),
                 DBaas: mock_dbaas.New(),
@@ -773,13 +773,13 @@ func removeFromCache[K DBaasObject](obj K) error <span class="cov0" title="0">{
         return nil</span>
 }
 
-func init() <span class="cov10" title="343">{
+func init() <span class="cov10" title="319">{
         // Gob register
         gob.Register(&amp;dbaas.DBaaS{})
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="340">{
+        if err == nil </span><span class="cov9" title="310">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -788,18 +788,18 @@ func init() <span class="cov10" title="343">{
         }
 
         // Try to get cache
-        <span class="cov10" title="343">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="340">{
+        <span class="cov10" title="319">bdy, err := os.ReadFile(mockedApiStatePath)
+        if err == nil </span><span class="cov9" title="310">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov2" title="3">{
+                if err != nil </span><span class="cov4" title="8">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="340">return</span>
+                <span class="cov9" title="310">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov2" title="3">_, err = os.Create(mockedApiStatePath)
+        <span class="cov4" title="9">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -1014,7 +1014,7 @@ func (c *Client) UpdateDBaasScheduleBackup(publicCloudId int64, publicCloudProje
         return true, nil
 }</span>
 
-func New() *Client <span class="cov10" title="299">{
+func New() *Client <span class="cov10" title="281">{
         return &amp;Client{}
 }</span>
 </pre>
@@ -1840,40 +1840,40 @@ var (
         ErrDuplicateKey = errors.New("duplicate key found")
 )
 
-func getFromCache[K KaasObject](key string) (K, error) <span class="cov7" title="91">{
+func getFromCache[K KaasObject](key string) (K, error) <span class="cov7" title="86">{
         obj, found := mockedApiState[key]
         if !found </span><span class="cov1" title="1">{
                 return nil, ErrKeyNotFound
         }</span>
 
-        <span class="cov7" title="90">var buff = bytes.NewBuffer(obj)
+        <span class="cov7" title="85">var buff = bytes.NewBuffer(obj)
         var result K
         err := gob.NewDecoder(buff).Decode(&amp;result)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
 
-        <span class="cov7" title="90">if result == nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="85">if result == nil </span><span class="cov0" title="0">{
                 return nil, ErrKeyNotFound
         }</span>
 
-        <span class="cov7" title="90">return result, nil</span>
+        <span class="cov7" title="85">return result, nil</span>
 }
 
-func addToCache[K KaasObject](obj K) error <span class="cov5" title="19">{
+func addToCache[K KaasObject](obj K) error <span class="cov5" title="18">{
         key := obj.Key()
         _, found := mockedApiState[key]
         if found </span><span class="cov0" title="0">{
                 return ErrDuplicateKey
         }</span>
 
-        <span class="cov5" title="19">var buff bytes.Buffer
+        <span class="cov5" title="18">var buff bytes.Buffer
         err := gob.NewEncoder(&amp;buff).Encode(obj)
         if err != nil </span><span class="cov0" title="0">{
                 return err
         }</span>
 
-        <span class="cov5" title="19">mockedApiState[key] = buff.Bytes()
+        <span class="cov5" title="18">mockedApiState[key] = buff.Bytes()
         saveCache()
         return nil</span>
 }
@@ -1903,26 +1903,26 @@ func updateCache[K KaasObject](obj K) error <span class="cov0" title="0">{
         return nil</span>
 }
 
-func removeFromCache[K KaasObject](obj K) error <span class="cov5" title="19">{
+func removeFromCache[K KaasObject](obj K) error <span class="cov5" title="18">{
         key := obj.Key()
         _, found := mockedApiState[key]
         if !found </span><span class="cov0" title="0">{
                 return ErrKeyNotFound
         }</span>
 
-        <span class="cov5" title="19">delete(mockedApiState, key)
+        <span class="cov5" title="18">delete(mockedApiState, key)
         saveCache()
         return nil</span>
 }
 
-func init() <span class="cov10" title="343">{
+func init() <span class="cov10" title="319">{
         // Gob register
         gob.Register(&amp;kaas.Kaas{})
         gob.Register(&amp;kaas.InstancePool{})
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="334">{
+        if err == nil </span><span class="cov9" title="309">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1931,30 +1931,30 @@ func init() <span class="cov10" title="343">{
         }
 
         // Try to get cache
-        <span class="cov10" title="343">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="334">{
+        <span class="cov10" title="319">bdy, err := os.ReadFile(mockedApiStatePath)
+        if err == nil </span><span class="cov9" title="309">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov4" title="9">{
+                if err != nil </span><span class="cov4" title="10">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="334">return</span>
+                <span class="cov9" title="309">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov4" title="9">_, err = os.Create(mockedApiStatePath)
+        <span class="cov4" title="10">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
 }
 
-func saveCache() <span class="cov6" title="38">{
+func saveCache() <span class="cov6" title="36">{
         data, err := json.Marshal(mockedApiState)
         if err != nil </span><span class="cov0" title="0">{
                 return
         }</span>
         //nolint:errcheck
-        <span class="cov6" title="38">os.WriteFile(mockedApiStatePath, data, 0666)</span>
+        <span class="cov6" title="36">os.WriteFile(mockedApiStatePath, data, 0666)</span>
 }
 
 func ResetCache() <span class="cov0" title="0">{
@@ -1980,11 +1980,11 @@ var (
 
 type Client struct{}
 
-func New() *Client <span class="cov10" title="299">{
+func New() *Client <span class="cov10" title="281">{
         return &amp;Client{}
 }</span>
 
-func (c *Client) GetPacks() ([]*kaas.KaasPack, error) <span class="cov6" title="26">{
+func (c *Client) GetPacks() ([]*kaas.KaasPack, error) <span class="cov6" title="24">{
         return []*kaas.KaasPack{
                 {
                         Id:          1,
@@ -1999,10 +1999,10 @@ func (c *Client) GetPacks() ([]*kaas.KaasPack, error) <span class="cov6" title="
         }, nil
 }</span>
 
-func (c *Client) MustGetPackFromId(id int64) *kaas.KaasPack <span class="cov5" title="13">{
+func (c *Client) MustGetPackFromId(id int64) *kaas.KaasPack <span class="cov4" title="12">{
         packs, _ := c.GetPacks()
-        for _, pack := range packs </span><span class="cov5" title="13">{
-                if pack.Id == id </span><span class="cov5" title="13">{
+        for _, pack := range packs </span><span class="cov4" title="12">{
+                if pack.Id == id </span><span class="cov4" title="12">{
                         return pack
                 }</span>
         }
@@ -2014,35 +2014,35 @@ func (c *Client) GetVersions() ([]string, error) <span class="cov0" title="0">{
         return []string{"1.29", "1.30", "1.31"}, nil
 }</span>
 
-func (c *Client) GetKaas(publicCloudId int64, publicCloudProjectId int64, kaasId int64) (*kaas.Kaas, error) <span class="cov7" title="71">{
+func (c *Client) GetKaas(publicCloudId int64, publicCloudProjectId int64, kaasId int64) (*kaas.Kaas, error) <span class="cov7" title="66">{
         key := fmt.Sprintf("%d-%d-%d", publicCloudId, publicCloudProjectId, kaasId)
         obj, err := getFromCache[*kaas.Kaas](key)
         if err != nil </span><span class="cov1" title="1">{
                 return nil, err
         }</span>
 
-        <span class="cov7" title="70">obj.Status = "Active"
+        <span class="cov7" title="65">obj.Status = "Active"
 
         return obj, nil</span>
 }
 
-func (client *Client) GetKubeconfig(publicCloudId int64, publicCloudProjectId int64, kaasId int64) (string, error) <span class="cov6" title="38">{
+func (client *Client) GetKubeconfig(publicCloudId int64, publicCloudProjectId int64, kaasId int64) (string, error) <span class="cov6" title="33">{
         return genKubeconfig(), nil
 }</span>
 
-func (c *Client) CreateKaas(input *kaas.Kaas) (int64, error) <span class="cov5" title="13">{
+func (c *Client) CreateKaas(input *kaas.Kaas) (int64, error) <span class="cov4" title="12">{
         // Checks
         if input.Project.PublicCloudId == 0 </span><span class="cov0" title="0">{
                 return 0, fmt.Errorf("kaas is missing public cloud project id")
         }</span>
-        <span class="cov5" title="13">if input.Region == "" </span><span class="cov0" title="0">{
+        <span class="cov4" title="12">if input.Region == "" </span><span class="cov0" title="0">{
                 return 0, fmt.Errorf("kaas is missing region")
         }</span>
-        <span class="cov5" title="13">if input.PackId == 0 </span><span class="cov0" title="0">{
+        <span class="cov4" title="12">if input.PackId == 0 </span><span class="cov0" title="0">{
                 return 0, fmt.Errorf("kaas is missing pack id")
         }</span>
 
-        <span class="cov5" title="13">var obj = kaas.Kaas{
+        <span class="cov4" title="12">var obj = kaas.Kaas{
                 Project:           input.Project,
                 Region:            input.Region,
                 KubernetesVersion: input.KubernetesVersion,
@@ -2084,7 +2084,7 @@ func (c *Client) UpdateKaas(input *kaas.Kaas) (bool, error) <span class="cov0" t
         return true, updateCache(&amp;obj)</span>
 }
 
-func (c *Client) DeleteKaas(publicCloudId int64, publicCloudProjectId int64, kaasId int64) (bool, error) <span class="cov5" title="13">{
+func (c *Client) DeleteKaas(publicCloudId int64, publicCloudProjectId int64, kaasId int64) (bool, error) <span class="cov4" title="12">{
         var obj = kaas.Kaas{
                 Project: kaas.KaasProject{
                         PublicCloudId: publicCloudId,
@@ -2240,7 +2240,7 @@ func (c *Client) DeleteInstancePool(publicCloudId int64, publicCloudProjectId in
         return true, removeFromCache(&amp;obj)</span>
 }
 
-func (c *Client) GetApiserverParams(publicCloudId int64, projectId int64, kaasId int64) (*kaas.Apiserver, error) <span class="cov6" title="25">{
+func (c *Client) GetApiserverParams(publicCloudId int64, projectId int64, kaasId int64) (*kaas.Apiserver, error) <span class="cov5" title="21">{
         return nil, nil
 }</span>
 func (c *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int64, projectId int64, kaasId int64) (bool, error) <span class="cov0" title="0">{
@@ -2257,25 +2257,25 @@ import (
         "math/rand/v2"
 )
 
-func genId() int64 <span class="cov8" title="19">{
+func genId() int64 <span class="cov8" title="18">{
         return rand.Int64()
 }</span>
 
-func genKubeconfig() string <span class="cov10" title="38">{
+func genKubeconfig() string <span class="cov10" title="33">{
         var b = make([]byte, 1024)
         _, err := cryptorand.Read(b)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
 
-        <span class="cov10" title="38">var out bytes.Buffer
+        <span class="cov10" title="33">var out bytes.Buffer
         enc := base64.NewEncoder(base64.StdEncoding, &amp;out)
         _, err = enc.Write(b)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
 
-        <span class="cov10" title="38">return out.String()</span>
+        <span class="cov10" title="33">return out.String()</span>
 }
 </pre>
 		
@@ -2348,7 +2348,7 @@ type Kaas struct {
         Status            string `json:"status,omitempty"`
 }
 
-func (kaas *Kaas) Key() string <span class="cov10" title="26">{
+func (kaas *Kaas) Key() string <span class="cov10" title="24">{
         return fmt.Sprintf("%d-%d-%d", kaas.Project.PublicCloudId, kaas.Project.ProjectId, kaas.Id)
 }</span>
 
@@ -2375,7 +2375,7 @@ type InstancePool struct {
         ErrorMessages []string `json:"error_messages,omitempty"`
 }
 
-func (instancePool *InstancePool) Key() string <span class="cov7" title="12">{
+func (instancePool *InstancePool) Key() string <span class="cov8" title="12">{
         return fmt.Sprintf("%d-%d", instancePool.KaasId, instancePool.Id)
 }</span>
 </pre>
@@ -2816,13 +2816,13 @@ type DynamicObjectValidator struct {
         Strict bool
 }
 
-func NewDynamicObjectValidator() *DynamicObjectValidator <span class="cov10" title="181">{
+func NewDynamicObjectValidator() *DynamicObjectValidator <span class="cov10" title="171">{
         return &amp;DynamicObjectValidator{}
 }</span>
 
 var _ validator.Dynamic = (*DynamicObjectValidator)(nil)
 
-func (dv *DynamicObjectValidator) Description(context.Context) string <span class="cov5" title="16">{
+func (dv *DynamicObjectValidator) Description(context.Context) string <span class="cov6" title="20">{
         return ""
 }</span>
 
@@ -2830,8 +2830,8 @@ func (dv *DynamicObjectValidator) MarkdownDescription(context.Context) string <s
         return ""
 }</span>
 
-func (dv *DynamicObjectValidator) ValidateDynamic(ctx context.Context, req validator.DynamicRequest, res *validator.DynamicResponse) <span class="cov4" title="8">{
-        if req.ConfigValue.IsNull() </span><span class="cov4" title="8">{
+func (dv *DynamicObjectValidator) ValidateDynamic(ctx context.Context, req validator.DynamicRequest, res *validator.DynamicResponse) <span class="cov5" title="10">{
+        if req.ConfigValue.IsNull() </span><span class="cov5" title="10">{
                 return
         }</span>
 
@@ -2909,12 +2909,12 @@ type IkProviderModel struct {
         Token types.String `tfsdk:"token"`
 }
 
-func (p *IkProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) <span class="cov9" title="338">{
+func (p *IkProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) <span class="cov9" title="314">{
         resp.TypeName = "infomaniak"
         resp.Version = p.version
 }</span>
 
-func (p *IkProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) <span class="cov10" title="343">{
+func (p *IkProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) <span class="cov10" title="319">{
         resp.Schema = schema.Schema{
                 Attributes: map[string]schema.Attribute{
                         "host": schema.StringAttribute{
@@ -2935,7 +2935,7 @@ func (p *IkProvider) Schema(ctx context.Context, req provider.SchemaRequest, res
         }
 }</span>
 
-func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) <span class="cov7" title="90">{
+func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) <span class="cov7" title="84">{
         tflog.Debug(ctx, "Provider configuration started")
 
         if p.ik != nil </span><span class="cov0" title="0">{
@@ -2945,7 +2945,7 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
                 return
         }</span>
 
-        <span class="cov7" title="90">var data IkProviderModel
+        <span class="cov7" title="84">var data IkProviderModel
 
         resp.Diagnostics.Append(req.Config.Get(ctx, &amp;data)...)
 
@@ -2953,7 +2953,7 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
                 return
         }</span>
 
-        <span class="cov7" title="90">if data.Host.IsUnknown() </span><span class="cov0" title="0">{
+        <span class="cov7" title="84">if data.Host.IsUnknown() </span><span class="cov0" title="0">{
                 resp.Diagnostics.AddAttributeError(
                         path.Root("host"),
                         "Unknown Infomaniak API Host",
@@ -2962,7 +2962,7 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
                 )
         }</span>
 
-        <span class="cov7" title="90">if data.Token.IsUnknown() </span><span class="cov0" title="0">{
+        <span class="cov7" title="84">if data.Token.IsUnknown() </span><span class="cov0" title="0">{
                 resp.Diagnostics.AddAttributeError(
                         path.Root("token"),
                         "Unknown Infomaniak API Token",
@@ -2971,26 +2971,26 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
                 )
         }</span>
 
-        <span class="cov7" title="90">if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
+        <span class="cov7" title="84">if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                 return
         }</span>
 
-        <span class="cov7" title="90">host := os.Getenv(INFOMANIAK_HOST)
+        <span class="cov7" title="84">host := os.Getenv(INFOMANIAK_HOST)
         token := os.Getenv(INFOMANIAK_TOKEN)
 
-        if host == "" </span><span class="cov7" title="90">{
+        if host == "" </span><span class="cov7" title="84">{
                 if !data.Host.IsNull() </span><span class="cov0" title="0">{
                         host = data.Host.ValueString()
-                }</span> else<span class="cov7" title="90"> {
+                }</span> else<span class="cov7" title="84"> {
                         host = DefaultHost
                 }</span>
         }
 
-        <span class="cov7" title="90">if token == "" &amp;&amp; !data.Token.IsNull() </span><span class="cov7" title="90">{
+        <span class="cov7" title="84">if token == "" &amp;&amp; !data.Token.IsNull() </span><span class="cov7" title="84">{
                 token = data.Token.ValueString()
         }</span>
 
-        <span class="cov7" title="90">data.Host = types.StringValue(host)
+        <span class="cov7" title="84">data.Host = types.StringValue(host)
         data.Token = types.StringValue(token)
 
         if token == "" </span><span class="cov0" title="0">{
@@ -3003,11 +3003,11 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
                 )
         }</span>
 
-        <span class="cov7" title="90">if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
+        <span class="cov7" title="84">if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                 return
         }</span>
 
-        <span class="cov7" title="90">p.ik = &amp;IkProviderData{
+        <span class="cov7" title="84">p.ik = &amp;IkProviderData{
                 Version: types.StringValue(p.version),
                 Data:    &amp;data,
         }
@@ -3016,20 +3016,20 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
         resp.ResourceData = p.ik</span>
 }
 
-func (p *IkProvider) Resources(ctx context.Context) []func() resource.Resource <span class="cov9" title="338">{
+func (p *IkProvider) Resources(ctx context.Context) []func() resource.Resource <span class="cov9" title="314">{
         return registry.GetResources()
 }</span>
 
-func (p *IkProvider) DataSources(ctx context.Context) []func() datasource.DataSource <span class="cov9" title="198">{
+func (p *IkProvider) DataSources(ctx context.Context) []func() datasource.DataSource <span class="cov9" title="179">{
         return registry.GetDataSources()
 }</span>
 
-func (p *IkProvider) Functions(ctx context.Context) []func() function.Function <span class="cov8" title="171">{
+func (p *IkProvider) Functions(ctx context.Context) []func() function.Function <span class="cov8" title="159">{
         return nil
 }</span>
 
-func New(version string) func() provider.Provider <span class="cov10" title="343">{
-        return func() provider.Provider </span><span class="cov10" title="343">{
+func New(version string) func() provider.Provider <span class="cov10" title="319">{
+        return func() provider.Provider </span><span class="cov10" title="319">{
                 return &amp;IkProvider{
                         version: version,
                 }
@@ -3053,19 +3053,19 @@ import (
 var resources []func() resource.Resource
 var datasources []func() datasource.DataSource
 
-func RegisterResource(F func() resource.Resource) <span class="cov10" title="2058">{
+func RegisterResource(F func() resource.Resource) <span class="cov10" title="1914">{
         resources = append(resources, F)
 }</span>
 
-func RegisterDataSource(F func() datasource.DataSource) <span class="cov9" title="1715">{
+func RegisterDataSource(F func() datasource.DataSource) <span class="cov9" title="1595">{
         datasources = append(datasources, F)
 }</span>
 
-func GetResources() []func() resource.Resource <span class="cov7" title="338">{
+func GetResources() []func() resource.Resource <span class="cov7" title="314">{
         return resources
 }</span>
 
-func GetDataSources() []func() datasource.DataSource <span class="cov7" title="198">{
+func GetDataSources() []func() datasource.DataSource <span class="cov7" title="179">{
         return datasources
 }</span>
 </pre>
@@ -3078,14 +3078,14 @@ import (
         "terraform-provider-infomaniak/internal/apis"
 )
 
-func GetApiClient(providerData any) (*apis.Client, error) <span class="cov10" title="299">{
+func GetApiClient(providerData any) (*apis.Client, error) <span class="cov10" title="281">{
         data, ok := providerData.(*IkProviderData)
         if !ok </span><span class="cov0" title="0">{
                 return nil, fmt.Errorf("expected *provider.IkProviderData, got: %T", providerData)
         }</span>
 
-        <span class="cov10" title="299">mocked := os.Getenv("TF_TESTS_MOCKED")
-        if data.Version.ValueString() == "dev" &amp;&amp; mocked == "true" </span><span class="cov10" title="299">{
+        <span class="cov10" title="281">mocked := os.Getenv("TF_TESTS_MOCKED")
+        if data.Version.ValueString() == "dev" &amp;&amp; mocked == "true" </span><span class="cov10" title="281">{
                 return apis.NewMockClient(), nil
         }</span>
 
@@ -3119,7 +3119,7 @@ var (
         _ resource.ResourceWithImportState = &amp;dbaasBackupScheduleResource{}
 )
 
-func NewDBaasBackupScheduleResource() resource.Resource <span class="cov10" title="584">{
+func NewDBaasBackupScheduleResource() resource.Resource <span class="cov10" title="543">{
         return &amp;dbaasBackupScheduleResource{}
 }</span>
 
@@ -3147,7 +3147,7 @@ func (model *DBaasBackupScheduleModel) fill(backupSchedule *dbaas.DBaasBackupSch
         model.Id = types.Int64PointerValue(backupSchedule.Id)
 }</span>
 
-func (r *dbaasBackupScheduleResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) <span class="cov9" title="413">{
+func (r *dbaasBackupScheduleResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) <span class="cov9" title="384">{
         resp.TypeName = req.ProviderTypeName + "_dbaas_backup_schedule"
 }</span>
 
@@ -3171,7 +3171,7 @@ func (r *dbaasBackupScheduleResource) Configure(ctx context.Context, req resourc
         <span class="cov0" title="0">r.client = client</span>
 }
 
-func (r *dbaasBackupScheduleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) <span class="cov8" title="171">{
+func (r *dbaasBackupScheduleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) <span class="cov8" title="159">{
         resp.Schema = getDbaasBackupScheduleResourceSchema()
 }</span>
 
@@ -3385,7 +3385,7 @@ import (
         "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
-func getDbaasBackupScheduleResourceSchema() schema.Schema <span class="cov10" title="171">{
+func getDbaasBackupScheduleResourceSchema() schema.Schema <span class="cov10" title="159">{
         return schema.Schema{
                 Attributes: map[string]schema.Attribute{
                         "public_cloud_id": schema.Int64Attribute{
@@ -3471,7 +3471,7 @@ type dbaasConstsDataSource struct {
 }
 
 // NewDBaasDataSource is a helper function to simplify the provider implementation.
-func NewDBaasConstsDataSource() datasource.DataSource <span class="cov10" title="369">{
+func NewDBaasConstsDataSource() datasource.DataSource <span class="cov10" title="338">{
         return &amp;dbaasConstsDataSource{}
 }</span>
 
@@ -3506,7 +3506,7 @@ type DBaasTypes struct {
 }
 
 // Schema defines the schema for the data source.
-func (d *dbaasConstsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="171">{
+func (d *dbaasConstsDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="159">{
         resp.Schema = getDbaasConstantsDataSourceSchema()
 }</span>
 
@@ -3558,7 +3558,7 @@ func (d *dbaasConstsDataSource) Read(ctx context.Context, req datasource.ReadReq
 }
 
 // Metadata returns the data source type name.
-func (d *dbaasConstsDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) <span class="cov9" title="198">{
+func (d *dbaasConstsDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) <span class="cov9" title="179">{
         resp.TypeName = req.ProviderTypeName + "_dbaas_constants"
 }</span>
 </pre>
@@ -3570,7 +3570,7 @@ import (
         "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func getDbaasConstantsDataSourceSchema() schema.Schema <span class="cov10" title="171">{
+func getDbaasConstantsDataSourceSchema() schema.Schema <span class="cov10" title="159">{
         return schema.Schema{
                 Attributes: map[string]schema.Attribute{
                         "types": schema.ListNestedAttribute{
@@ -3619,15 +3619,15 @@ type dbaasDataSource struct {
 }
 
 // NewDBaasDataSource is a helper function to simplify the provider implementation.
-func NewDBaasDataSource() datasource.DataSource <span class="cov10" title="386">{
+func NewDBaasDataSource() datasource.DataSource <span class="cov10" title="359">{
         return &amp;dbaasDataSource{}
 }</span>
 
 // Configure adds the provider configured client to the data source.
-func (d *dbaasDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) <span class="cov4" title="10">{
+func (d *dbaasDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) <span class="cov4" title="12">{
         // Add a nil check when handling ProviderData because Terraform
         // sets that data after it calls the ConfigureProvider RPC.
-        if req.ProviderData == nil </span><span class="cov3" title="4">{
+        if req.ProviderData == nil </span><span class="cov3" title="6">{
                 return
         }</span>
 
@@ -3682,7 +3682,7 @@ func (data *DBaasDataModel) fill(obj *dbaas.DBaaS) <span class="cov2" title="3">
 }
 
 // Schema defines the schema for the data source.
-func (d *dbaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="178">{
+func (d *dbaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="168">{
         resp.Schema = getDbaasDataSourceSchema()
 }</span>
 
@@ -3745,7 +3745,7 @@ func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 }
 
 // Metadata returns the data source type name.
-func (d *dbaasDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) <span class="cov8" title="198">{
+func (d *dbaasDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) <span class="cov8" title="179">{
         resp.TypeName = req.ProviderTypeName + "_dbaas"
 }</span>
 </pre>
@@ -3757,7 +3757,7 @@ import (
         "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func getDbaasDataSourceSchema() schema.Schema <span class="cov10" title="178">{
+func getDbaasDataSourceSchema() schema.Schema <span class="cov10" title="168">{
         return schema.Schema{
                 Attributes: map[string]schema.Attribute{
                         "public_cloud_id": schema.Int64Attribute{
@@ -4060,7 +4060,7 @@ type dbaasPackDataSource struct {
 }
 
 // NewDBaasDataSource is a helper function to simplify the provider implementation.
-func NewDBaasPackDataSource() datasource.DataSource <span class="cov10" title="369">{
+func NewDBaasPackDataSource() datasource.DataSource <span class="cov10" title="338">{
         return &amp;dbaasPackDataSource{}
 }</span>
 
@@ -4107,7 +4107,7 @@ type PricingModel struct {
 }
 
 // Schema defines the schema for the data source.
-func (d *dbaasPackDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="171">{
+func (d *dbaasPackDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="159">{
         resp.Schema = getDbaasPacksDataSourceSchema()
 }</span>
 
@@ -4151,7 +4151,7 @@ func (d *dbaasPackDataSource) Read(ctx context.Context, req datasource.ReadReque
 }
 
 // Metadata returns the data source type name.
-func (d *dbaasPackDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) <span class="cov9" title="198">{
+func (d *dbaasPackDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) <span class="cov9" title="179">{
         resp.TypeName = req.ProviderTypeName + "_dbaas_pack"
 }</span>
 </pre>
@@ -4160,7 +4160,7 @@ func (d *dbaasPackDataSource) Metadata(_ context.Context, req datasource.Metadat
 
 import "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 
-func getDbaasPacksDataSourceSchema() schema.Schema <span class="cov10" title="171">{
+func getDbaasPacksDataSourceSchema() schema.Schema <span class="cov10" title="159">{
         pricingObject := schema.SingleNestedAttribute{
                 Computed: true,
                 Attributes: map[string]schema.Attribute{
@@ -4242,7 +4242,7 @@ var (
         _ resource.ResourceWithUpgradeState = &amp;dbaasResource{}
 )
 
-func NewDBaasResource() resource.Resource <span class="cov10" title="614">{
+func NewDBaasResource() resource.Resource <span class="cov10" title="577">{
         return &amp;dbaasResource{}
 }</span>
 
@@ -4274,15 +4274,15 @@ type DBaasModel struct {
         EffectiveConfiguration types.Dynamic `tfsdk:"effective_configuration"`
 }
 
-func (r *dbaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) <span class="cov9" title="413">{
+func (r *dbaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) <span class="cov9" title="384">{
         resp.TypeName = req.ProviderTypeName + "_dbaas"
 }</span>
 
 // Configure adds the provider configured client to the data source.
-func (r *dbaasResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) <span class="cov4" title="16">{
+func (r *dbaasResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) <span class="cov5" title="18">{
         // Add a nil check when handling ProviderData because Terraform
         // sets that data after it calls the ConfigureProvider RPC.
-        if req.ProviderData == nil </span><span class="cov2" title="4">{
+        if req.ProviderData == nil </span><span class="cov3" title="6">{
                 return
         }</span>
 
@@ -4307,7 +4307,7 @@ func (r *dbaasResource) UpgradeState(context.Context) map[int64]resource.StateUp
         }
 }</span>
 
-func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) <span class="cov8" title="181">{
+func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) <span class="cov8" title="171">{
         resp.Schema = getDbaasResourceSchema()
 }</span>
 
@@ -4822,7 +4822,7 @@ import (
         "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func getDbaasResourceSchema() schema.Schema <span class="cov10" title="181">{
+func getDbaasResourceSchema() schema.Schema <span class="cov10" title="171">{
         return schema.Schema{
                 Version: 1,
                 Attributes: map[string]schema.Attribute{
@@ -4938,7 +4938,7 @@ func getDbaasResourceSchema() schema.Schema <span class="cov10" title="181">{
 
 import "terraform-provider-infomaniak/internal/provider/registry"
 
-func Register() <span class="cov10" title="343">{
+func Register() <span class="cov10" title="319">{
         registry.RegisterResource(NewDBaasResource)
         registry.RegisterResource(NewDBaasBackupScheduleResource)
 
@@ -5258,7 +5258,7 @@ var (
         _ resource.ResourceWithModifyPlan  = &amp;recordResource{}
 )
 
-func NewRecordResource() resource.Resource <span class="cov10" title="584">{
+func NewRecordResource() resource.Resource <span class="cov10" title="543">{
         return &amp;recordResource{}
 }</span>
 
@@ -5300,7 +5300,7 @@ type RecordDataModel struct {
         FingerprintAlgorithm types.Int64  `tfsdk:"fingerprint_algorithm"` // SSHFP
 }
 
-func (r *recordResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) <span class="cov9" title="413">{
+func (r *recordResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) <span class="cov9" title="384">{
         resp.TypeName = req.ProviderTypeName + "_record"
 }</span>
 
@@ -5324,7 +5324,7 @@ func (r *recordResource) Configure(ctx context.Context, req resource.ConfigureRe
         <span class="cov0" title="0">r.client = client</span>
 }
 
-func (r *recordResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) <span class="cov8" title="171">{
+func (r *recordResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) <span class="cov8" title="159">{
         resp.Schema = getRecordResourceSchema()
 }</span>
 
@@ -5524,7 +5524,7 @@ import (
         "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
-func getRecordResourceSchema() schema.Schema <span class="cov10" title="171">{
+func getRecordResourceSchema() schema.Schema <span class="cov10" title="159">{
         return schema.Schema{
                 Attributes: map[string]schema.Attribute{
                         "zone_fqdn": schema.StringAttribute{
@@ -5694,7 +5694,7 @@ func getRecordResourceSchema() schema.Schema <span class="cov10" title="171">{
 
 import "terraform-provider-infomaniak/internal/provider/registry"
 
-func Register() <span class="cov10" title="343">{
+func Register() <span class="cov10" title="319">{
         registry.RegisterResource(NewZoneResource)
         registry.RegisterResource(NewRecordResource)
 }</span>
@@ -5718,7 +5718,7 @@ var (
         _ resource.ResourceWithImportState = &amp;zoneResource{}
 )
 
-func NewZoneResource() resource.Resource <span class="cov10" title="584">{
+func NewZoneResource() resource.Resource <span class="cov10" title="543">{
         return &amp;zoneResource{}
 }</span>
 
@@ -5731,7 +5731,7 @@ type ZoneModel struct {
         Id   types.Int64  `tfsdk:"id"`
 }
 
-func (r *zoneResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) <span class="cov9" title="413">{
+func (r *zoneResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) <span class="cov9" title="384">{
         resp.TypeName = req.ProviderTypeName + "_zone"
 }</span>
 
@@ -5755,7 +5755,7 @@ func (r *zoneResource) Configure(ctx context.Context, req resource.ConfigureRequ
         <span class="cov0" title="0">r.client = client</span>
 }
 
-func (r *zoneResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) <span class="cov8" title="171">{
+func (r *zoneResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) <span class="cov8" title="159">{
         resp.Schema = getZoneResourceSchema()
 }</span>
 
@@ -5861,7 +5861,7 @@ import (
         "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
-func getZoneResourceSchema() schema.Schema <span class="cov10" title="171">{
+func getZoneResourceSchema() schema.Schema <span class="cov10" title="159">{
         return schema.Schema{
                 Attributes: map[string]schema.Attribute{
                         "fqdn": schema.StringAttribute{
@@ -5906,19 +5906,19 @@ type kaasDataSource struct {
 }
 
 // NewKaasDataSource is a helper function to simplify the provider implementation.
-func NewKaasDataSource() datasource.DataSource <span class="cov10" title="390">{
+func NewKaasDataSource() datasource.DataSource <span class="cov10" title="338">{
         return &amp;kaasDataSource{}
 }</span>
 
 // Configure adds the provider configured client to the data source.
-func (d *kaasDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) <span class="cov4" title="12">{
+func (d *kaasDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) <span class="cov0" title="0">{
         // Add a nil check when handling ProviderData because Terraform
         // sets that data after it calls the ConfigureProvider RPC.
-        if req.ProviderData == nil </span><span class="cov3" title="6">{
+        if req.ProviderData == nil </span><span class="cov0" title="0">{
                 return
         }</span>
 
-        <span class="cov3" title="6">client, err := provider.GetApiClient(req.ProviderData)
+        <span class="cov0" title="0">client, err := provider.GetApiClient(req.ProviderData)
         if err != nil </span><span class="cov0" title="0">{
                 resp.Diagnostics.AddError(
                         "Unexpected Data Source Configure Type",
@@ -5927,16 +5927,16 @@ func (d *kaasDataSource) Configure(_ context.Context, req datasource.ConfigureRe
                 return
         }</span>
 
-        <span class="cov3" title="6">d.client = client</span>
+        <span class="cov0" title="0">d.client = client</span>
 }
 
 // Schema defines the schema for the data source.
-func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="180">{
+func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="159">{
         resp.Schema = getKaasDataSourceSchema()
 }</span>
 
 // Read refreshes the Terraform state with the latest data.
-func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) <span class="cov2" title="3">{
+func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) <span class="cov0" title="0">{
         var data KaasModel
 
         resp.Diagnostics.Append(req.Config.Get(ctx, &amp;data)...)
@@ -5954,7 +5954,7 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
                 return
         }</span>
 
-        <span class="cov2" title="3">kubeconfig, err := d.client.Kaas.GetKubeconfig(
+        <span class="cov0" title="0">kubeconfig, err := d.client.Kaas.GetKubeconfig(
                 data.PublicCloudId.ValueInt64(),
                 data.PublicCloudProjectId.ValueInt64(),
                 data.Id.ValueInt64(),
@@ -5967,7 +5967,7 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
                 return
         }</span>
 
-        <span class="cov2" title="3">data.Kubeconfig = types.StringValue(kubeconfig)
+        <span class="cov0" title="0">data.Kubeconfig = types.StringValue(kubeconfig)
         data.Region = types.StringValue(obj.Region)
         data.KubernetesVersion = types.StringValue(obj.KubernetesVersion)
 
@@ -5984,12 +5984,12 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
                 return
         }</span>
 
-        <span class="cov2" title="3">if apiserverParams != nil </span><span class="cov0" title="0">{
+        <span class="cov0" title="0">if apiserverParams != nil </span><span class="cov0" title="0">{
                 data.fillApiserverState(ctx, apiserverParams)
         }</span>
 
         // Set state
-        <span class="cov2" title="3">diags := resp.State.Set(ctx, &amp;data)
+        <span class="cov0" title="0">diags := resp.State.Set(ctx, &amp;data)
         resp.Diagnostics.Append(diags...)
         if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                 return
@@ -5997,7 +5997,7 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 }
 
 // Metadata returns the data source type name.
-func (d *kaasDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) <span class="cov8" title="198">{
+func (d *kaasDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) <span class="cov9" title="179">{
         resp.TypeName = req.ProviderTypeName + "_kaas"
 }</span>
 </pre>
@@ -6009,7 +6009,7 @@ import (
         "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func getKaasDataSourceSchema() schema.Schema <span class="cov10" title="180">{
+func getKaasDataSourceSchema() schema.Schema <span class="cov10" title="159">{
         return schema.Schema{
                 Attributes: map[string]schema.Attribute{
                         "public_cloud_id": schema.Int64Attribute{
@@ -6157,12 +6157,12 @@ type kaasInstancePoolDataSource struct {
 }
 
 // NewKaasInstancePoolDataSource is a helper function to simplify the provider implementation.
-func NewKaasInstancePoolDataSource() datasource.DataSource <span class="cov10" title="394">{
+func NewKaasInstancePoolDataSource() datasource.DataSource <span class="cov10" title="363">{
         return &amp;kaasInstancePoolDataSource{}
 }</span>
 
 // Configure adds the provider configured client to the data source.
-func (d *kaasInstancePoolDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) <span class="cov4" title="14">{
+func (d *kaasInstancePoolDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) <span class="cov5" title="14">{
         // Add a nil check when handling ProviderData because Terraform
         // sets that data after it calls the ConfigureProvider RPC.
         if req.ProviderData == nil </span><span class="cov4" title="8">{
@@ -6182,7 +6182,7 @@ func (d *kaasInstancePoolDataSource) Configure(_ context.Context, req datasource
 }
 
 // Schema defines the schema for the data source.
-func (d *kaasInstancePoolDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="182">{
+func (d *kaasInstancePoolDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) <span class="cov8" title="170">{
         resp.Schema = getKaasInstancePoolDataSourceSchema()
 }</span>
 
@@ -6224,7 +6224,7 @@ func (d *kaasInstancePoolDataSource) Read(ctx context.Context, req datasource.Re
 }
 
 // Metadata returns the data source type name.
-func (d *kaasInstancePoolDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) <span class="cov8" title="198">{
+func (d *kaasInstancePoolDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) <span class="cov8" title="179">{
         resp.TypeName = req.ProviderTypeName + "_kaas_instance_pool"
 }</span>
 </pre>
@@ -6236,7 +6236,7 @@ import (
         "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func getKaasInstancePoolDataSourceSchema() schema.Schema <span class="cov10" title="182">{
+func getKaasInstancePoolDataSourceSchema() schema.Schema <span class="cov10" title="170">{
         return schema.Schema{
                 Attributes: map[string]schema.Attribute{
                         "public_cloud_id": schema.Int64Attribute{
@@ -6311,7 +6311,7 @@ var (
         _ resource.ResourceWithConfigure = &amp;kaasInstancePoolResource{}
 )
 
-func NewKaasInstancePoolResource() resource.Resource <span class="cov10" title="806">{
+func NewKaasInstancePoolResource() resource.Resource <span class="cov10" title="765">{
         return &amp;kaasInstancePoolResource{}
 }</span>
 
@@ -6333,7 +6333,7 @@ type KaasInstancePoolModel struct {
         Labels           types.Map    `tfsdk:"labels"`
 }
 
-func (r *kaasInstancePoolResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) <span class="cov9" title="413">{
+func (r *kaasInstancePoolResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) <span class="cov9" title="384">{
         resp.TypeName = req.ProviderTypeName + "_kaas_instance_pool"
 }</span>
 
@@ -6357,7 +6357,7 @@ func (r *kaasInstancePoolResource) Configure(_ context.Context, req resource.Con
         <span class="cov7" title="89">r.client = client</span>
 }
 
-func (r *kaasInstancePoolResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) <span class="cov8" title="243">{
+func (r *kaasInstancePoolResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) <span class="cov8" title="231">{
         resp.Schema = getKaasInstancePoolResourceSchema()
 }</span>
 
@@ -6650,7 +6650,7 @@ import (
         "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func getKaasInstancePoolResourceSchema() schema.Schema <span class="cov10" title="243">{
+func getKaasInstancePoolResourceSchema() schema.Schema <span class="cov10" title="231">{
         return schema.Schema{
                 Attributes: map[string]schema.Attribute{
                         "public_cloud_id": schema.Int64Attribute{
@@ -6767,7 +6767,7 @@ var (
         _ resource.ResourceWithImportState = &amp;kaasResource{}
 )
 
-func NewKaasResource() resource.Resource <span class="cov10" title="1053">{
+func NewKaasResource() resource.Resource <span class="cov10" title="974">{
         return &amp;kaasResource{}
 }</span>
 
@@ -6826,19 +6826,19 @@ type Audit struct {
         Policy        types.String `tfsdk:"policy"`
 }
 
-func (r *kaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) <span class="cov8" title="413">{
+func (r *kaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) <span class="cov8" title="384">{
         resp.TypeName = req.ProviderTypeName + "_kaas"
 }</span>
 
 // Configure adds the provider configured client to the data source.
-func (r *kaasResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) <span class="cov8" title="255">{
+func (r *kaasResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) <span class="cov8" title="235">{
         // Add a nil check when handling ProviderData because Terraform
         // sets that data after it calls the ConfigureProvider RPC.
-        if req.ProviderData == nil </span><span class="cov6" title="75">{
+        if req.ProviderData == nil </span><span class="cov6" title="67">{
                 return
         }</span>
 
-        <span class="cov7" title="180">client, err := provider.GetApiClient(req.ProviderData)
+        <span class="cov7" title="168">client, err := provider.GetApiClient(req.ProviderData)
         if err != nil </span><span class="cov0" title="0">{
                 resp.Diagnostics.AddError(
                         "Unexpected Resource Configure Type",
@@ -6847,14 +6847,14 @@ func (r *kaasResource) Configure(ctx context.Context, req resource.ConfigureRequ
                 return
         }</span>
 
-        <span class="cov7" title="180">r.client = client</span>
+        <span class="cov7" title="168">r.client = client</span>
 }
 
-func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) <span class="cov8" title="326">{
+func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) <span class="cov8" title="300">{
         resp.Schema = getKaasResourceSchema()
 }</span>
 
-func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) <span class="cov4" title="13">{
+func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) <span class="cov4" title="12">{
         var data KaasModel
 
         // Read Terraform plan data into the model
@@ -6863,12 +6863,12 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
                 return
         }</span>
 
-        <span class="cov4" title="13">chosenPack, err := r.getPackId(data, &amp;resp.Diagnostics)
+        <span class="cov4" title="12">chosenPack, err := r.getPackId(data, &amp;resp.Diagnostics)
         if err != nil </span><span class="cov0" title="0">{
                 return
         }</span>
 
-        <span class="cov4" title="13">input := &amp;kaas.Kaas{
+        <span class="cov4" title="12">input := &amp;kaas.Kaas{
                 Project: kaas.KaasProject{
                         PublicCloudId: data.PublicCloudId.ValueInt64(),
                         ProjectId:     data.PublicCloudProjectId.ValueInt64(),
@@ -6889,7 +6889,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
                 return
         }</span>
 
-        <span class="cov4" title="13">data.Id = types.Int64Value(kaasId)
+        <span class="cov4" title="12">data.Id = types.Int64Value(kaasId)
         resp.Diagnostics.Append(resp.State.Set(ctx, &amp;data)...)
 
         kaasObject, err := r.waitUntilActive(ctx, input, kaasId)
@@ -6901,16 +6901,16 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
                 return
         }</span>
 
-        <span class="cov4" title="13">if kaasObject == nil </span><span class="cov0" title="0">{
+        <span class="cov4" title="12">if kaasObject == nil </span><span class="cov0" title="0">{
                 return
         }</span>
 
-        <span class="cov4" title="13">err = r.fetchAndSetKubeconfig(&amp;data, kaasObject)
+        <span class="cov4" title="12">err = r.fetchAndSetKubeconfig(&amp;data, kaasObject)
         if err != nil </span><span class="cov0" title="0">{
                 resp.Diagnostics.AddWarning("could not fetch and set kubeconfig", err.Error())
         }</span>
 
-        <span class="cov4" title="13">data.fill(kaasObject)
+        <span class="cov4" title="12">data.fill(kaasObject)
 
         resp.Diagnostics.Append(resp.State.Set(ctx, &amp;data)...)
 
@@ -6929,7 +6929,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
         }
 
         // Save data into Terraform state
-        <span class="cov4" title="13">resp.Diagnostics.Append(resp.State.Set(ctx, &amp;data)...)</span>
+        <span class="cov4" title="12">resp.Diagnostics.Append(resp.State.Set(ctx, &amp;data)...)</span>
 }
 
 func (state *KaasModel) fillApiserverState(ctx context.Context, apiserverParams *kaas.Apiserver) <span class="cov0" title="0">{
@@ -6982,18 +6982,18 @@ func (state *KaasModel) canSetApiserverToNil() bool <span class="cov0" title="0"
         return apiserver.Audit == nil &amp;&amp; apiserver.Oidc == nil &amp;&amp; apiserver.Params.IsNull()
 }</span>
 
-func (r *kaasResource) waitUntilActive(ctx context.Context, kaas *kaas.Kaas, id int64) (*kaas.Kaas, error) <span class="cov4" title="13">{
-        for </span><span class="cov4" title="13">{
+func (r *kaasResource) waitUntilActive(ctx context.Context, kaas *kaas.Kaas, id int64) (*kaas.Kaas, error) <span class="cov4" title="12">{
+        for </span><span class="cov4" title="12">{
                 found, err := r.client.Kaas.GetKaas(kaas.Project.PublicCloudId, kaas.Project.ProjectId, id)
                 if err != nil </span><span class="cov0" title="0">{
                         return nil, err
                 }</span>
 
-                <span class="cov4" title="13">if ctx.Err() != nil </span><span class="cov0" title="0">{
+                <span class="cov4" title="12">if ctx.Err() != nil </span><span class="cov0" title="0">{
                         return nil, nil
                 }</span>
 
-                <span class="cov4" title="13">if found.Status == "Active" </span><span class="cov4" title="13">{
+                <span class="cov4" title="12">if found.Status == "Active" </span><span class="cov4" title="12">{
                         return found, nil
                 }</span>
 
@@ -7014,7 +7014,7 @@ func (r *kaasResource) getApiserverParamsValues(data KaasModel) map[string]strin
         <span class="cov0" title="0">return params</span>
 }
 
-func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) <span class="cov4" title="22">{
+func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) <span class="cov4" title="21">{
         var state KaasModel
 
         // Read Terraform plan data into the model
@@ -7025,7 +7025,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
         }</span>
 
         // Read API call logic
-        <span class="cov4" title="22">kaasObject, err := r.client.Kaas.GetKaas(
+        <span class="cov4" title="21">kaasObject, err := r.client.Kaas.GetKaas(
                 state.PublicCloudId.ValueInt64(),
                 state.PublicCloudProjectId.ValueInt64(),
                 state.Id.ValueInt64(),
@@ -7038,14 +7038,14 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
                 return
         }</span>
 
-        <span class="cov4" title="22">state.fill(kaasObject)
+        <span class="cov4" title="21">state.fill(kaasObject)
 
         err = r.fetchAndSetKubeconfig(&amp;state, kaasObject)
         if err != nil </span><span class="cov0" title="0">{
                 resp.Diagnostics.AddWarning("could not fetch and set kubeconfig", err.Error())
         }</span>
 
-        <span class="cov4" title="22">apiserverParams, err := r.client.Kaas.GetApiserverParams(state.PublicCloudId.ValueInt64(), state.PublicCloudProjectId.ValueInt64(), kaasObject.Id)
+        <span class="cov4" title="21">apiserverParams, err := r.client.Kaas.GetApiserverParams(state.PublicCloudId.ValueInt64(), state.PublicCloudProjectId.ValueInt64(), kaasObject.Id)
         if err != nil </span><span class="cov0" title="0">{
                 resp.Diagnostics.AddWarning(
                         "Could not get Oidc",
@@ -7053,12 +7053,12 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
                 )
         }</span>
 
-        <span class="cov4" title="22">if apiserverParams != nil </span><span class="cov0" title="0">{
+        <span class="cov4" title="21">if apiserverParams != nil </span><span class="cov0" title="0">{
                 state.fillApiserverState(ctx, apiserverParams)
         }</span>
 
         // Save updated data into Terraform state
-        <span class="cov4" title="22">resp.Diagnostics.Append(resp.State.Set(ctx, &amp;state)...)</span>
+        <span class="cov4" title="21">resp.Diagnostics.Append(resp.State.Set(ctx, &amp;state)...)</span>
 }
 
 func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) <span class="cov0" title="0">{
@@ -7124,7 +7124,7 @@ func (r *kaasResource) prepareUpdateInput(state, data KaasModel, packID int64) *
         <span class="cov0" title="0">return input</span>
 }
 
-func (r *kaasResource) fetchAndSetKubeconfig(data *KaasModel, input *kaas.Kaas) error <span class="cov5" title="35">{
+func (r *kaasResource) fetchAndSetKubeconfig(data *KaasModel, input *kaas.Kaas) error <span class="cov5" title="33">{
         kubeconfig, err := r.client.Kaas.GetKubeconfig(
                 input.Project.PublicCloudId,
                 input.Project.ProjectId,
@@ -7133,7 +7133,7 @@ func (r *kaasResource) fetchAndSetKubeconfig(data *KaasModel, input *kaas.Kaas) 
         if err != nil </span><span class="cov0" title="0">{
                 return fmt.Errorf("could not get kubeconfig: %w", err)
         }</span>
-        <span class="cov5" title="35">data.Kubeconfig = types.StringValue(kubeconfig)
+        <span class="cov5" title="33">data.Kubeconfig = types.StringValue(kubeconfig)
         return nil</span>
 }
 
@@ -7171,7 +7171,7 @@ func (r *kaasResource) buildApiserverParamsInput(data KaasModel) *kaas.Apiserver
         <span class="cov0" title="0">return apiserverParamsInput</span>
 }
 
-func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) <span class="cov4" title="13">{
+func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) <span class="cov4" title="12">{
         var data KaasModel
 
         // Read Terraform prior state data into the model
@@ -7182,7 +7182,7 @@ func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, r
         }</span>
 
         // DeleteKaas API call logic
-        <span class="cov4" title="13">_, err := r.client.Kaas.DeleteKaas(
+        <span class="cov4" title="12">_, err := r.client.Kaas.DeleteKaas(
                 data.PublicCloudId.ValueInt64(),
                 data.PublicCloudProjectId.ValueInt64(),
                 data.Id.ValueInt64(),
@@ -7229,7 +7229,7 @@ func (r *kaasResource) ImportState(ctx context.Context, req resource.ImportState
         resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), kaasId)...)</span>
 }
 
-func (r *kaasResource) getPackId(data KaasModel, diagnostic *diag.Diagnostics) (*kaas.KaasPack, error) <span class="cov4" title="13">{
+func (r *kaasResource) getPackId(data KaasModel, diagnostic *diag.Diagnostics) (*kaas.KaasPack, error) <span class="cov4" title="12">{
         packs, err := r.client.Kaas.GetPacks()
         if err != nil </span><span class="cov0" title="0">{
                 diagnostic.AddError(
@@ -7239,15 +7239,15 @@ func (r *kaasResource) getPackId(data KaasModel, diagnostic *diag.Diagnostics) (
                 return nil, err
         }</span>
 
-        <span class="cov4" title="13">var chosenPack *kaas.KaasPack
-        for _, pack := range packs </span><span class="cov4" title="13">{
-                if pack.Name == data.PackName.ValueString() </span><span class="cov4" title="13">{
+        <span class="cov4" title="12">var chosenPack *kaas.KaasPack
+        for _, pack := range packs </span><span class="cov4" title="12">{
+                if pack.Name == data.PackName.ValueString() </span><span class="cov4" title="12">{
                         chosenPack = pack
                         break</span>
                 }
         }
 
-        <span class="cov4" title="13">if chosenPack == nil </span><span class="cov0" title="0">{
+        <span class="cov4" title="12">if chosenPack == nil </span><span class="cov0" title="0">{
                 var packNames []string
                 for _, pack := range packs </span><span class="cov0" title="0">{
                         packNames = append(packNames, pack.Name)
@@ -7260,10 +7260,10 @@ func (r *kaasResource) getPackId(data KaasModel, diagnostic *diag.Diagnostics) (
                 return nil, fmt.Errorf("pack name has not been found")</span>
         }
 
-        <span class="cov4" title="13">return chosenPack, nil</span>
+        <span class="cov4" title="12">return chosenPack, nil</span>
 }
 
-func (model *KaasModel) fill(kaas *kaas.Kaas) <span class="cov5" title="35">{
+func (model *KaasModel) fill(kaas *kaas.Kaas) <span class="cov5" title="33">{
         model.Id = types.Int64Value(kaas.Id)
         model.Region = types.StringValue(kaas.Region)
         model.KubernetesVersion = types.StringValue(kaas.KubernetesVersion)
@@ -7285,7 +7285,7 @@ import (
         "github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func getKaasResourceSchema() schema.Schema <span class="cov10" title="326">{
+func getKaasResourceSchema() schema.Schema <span class="cov10" title="300">{
         return schema.Schema{
                 Attributes: map[string]schema.Attribute{
                         "public_cloud_id": schema.Int64Attribute{
@@ -7467,7 +7467,7 @@ func getKaasResourceSchema() schema.Schema <span class="cov10" title="326">{
 
 import "terraform-provider-infomaniak/internal/provider/registry"
 
-func Register() <span class="cov10" title="343">{
+func Register() <span class="cov10" title="319">{
         registry.RegisterResource(NewKaasResource)
         registry.RegisterResource(NewKaasInstancePoolResource)
 
