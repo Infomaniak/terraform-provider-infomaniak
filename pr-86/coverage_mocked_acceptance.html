@@ -779,8 +779,8 @@ func init() <span class="cov10" title="319">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="310">{
-                // DeleteKaas cache if old
+        if err == nil </span><span class="cov9" title="315">{
+                // Delete DBaaS cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
                         return
@@ -789,17 +789,17 @@ func init() <span class="cov10" title="319">{
 
         // Try to get cache
         <span class="cov10" title="319">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="310">{
+        if err == nil </span><span class="cov9" title="315">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov4" title="8">{
+                if err != nil </span><span class="cov3" title="4">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="310">return</span>
+                <span class="cov9" title="315">return</span>
         }
 
-        // Create Kaas tmp file for caching
-        <span class="cov4" title="9">_, err = os.Create(mockedApiStatePath)
+        // Create DBaaS tmp file for caching
+        <span class="cov3" title="4">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -1922,7 +1922,7 @@ func init() <span class="cov10" title="319">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="309">{
+        if err == nil </span><span class="cov9" title="299">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1932,17 +1932,17 @@ func init() <span class="cov10" title="319">{
 
         // Try to get cache
         <span class="cov10" title="319">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="309">{
+        if err == nil </span><span class="cov9" title="299">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov4" title="10">{
+                if err != nil </span><span class="cov5" title="20">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="309">return</span>
+                <span class="cov9" title="299">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov4" title="10">_, err = os.Create(mockedApiStatePath)
+        <span class="cov5" title="20">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -3818,7 +3818,8 @@ func getDbaasDataSourceSchema() schema.Schema <span class="cov10" title="168">{
                                 MarkdownDescription: "DbaaS kubernetes name",
                         },
                         "effective_configuration": schema.DynamicAttribute{
-                                Computed: true,
+                                Computed:            true,
+                                MarkdownDescription: "The effective database configuration settings",
                         },
                 },
                 MarkdownDescription: "The dbaas data source allows the user to manage a dbaas project",

@@ -726,7 +726,7 @@ func init() <span class="cov0" title="0">{
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
         if err == nil </span><span class="cov0" title="0">{
-                // DeleteKaas cache if old
+                // Delete DBaaS cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
                         return
@@ -744,7 +744,7 @@ func init() <span class="cov0" title="0">{
                 <span class="cov0" title="0">return</span>
         }
 
-        // Create Kaas tmp file for caching
+        // Create DBaaS tmp file for caching
         <span class="cov0" title="0">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
@@ -3764,7 +3764,8 @@ func getDbaasDataSourceSchema() schema.Schema <span class="cov0" title="0">{
                                 MarkdownDescription: "DbaaS kubernetes name",
                         },
                         "effective_configuration": schema.DynamicAttribute{
-                                Computed: true,
+                                Computed:            true,
+                                MarkdownDescription: "The effective database configuration settings",
                         },
                 },
                 MarkdownDescription: "The dbaas data source allows the user to manage a dbaas project",
