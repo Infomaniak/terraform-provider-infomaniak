@@ -5,6 +5,7 @@ import (
 	"math/rand/v2"
 	"slices"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
+	"time"
 
 	"github.com/samber/lo"
 )
@@ -123,8 +124,20 @@ func (c *Client) CreateDBaasScheduleBackup(publicCloudId int64, publicCloudProje
 		return 0, fmt.Errorf("dbaas backup schedule is missing schedule_at")
 	}
 
+	if backupSchedules.Retention == nil {
+		return 0, fmt.Errorf("dbaas backup schedule is retention schedule_at")
+	}
+
+	_, err := time.Parse("15:04", *backupSchedules.ScheduledAt)
+	if err != nil {
+		return 0, fmt.Errorf("The scheduled at does not match the format H:i.")
+	}
+
 	id := rand.Int64()
 	backupSchedules.Id = &id
+
+	name := fmt.Sprintf("%d", rand.Float64())
+	backupSchedules.Name = &name
 
 	return id, addToCache(backupSchedules)
 }
@@ -319,6 +332,10 @@ func (c *Client) UpdateDBaasScheduleBackup(publicCloudId int64, publicCloudProje
 	}
 	if backupSchedules.ScheduledAt == nil {
 		return false, fmt.Errorf("dbaas backup schedule is missing scheduled_at")
+	}
+
+	if backupSchedules.Retention == nil {
+		return false, fmt.Errorf("dbaas backup schedule is retention schedule_at")
 	}
 
 	return true, updateCache(backupSchedules)

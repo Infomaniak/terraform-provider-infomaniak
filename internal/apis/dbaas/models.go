@@ -99,7 +99,7 @@ type DBaasBackupSchedule struct {
 	Name          *string `json:"name,omitempty"`
 	ScheduledAt   *string `json:"scheduled_at,omitempty"`
 	Retention     *int64  `json:"retention,omitempty"`
-	IsPitrEnabled *bool   `json:"is_pitr_enabled,omitempty"`
+	IsPitrEnabled bool    `json:"is_pitr_enabled"`
 }
 
 type DBaaSCreateInfo struct {
