@@ -151,7 +151,7 @@
 				
 				<option value="file47">terraform-provider-infomaniak/internal/services/kaas/kaas_instance_pool_resource_schema.go (100.0%)</option>
 				
-				<option value="file48">terraform-provider-infomaniak/internal/services/kaas/kaas_pack_data_source.go (7.1%)</option>
+				<option value="file48">terraform-provider-infomaniak/internal/services/kaas/kaas_pack_data_source.go (7.7%)</option>
 				
 				<option value="file49">terraform-provider-infomaniak/internal/services/kaas/kaas_pack_data_source_schema.go (100.0%)</option>
 				
@@ -797,7 +797,7 @@ func init() <span class="cov10" title="360">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="353">{
+        if err == nil </span><span class="cov9" title="356">{
                 // Delete DBaaS cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -807,17 +807,17 @@ func init() <span class="cov10" title="360">{
 
         // Try to get cache
         <span class="cov10" title="360">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="353">{
+        if err == nil </span><span class="cov9" title="356">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov3" title="7">{
+                if err != nil </span><span class="cov3" title="4">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="353">return</span>
+                <span class="cov9" title="356">return</span>
         }
 
         // Create DBaaS tmp file for caching
-        <span class="cov3" title="7">_, err = os.Create(mockedApiStatePath)
+        <span class="cov3" title="4">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -2023,7 +2023,7 @@ func init() <span class="cov10" title="360">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="349">{
+        if err == nil </span><span class="cov9" title="341">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -2033,17 +2033,17 @@ func init() <span class="cov10" title="360">{
 
         // Try to get cache
         <span class="cov10" title="360">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="349">{
+        if err == nil </span><span class="cov9" title="341">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov4" title="11">{
+                if err != nil </span><span class="cov5" title="19">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="349">return</span>
+                <span class="cov9" title="341">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov4" title="11">_, err = os.Create(mockedApiStatePath)
+        <span class="cov5" title="19">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -7251,16 +7251,10 @@ func (d *kaasPackDataSource) Read(ctx context.Context, req datasource.ReadReques
 
         resp.Diagnostics.Append(req.Config.Get(ctx, &amp;data)...)
 
-        obj, err := d.getPack(data, &amp;resp.Diagnostics)
-        if err != nil </span><span class="cov0" title="0">{
-                resp.Diagnostics.AddError(
-                        "Unable to find KaaS pack",
-                        err.Error(),
-                )
-                return
-        }</span>
+        // error can be ignored as getPack already handles it for us
+        obj, _ := d.getPack(data, &amp;resp.Diagnostics)
 
-        <span class="cov0" title="0">data.Id = types.Int64Value(int64(obj.Id))
+        data.Id = types.Int64Value(int64(obj.Id))
         data.Name = types.StringValue((obj.Name))
         data.Description = types.StringValue(obj.Description)
         data.PricePerHour = &amp;KaasPackRatesModel{
@@ -7426,7 +7420,6 @@ func (d *kaasRegionsDataSource) Read(ctx context.Context, req datasource.ReadReq
         resp.Diagnostics.Append(req.Config.Get(ctx, &amp;data)...)
 
         obj, err := d.client.Kaas.GetRegions()
-
         if err != nil </span><span class="cov0" title="0">{
                 resp.Diagnostics.AddError(
                         "Unable to find KaaS regions",
@@ -8262,7 +8255,6 @@ func (d *kaasVersionsDataSource) Read(ctx context.Context, req datasource.ReadRe
         resp.Diagnostics.Append(req.Config.Get(ctx, &amp;data)...)
 
         obj, err := d.client.Kaas.GetVersions()
-
         if err != nil </span><span class="cov0" title="0">{
                 resp.Diagnostics.AddError(
                         "Unable to get KaaS versions",

@@ -7197,16 +7197,10 @@ func (d *kaasPackDataSource) Read(ctx context.Context, req datasource.ReadReques
 
         resp.Diagnostics.Append(req.Config.Get(ctx, &amp;data)...)
 
-        obj, err := d.getPack(data, &amp;resp.Diagnostics)
-        if err != nil </span><span class="cov0" title="0">{
-                resp.Diagnostics.AddError(
-                        "Unable to find KaaS pack",
-                        err.Error(),
-                )
-                return
-        }</span>
+        // error can be ignored as getPack already handles it for us
+        obj, _ := d.getPack(data, &amp;resp.Diagnostics)
 
-        <span class="cov0" title="0">data.Id = types.Int64Value(int64(obj.Id))
+        data.Id = types.Int64Value(int64(obj.Id))
         data.Name = types.StringValue((obj.Name))
         data.Description = types.StringValue(obj.Description)
         data.PricePerHour = &amp;KaasPackRatesModel{
@@ -7372,7 +7366,6 @@ func (d *kaasRegionsDataSource) Read(ctx context.Context, req datasource.ReadReq
         resp.Diagnostics.Append(req.Config.Get(ctx, &amp;data)...)
 
         obj, err := d.client.Kaas.GetRegions()
-
         if err != nil </span><span class="cov0" title="0">{
                 resp.Diagnostics.AddError(
                         "Unable to find KaaS regions",
@@ -8208,7 +8201,6 @@ func (d *kaasVersionsDataSource) Read(ctx context.Context, req datasource.ReadRe
         resp.Diagnostics.Append(req.Config.Get(ctx, &amp;data)...)
 
         obj, err := d.client.Kaas.GetVersions()
-
         if err != nil </span><span class="cov0" title="0">{
                 resp.Diagnostics.AddError(
                         "Unable to get KaaS versions",
