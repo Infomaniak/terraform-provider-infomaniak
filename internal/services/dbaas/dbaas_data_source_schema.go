@@ -65,6 +65,10 @@ func getDbaasDataSourceSchema() schema.Schema {
 				Computed:            true,
 				MarkdownDescription: "DbaaS kubernetes name",
 			},
+			"effective_configuration": schema.DynamicAttribute{
+				Computed:            true,
+				MarkdownDescription: "The effective database configuration settings",
+			},
 		},
 		MarkdownDescription: "The dbaas data source allows the user to manage a dbaas project",
 	}
