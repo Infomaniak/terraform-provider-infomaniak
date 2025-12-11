@@ -72,14 +72,8 @@ func (d *kaasPackDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
-	obj, err := d.getPack(data, &resp.Diagnostics)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to find KaaS pack",
-			err.Error(),
-		)
-		return
-	}
+	// error can be ignored as getPack already handles it for us
+	obj, _ := d.getPack(data, &resp.Diagnostics)
 
 	data.Id = types.Int64Value(int64(obj.Id))
 	data.Name = types.StringValue((obj.Name))

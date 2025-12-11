@@ -60,7 +60,6 @@ func (d *kaasRegionsDataSource) Read(ctx context.Context, req datasource.ReadReq
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
 	obj, err := d.client.Kaas.GetRegions()
-
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to find KaaS regions",

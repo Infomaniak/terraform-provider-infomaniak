@@ -60,7 +60,6 @@ func (d *kaasVersionsDataSource) Read(ctx context.Context, req datasource.ReadRe
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
 	obj, err := d.client.Kaas.GetVersions()
-
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to get KaaS versions",
