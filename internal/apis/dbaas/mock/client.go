@@ -3,7 +3,11 @@ package mock
 import (
 	"fmt"
 	"math/rand/v2"
+	"slices"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
+	"time"
+
+	"github.com/samber/lo"
 )
 
 // Ensure that our client implements Api
@@ -13,19 +17,31 @@ var (
 
 type Client struct{}
 
-func (c *Client) GetPacks() (map[string][]*dbaas.DBaaSPack, error) {
-	return map[string][]*dbaas.DBaaSPack{
+func (c *Client) getPacks() map[string][]*dbaas.Pack {
+	return map[string][]*dbaas.Pack{
 		"mysql": {
 			{
-				Id:   1,
-				Name: "essential-1",
+				ID:        1,
+				Type:      "mysql",
+				Name:      "essential-db-4",
+				Group:     "essential-db",
+				Instances: 1,
+				CPU:       1,
+				RAM:       4,
+				Storage:   80,
 			},
 			{
-				Id:   2,
-				Name: "essential-2",
+				ID:        2,
+				Type:      "mysql",
+				Name:      "essential-db-8",
+				Group:     "essential-db",
+				Instances: 1,
+				CPU:       2,
+				RAM:       8,
+				Storage:   160,
 			},
 		},
-	}, nil
+	}
 }
 
 // CreateDBaaS implements dbaas.Api.
@@ -42,24 +58,34 @@ func (c *Client) CreateDBaaS(input *dbaas.DBaaS) (*dbaas.DBaaSCreateInfo, error)
 		return nil, fmt.Errorf("dbaas is missing pack id")
 	}
 
-	packs, _ := c.GetPacks()
-	dbPacks, ok := packs[input.Type]
+	// check if the type is valid
+	dbTypes, _ := c.GetDbaasTypes()
+	dbType, ok := lo.Find(dbTypes, func(dbType *dbaas.DbaasType) bool {
+		return dbType.Name == input.Type
+	})
 
 	if !ok {
-		return nil, fmt.Errorf("dbType not found")
+		return nil, fmt.Errorf("The selected filter.type is invalid.")
 	}
 
-	var pack *dbaas.DBaaSPack
-
-	for _, dbPack := range dbPacks {
-		if dbPack.Id == input.PackId {
-			pack = dbPack
-			break
-		}
+	// check if the version is valid
+	if !slices.Contains(dbType.Versions, input.Version) {
+		return nil, fmt.Errorf("The selected version is invalid.")
 	}
 
-	if pack == nil {
-		return nil, fmt.Errorf("dbaas pack not found")
+	// check if the region is valid
+	regions, _ := c.GetDbaasRegions()
+	if !slices.Contains(regions, input.Region) {
+		return nil, fmt.Errorf("The selected region is invalid.")
+	}
+
+	// get the requested pack
+	pack, ok := lo.Find(c.getPacks()[input.Type], func(item *dbaas.Pack) bool {
+		return item.ID == input.PackId
+	})
+
+	if !ok {
+		return nil, fmt.Errorf("pack not found")
 	}
 
 	var obj = dbaas.DBaaS{
@@ -68,8 +94,11 @@ func (c *Client) CreateDBaaS(input *dbaas.DBaaS) (*dbaas.DBaaSCreateInfo, error)
 		Type:    input.Type,
 		Version: input.Version,
 		PackId:  input.PackId,
-		Pack:    pack,
-		Name:    input.Name,
+		Pack: &dbaas.DBaaSPack{
+			Id:   pack.ID,
+			Name: pack.Name,
+		},
+		Name: input.Name,
 		Connection: &dbaas.DBaaSConnectionInfo{
 			Host:     "localhost",
 			Port:     "3306",
@@ -91,35 +120,69 @@ func (c *Client) CreateDBaaS(input *dbaas.DBaaS) (*dbaas.DBaaSCreateInfo, error)
 
 // CreateDBaasScheduleBackup implements dbaas.Api.
 func (c *Client) CreateDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, backupSchedules *dbaas.DBaasBackupSchedule) (int64, error) {
-	return 0, nil
+	if backupSchedules.ScheduledAt == nil {
+		return 0, fmt.Errorf("dbaas backup schedule is missing schedule_at")
+	}
+
+	if backupSchedules.Retention == nil {
+		return 0, fmt.Errorf("dbaas backup schedule is retention schedule_at")
+	}
+
+	_, err := time.Parse("15:04", *backupSchedules.ScheduledAt)
+	if err != nil {
+		return 0, fmt.Errorf("The scheduled at does not match the format H:i.")
+	}
+
+	id := rand.Int64()
+	backupSchedules.Id = &id
+
+	name := fmt.Sprintf("%f", rand.Float64())
+	backupSchedules.Name = &name
+
+	return id, addToCache(backupSchedules)
 }
 
 // DeleteDBaaS implements dbaas.Api.
 func (c *Client) DeleteDBaaS(publicCloudId int64, publicCloudProjectId int64, DBaaSId int64) (bool, error) {
-	return true, nil
+	var obj = dbaas.DBaaS{
+		Project: dbaas.DBaaSProject{
+			PublicCloudId: publicCloudId,
+			ProjectId:     publicCloudProjectId,
+		},
+		Id: DBaaSId,
+	}
+
+	return true, removeFromCache(&obj)
 }
 
 // DeleteDBaasScheduleBackup implements dbaas.Api.
 func (c *Client) DeleteDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, id int64) (bool, error) {
-	return true, nil
+	var obj = dbaas.DBaasBackupSchedule{
+		Id: &id,
+	}
+
+	return true, removeFromCache(&obj)
 }
 
 // FindPack implements dbaas.Api.
 func (c *Client) FindPack(dbType string, name string) (*dbaas.DBaaSPack, error) {
-	packs, _ := c.GetPacks()
-	dbPacks, ok := packs[dbType]
+	packs, ok := c.getPacks()[dbType]
+	if !ok {
+		return nil, fmt.Errorf("The selected filter.type is invalid.")
+	}
+
+	dbPack, ok := lo.Find(packs, func(item *dbaas.Pack) bool {
+		return item.Name == name
+	})
 
 	if !ok {
-		return nil, fmt.Errorf("dbType not found")
+		return nil, fmt.Errorf("pack not found")
 	}
 
-	for _, pack := range dbPacks {
-		if pack.Name == name {
-			return pack, nil
-		}
-	}
-
-	return nil, fmt.Errorf("pack not found")
+	return &dbaas.DBaaSPack{
+		Id:   dbPack.ID,
+		Name: dbPack.Name,
+	}, nil
 }
 
 // GetConfiguration implements dbaas.Api.
@@ -131,7 +194,6 @@ func (c *Client) GetConfiguration(publicCloudId int64, publicCloudProjectId int6
 
 // GetDBaaS implements dbaas.Api.
 func (c *Client) GetDBaaS(publicCloudId int64, publicCloudProjectId int64, DBaaSId int64) (*dbaas.DBaaS, error) {
-
 	key := fmt.Sprintf("%d-%d-%d", publicCloudId, publicCloudProjectId, DBaaSId)
 	obj, err := getFromCache[*dbaas.DBaaS](key)
 	if err != nil {
@@ -145,12 +207,61 @@ func (c *Client) GetDBaaS(publicCloudId int64, publicCloudProjectId int64, DBaaS
 
 // GetDBaasScheduleBackup implements dbaas.Api.
 func (c *Client) GetDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, id int64) (*dbaas.DBaasBackupSchedule, error) {
-	return nil, nil
+	key := fmt.Sprintf("%d", id)
+	obj, err := getFromCache[*dbaas.DBaasBackupSchedule](key)
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }
 
 // GetDbaasPack implements dbaas.Api.
 func (c *Client) GetDbaasPack(params dbaas.PackFilter) (*dbaas.Pack, error) {
-	return nil, nil
+	packs, ok := c.getPacks()[params.DbType]
+	if !ok {
+		return nil, fmt.Errorf("The selected filter.type is invalid.")
+	}
+
+	filteredPacks := lo.Filter(packs, func(pack *dbaas.Pack, _ int) bool {
+		found := true
+
+		if params.Group != nil && pack.Group != *params.Group {
+			found = false
+		}
+
+		if params.Name != nil && pack.Name != *params.Name {
+			found = false
+		}
+
+		if params.Instances != nil && pack.Instances != *params.Instances {
+			found = false
+		}
+
+		if params.Cpu != nil && pack.CPU != *params.Cpu {
+			found = false
+		}
+
+		if params.Ram != nil && pack.RAM != *params.Ram {
+			found = false
+		}
+
+		if params.Storage != nil && pack.Storage != *params.Storage {
+			found = false
+		}
+
+		return found
+	})
+
+	if len(filteredPacks) == 0 {
+		return nil, fmt.Errorf("pack not found")
+	}
+
+	if len(filteredPacks) > 1 {
+		return nil, fmt.Errorf("multiple packs found, please refine your search")
+	}
+
+	return filteredPacks[0], nil
 }
 
 // GetDbaasRegions implements dbaas.Api.
@@ -185,12 +296,49 @@ func (c *Client) PutConfiguration(publicCloudId int64, publicCloudProjectId int6
 
 // UpdateDBaaS implements dbaas.Api.
 func (c *Client) UpdateDBaaS(input *dbaas.DBaaS) (bool, error) {
-	return true, nil
+	// Checks
+	if input.Project.PublicCloudId == 0 {
+		return false, fmt.Errorf("dbaas is missing public cloud project id")
+	}
+	if input.Id == 0 {
+		return false, fmt.Errorf("dbaas is missing kaas id")
+	}
+	if input.PackId == 0 {
+		return false, fmt.Errorf("dbaas is missing pack id")
+	}
+	if input.Region != "" {
+		return false, fmt.Errorf("client cannot update region")
+	}
+
+	var obj = dbaas.DBaaS{
+		Id:      input.Id,
+		Project: input.Project,
+
+		Name:   input.Name,
+		PackId: input.PackId,
+	}
+
+	return true, updateCache(&obj)
 }
 
 // UpdateDBaasScheduleBackup implements dbaas.Api.
 func (c *Client) UpdateDBaasScheduleBackup(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, id int64, backupSchedules *dbaas.DBaasBackupSchedule) (bool, error) {
-	return true, nil
+	// Checks
+	if publicCloudProjectId == 0 {
+		return false, fmt.Errorf("dbaas backup schedule is missing public cloud project id")
+	}
+	if id == 0 {
+		return false, fmt.Errorf("dbaas backup schedule is missing kaas id")
+	}
+	if backupSchedules.ScheduledAt == nil {
+		return false, fmt.Errorf("dbaas backup schedule is missing scheduled_at")
+	}
+
+	if backupSchedules.Retention == nil {
+		return false, fmt.Errorf("dbaas backup schedule is retention schedule_at")
+	}
+
+	return true, updateCache(backupSchedules)
 }
 
 func New() *Client {

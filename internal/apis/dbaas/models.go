@@ -99,7 +99,7 @@ type DBaasBackupSchedule struct {
 	Name          *string `json:"name,omitempty"`
 	ScheduledAt   *string `json:"scheduled_at,omitempty"`
 	Retention     *int64  `json:"retention,omitempty"`
-	IsPitrEnabled *bool   `json:"is_pitr_enabled,omitempty"`
+	IsPitrEnabled bool    `json:"is_pitr_enabled"`
 }
 
 type DBaaSCreateInfo struct {
@@ -134,6 +134,10 @@ type DBaaSRestore struct {
 
 func (dbaas *DBaaS) Key() string {
 	return fmt.Sprintf("%d-%d-%d", dbaas.Project.PublicCloudId, dbaas.Project.ProjectId, dbaas.Id)
+}
+
+func (dbaas *DBaasBackupSchedule) Key() string {
+	return fmt.Sprintf("%d", *dbaas.Id)
 }
 
 type DBaaSProject struct {

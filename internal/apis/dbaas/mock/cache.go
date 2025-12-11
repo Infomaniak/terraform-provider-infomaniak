@@ -13,7 +13,7 @@ import (
 
 type DBaasObject interface {
 	Key() string
-	*dbaas.DBaaS
+	*dbaas.DBaaS | *dbaas.DBaasBackupSchedule
 }
 
 var (

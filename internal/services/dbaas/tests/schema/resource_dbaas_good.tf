@@ -26,11 +26,3 @@ resource "infomaniak_dbaas" "db" {
   ]
   pack_name = "essential-db-4"
 }
-
-
-data "infomaniak_dbaas" "db" {
-  public_cloud_id         = 42
-  public_cloud_project_id = 54
-  id                      = infomaniak_dbaas.db.id
-  ca                      = "rupityghldjhg"
-}
