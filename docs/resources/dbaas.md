@@ -33,6 +33,44 @@ resource "infomaniak_dbaas" "db-0" {
   type      = "mysql"
   version   = "8.0.42"
   region    = "dc4-a"
+
+  allowed_cidrs = [
+    "162.1.15.122/32",
+    "1.1.1.1",
+    "2345:425:2CA1:0000:0000:567:5673:23b5/64",
+  ]
+
+  configuration = {
+    connect_timeout = 300,
+    max_connections = 300,
+    sql_mode = [
+      "ERROR_FOR_DIVISION_BY_ZERO"
+    ]
+  }
+}
+```
+
+Be careful with `allowed_cidrs`:
+```hcl
+resource "infomaniak_dbaas" "db-0" {
+  public_cloud_id = xxxxx
+  public_cloud_project_id = yyyyy
+  
+  name      = "db-0"
+  pack_name = "pro-4"
+  type      = "mysql"
+  version   = "8.0.42"
+  region    = "dc4-a"
+
+  allowed_cidrs = [] // If you set an empty list here, it means no one can access it ! Even you !
+
+  configuration = {
+    connect_timeout = 300,
+    max_connections = 300,
+    sql_mode = [
+      "ERROR_FOR_DIVISION_BY_ZERO"
+    ]
+  }
 }
 ```
 
@@ -47,6 +85,8 @@ resource "infomaniak_dbaas" "db-0" {
 - `type` (String) The type of the database to use.
 - `version` (String) The version of the database to use.
 - `name` (String) The name of the DBaaS shown on the manager.
+- `allowed_cidrs` (List of String) The list of allowed cidrs to access to the database.
+- `configuration` (DynamicObject) Specific MySQL engine parameters. For available parameters, please refer to [this documentation](https://developer.infomaniak.com/docs/api/put/1/public_clouds/%7Bpublic_cloud_id%7D/projects/%7Bpublic_cloud_project_id%7D/dbaas/%7Bdbaas_id%7D/configurations). It needs to have at least one element.
 
 ### Read-Only
 
@@ -57,3 +97,4 @@ resource "infomaniak_dbaas" "db-0" {
 - `user` (String) The user to access the Database.
 - `password` (String, Sensitive) The password to access the Database.
 - `ca` (String) The database CA certificate.
+- `effective_configuration` (DynamicObject) Specific MySQL engine parameters on the API side, this is to account for defaulted values.

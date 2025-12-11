@@ -63,6 +63,8 @@ type DBaasDataModel struct {
 	Ca   types.String `tfsdk:"ca"`
 
 	AllowedCIDRs types.List `tfsdk:"allowed_cidrs"`
+
+	EffectiveConfiguration types.Dynamic `tfsdk:"effective_configuration"`
 }
 
 func (data *DBaasDataModel) fill(obj *dbaas.DBaaS) {
@@ -105,6 +107,18 @@ func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
+	newEffectiveConfig, diags := refreshEffectiveConfiguration(
+		d.client.DBaas,
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.Id.ValueInt64(),
+	)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	data.EffectiveConfiguration = newEffectiveConfig
 	data.fill(obj)
 
 	filteredIps, err := d.client.DBaas.GetIpFilters(

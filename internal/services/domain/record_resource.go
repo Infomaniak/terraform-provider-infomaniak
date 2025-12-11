@@ -104,8 +104,11 @@ func (r *recordResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 		return
 	}
 
-	computedTarget := plan.ComputeRawTarget()
-	plan.ComputedTarget = types.StringValue(computedTarget)
+	computedTarget, isKnown := plan.ComputeRawTarget()
+	plan.ComputedTarget = types.StringUnknown()
+	if isKnown {
+		plan.ComputedTarget = types.StringValue(computedTarget)
+	}
 
 	// Set the modified plan back
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
@@ -121,7 +124,7 @@ func (r *recordResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	rawTarget := data.ComputeRawTarget()
+	rawTarget, _ := data.ComputeRawTarget()
 
 	record, err := r.client.Domain.CreateRecord(
 		data.ZoneFqdn.ValueString(),
@@ -191,7 +194,7 @@ func (r *recordResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	rawTarget := data.ComputeRawTarget()
+	rawTarget, _ := data.ComputeRawTarget()
 
 	record, err := r.client.Domain.UpdateRecord(
 		data.ZoneFqdn.ValueString(),

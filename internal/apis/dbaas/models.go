@@ -64,7 +64,7 @@ type DBaaS struct {
 }
 
 type AllowedCIDRs struct {
-	IpFilters []string `json:"ip_filters,omitempty"`
+	IpFilters []string `json:"ip_filters"`
 }
 
 // avoid crashes when the backend returns [] instead of null when connection is not yet avaialble

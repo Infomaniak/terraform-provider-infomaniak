@@ -51,3 +51,4 @@ data "infomaniak_dbaas" "db-0" {
 - `port` (String) The port to access the Database.
 - `user` (String) The user to access the Database.
 - `password` (String, Sensitive) The Kubeconfig to access the Database.
+- `effective_configuration` (DynamicObject) The MySQL engine parameters on the API side.

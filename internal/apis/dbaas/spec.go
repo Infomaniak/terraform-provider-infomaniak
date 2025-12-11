@@ -8,6 +8,9 @@ type Api interface {
 	UpdateDBaaS(input *DBaaS) (bool, error)
 	DeleteDBaaS(publicCloudId int64, publicCloudProjectId int64, DBaaSId int64) (bool, error)
 
+	GetConfiguration(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) (map[string]any, error)
+	PutConfiguration(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, configuration map[string]any) (bool, error)
+
 	PatchIpFilters(publicCloudId int64, publicCloudProjectId int64, dbaasId int64, filters AllowedCIDRs) (bool, error)
 	GetIpFilters(publicCloudId int64, publicCloudProjectId int64, dbaasId int64) ([]string, error)
 

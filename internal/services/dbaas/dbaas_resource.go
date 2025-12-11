@@ -2,13 +2,18 @@ package dbaas
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/dbaas"
+	"terraform-provider-infomaniak/internal/dynamic"
 	"terraform-provider-infomaniak/internal/provider"
+	dbaasmigration "terraform-provider-infomaniak/internal/services/dbaas/dbaas_migration"
+	"terraform-provider-infomaniak/internal/utils"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -19,9 +24,10 @@ import (
 )
 
 var (
-	_ resource.Resource                = &dbaasResource{}
-	_ resource.ResourceWithConfigure   = &dbaasResource{}
-	_ resource.ResourceWithImportState = &dbaasResource{}
+	_ resource.Resource                 = &dbaasResource{}
+	_ resource.ResourceWithConfigure    = &dbaasResource{}
+	_ resource.ResourceWithImportState  = &dbaasResource{}
+	_ resource.ResourceWithUpgradeState = &dbaasResource{}
 )
 
 func NewDBaasResource() resource.Resource {
@@ -51,6 +57,9 @@ type DBaasModel struct {
 	Ca       types.String `tfsdk:"ca"`
 
 	AllowedCIDRs types.List `tfsdk:"allowed_cidrs"`
+
+	Configuration          types.Dynamic `tfsdk:"configuration"`
+	EffectiveConfiguration types.Dynamic `tfsdk:"effective_configuration"`
 }
 
 func (r *dbaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -75,6 +84,15 @@ func (r *dbaasResource) Configure(ctx context.Context, req resource.ConfigureReq
 	}
 
 	r.client = client
+}
+
+func (r *dbaasResource) UpgradeState(context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		0: {
+			PriorSchema:   dbaasmigration.GetV0Schema(),
+			StateUpgrader: dbaasmigration.StateUpgrader,
+		},
+	}
 }
 
 func (r *dbaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -136,6 +154,9 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	cidrs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
 	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &cidrs, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	allowedCIDRs := dbaas.AllowedCIDRs{
 		IpFilters: cidrs,
 	}
@@ -157,6 +178,46 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 		return
 	}
 
+	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
+		configuration, diags := utils.ConvertDynamicObjectToMapAny(data.Configuration)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		ok, err = r.client.DBaas.PutConfiguration(
+			data.PublicCloudId.ValueInt64(),
+			data.PublicCloudProjectId.ValueInt64(),
+			data.Id.ValueInt64(),
+			configuration,
+		)
+		if !ok && err == nil {
+			resp.Diagnostics.AddError("Unknown Settings error", "")
+			return
+		}
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error when updating DBaaS Settings",
+				err.Error(),
+			)
+			return
+		}
+	} else {
+		data.Configuration = types.DynamicNull()
+	}
+
+	newEffectiveConfig, diags := refreshEffectiveConfiguration(
+		r.client.DBaas,
+		data.PublicCloudId.ValueInt64(),
+		data.PublicCloudProjectId.ValueInt64(),
+		data.Id.ValueInt64(),
+	)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	data.EffectiveConfiguration = newEffectiveConfig
 	data.fill(dbaasObject)
 	data.Password = types.StringValue(createInfos.RootPassword)
 
@@ -204,6 +265,43 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	listFilteredIps, diags := types.ListValueFrom(ctx, types.StringType, filteredIps)
 	state.AllowedCIDRs = listFilteredIps
 	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	newEffectiveConfig, diags := refreshEffectiveConfiguration(
+		r.client.DBaas,
+		state.PublicCloudId.ValueInt64(),
+		state.PublicCloudProjectId.ValueInt64(),
+		state.Id.ValueInt64(),
+	)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Update values of configuration and effective_configuration
+	newEffectiveConfig, newConfig, diags := utils.ObjectStateManager(
+		ctx,
+		newEffectiveConfig,
+		state.EffectiveConfiguration,
+		state.Configuration,
+	)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	shouldUpdateConfiguration, diags := hasObjectChanged(state.Configuration, newConfig)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if shouldUpdateConfiguration {
+		state.Configuration = newConfig
+	}
+
+	state.EffectiveConfiguration = newEffectiveConfig
 
 	state.fill(dbaasObject)
 
@@ -287,6 +385,49 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	state.AllowedCIDRs = data.AllowedCIDRs
+
+	if !data.Configuration.IsNull() && !data.Configuration.IsUnknown() {
+		configuration, diags := utils.ConvertDynamicObjectToMapAny(data.Configuration)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		ok, err = r.client.DBaas.PutConfiguration(
+			state.PublicCloudId.ValueInt64(),
+			state.PublicCloudProjectId.ValueInt64(),
+			state.Id.ValueInt64(),
+			configuration,
+		)
+		if !ok && err == nil {
+			resp.Diagnostics.AddError("Unknown Settings error", "")
+			return
+		}
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error when updating DBaaS Settings",
+				err.Error(),
+			)
+			return
+		}
+
+		state.Configuration = data.Configuration
+	} else {
+		state.Configuration = types.DynamicNull()
+	}
+
+	newEffectiveConfig, diags := refreshEffectiveConfiguration(
+		r.client.DBaas,
+		state.PublicCloudId.ValueInt64(),
+		state.PublicCloudProjectId.ValueInt64(),
+		state.Id.ValueInt64(),
+	)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	state.EffectiveConfiguration = newEffectiveConfig
 	state.fill(dbaasObject)
 
 	// Save updated data into Terraform state
@@ -377,9 +518,57 @@ func (model *DBaasModel) fill(dbaas *dbaas.DBaaS) {
 		model.Host = types.StringValue(dbaas.Connection.Host)
 		model.Port = types.StringValue(dbaas.Connection.Port)
 		model.User = types.StringValue(dbaas.Connection.User)
-		model.Password = types.StringValue(dbaas.Connection.Password)
 		model.Ca = types.StringValue(dbaas.Connection.Ca)
+
+		if model.Password == types.StringNull() || model.Password == types.StringUnknown() {
+			model.Password = types.StringValue(dbaas.Connection.Password)
+		}
 	}
+}
+
+func refreshEffectiveConfiguration(apiClient dbaas.Api, publicCloudId, publicCloudProjectId, id int64) (types.Dynamic, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	effectiveSettings, err := apiClient.GetConfiguration(
+		publicCloudId,
+		publicCloudProjectId,
+		id,
+	)
+	if err != nil {
+		diags.AddError(
+			"Error when reading DBaaS settings",
+			err.Error(),
+		)
+		return types.DynamicNull(), diags
+	}
+
+	jsonEffectiveSettigs, err := json.Marshal(effectiveSettings)
+	if err != nil {
+		diags.AddError("could not marshall", "effective settings json marshall fail")
+	}
+	dynamicObj, err := dynamic.FromJSONImplied(jsonEffectiveSettigs)
+	if err != nil {
+		diags.AddError("could not create dynamic object", "effective settings dynamic object from json creation failure")
+	}
+
+	return dynamicObj, diags
+}
+
+// hasObjectChanged convert the state configuration and newly generated configuration
+// It then compares equivalent values ("100" is equal to 100) and tells if we need to update the state
+func hasObjectChanged(stateConfig, newConfig types.Dynamic) (bool, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	newConfigMap, d := utils.ConvertDynamicObjectToMapAny(newConfig)
+	diags.Append(d...)
+
+	newConfigConverted := utils.ConvertIntsToStrings(newConfigMap)
+
+	stateConfigMap, d := utils.ConvertDynamicObjectToMapAny(stateConfig)
+	diags.Append(d...)
+
+	stateConfigConverted := utils.ConvertIntsToStrings(stateConfigMap)
+
+	return !reflect.DeepEqual(newConfigConverted, stateConfigConverted), diags
 }
 
 func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS, id int64) (*dbaas.DBaaS, error) {

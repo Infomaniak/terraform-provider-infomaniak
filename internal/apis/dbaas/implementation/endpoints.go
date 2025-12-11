@@ -7,8 +7,9 @@ var (
 	EndpointPacks   = "/1/public_clouds/dbaas/packs"
 	EndpointPack    = "/1/public_clouds/dbaas/packs/1"
 
-	EndpointDatabases = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas"
-	EndpointDatabase  = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas/{dbaas_id}"
+	EndpointDatabases             = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas"
+	EndpointDatabase              = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas/{dbaas_id}"
+	EndpointDatabaseConfiguration = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas/{dbaas_id}/configurations"
 
 	EndpointDatabaseIpFilter = "/1/public_clouds/{public_cloud_id}/projects/{public_cloud_project_id}/dbaas/{dbaas_id}/ip_filters"
 

@@ -3,6 +3,7 @@ package apis
 import (
 	"terraform-provider-infomaniak/internal/apis/dbaas"
 	implem_dbaas "terraform-provider-infomaniak/internal/apis/dbaas/implementation"
+	mock_dbaas "terraform-provider-infomaniak/internal/apis/dbaas/mock"
 	"terraform-provider-infomaniak/internal/apis/domain"
 	"terraform-provider-infomaniak/internal/apis/kaas"
 
@@ -22,7 +23,8 @@ type Client struct {
 // It is used for testing or dryrunning
 func NewMockClient() *Client {
 	return &Client{
-		Kaas: mock_kaas.New(),
+		Kaas:  mock_kaas.New(),
+		DBaas: mock_dbaas.New(),
 	}
 }
 
