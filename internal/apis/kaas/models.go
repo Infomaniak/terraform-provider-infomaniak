@@ -7,9 +7,44 @@ import (
 )
 
 type KaasPack struct {
-	Id          int64  `json:"kaas_pack_id,omitempty"`
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
+	Id              int64       `json:"kaas_pack_id,omitempty"`
+	Name            string      `json:"name,omitempty"`
+	Description     string      `json:"description,omitempty"`
+	PricePerHour    *RatesModel `json:"price_per_hour,omitempty"`
+	LimitPerProject int64       `json:"limit_per_project,omitempty"`
+	IsActive        bool        `json:"is_active,omitempty"`
+}
+
+type RatesModel struct {
+	CHF float64 `json:"CHF,omitempty"`
+	EUR float64 `json:"EUR,omitempty"`
+}
+
+type KaasFlavorLookupParameters struct {
+	Name              *string
+	Cpu               *int64
+	Ram               *int64
+	Storage           *int64
+	IsMemoryOptimized *bool
+	IsIopsOptimized   *bool
+	IsGpuOptimized    *bool
+}
+
+type KaasFlavor struct {
+	Name              string        `json:"name,omitempty"`
+	Cpu               int64         `json:"cpu,omitempty"`
+	Ram               int64         `json:"ram,omitempty"`
+	Storage           int64         `json:"storage,omitempty"`
+	IsAvailable       bool          `json:"is_available,omitempty"`
+	IsMemoryOptimized bool          `json:"is_memory_optimized,omitempty"`
+	IsIopsOptimized   bool          `json:"is_iops_optimized,omitempty"`
+	IsGpuOptimized    bool          `json:"is_gpu_optimized,omitempty"`
+	Rates             *PricingModel `json:"rates,omitempty"`
+}
+
+type PricingModel struct {
+	HourlyExcludingTaxes float64 `json:"hour_excl_tax,omitempty"`
+	HourlyIncludingTaxes float64 `json:"hour_incl_tax,omitempty"`
 }
 
 type Apiserver struct {
