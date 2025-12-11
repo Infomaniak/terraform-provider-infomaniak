@@ -136,7 +136,7 @@ func (c *Client) CreateDBaasScheduleBackup(publicCloudId int64, publicCloudProje
 	id := rand.Int64()
 	backupSchedules.Id = &id
 
-	name := fmt.Sprintf("%d", rand.Float64())
+	name := fmt.Sprintf("%f", rand.Float64())
 	backupSchedules.Name = &name
 
 	return id, addToCache(backupSchedules)
