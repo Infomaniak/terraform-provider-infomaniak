@@ -240,21 +240,21 @@ func (state *KaasModel) canSetApiserverToNil() bool {
 }
 
 func (r *kaasResource) waitUntilActive(ctx context.Context, kaas *kaas.Kaas, id int64) (*kaas.Kaas, error) {
+	t := time.NewTicker(5 * time.Second)
 	for {
-		found, err := r.client.Kaas.GetKaas(kaas.Project.PublicCloudId, kaas.Project.ProjectId, id)
-		if err != nil {
-			return nil, err
-		}
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-t.C:
+			found, err := r.client.Kaas.GetKaas(kaas.Project.PublicCloudId, kaas.Project.ProjectId, id)
+			if err != nil {
+				return nil, err
+			}
 
-		if ctx.Err() != nil {
-			return nil, nil
+			if found.Status == "Active" {
+				return found, nil
+			}
 		}
-
-		if found.Status == "Active" {
-			return found, nil
-		}
-
-		time.Sleep(5 * time.Second)
 	}
 }
 
