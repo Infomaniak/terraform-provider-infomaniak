@@ -150,7 +150,7 @@ func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data Kaa
 	for {
 		select {
 		case <-ctx.Done():
-			return nil, nil
+			return nil, ctx.Err()
 		case <-ticker.C:
 			found, err := r.client.Kaas.GetInstancePool(
 				data.PublicCloudId.ValueInt64(),
