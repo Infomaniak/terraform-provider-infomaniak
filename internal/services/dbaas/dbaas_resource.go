@@ -576,15 +576,11 @@ func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS,
 	for {
 		select {
 		case <-ctx.Done():
-			return nil, nil
+			return nil, ctx.Err()
 		case <-t.C:
 			found, err := r.client.DBaas.GetDBaaS(dbaas.Project.PublicCloudId, dbaas.Project.ProjectId, id)
 			if err != nil {
 				return nil, err
-			}
-
-			if ctx.Err() != nil {
-				return nil, nil
 			}
 
 			if found.Status == "ready" {
