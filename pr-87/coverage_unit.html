@@ -4887,15 +4887,11 @@ func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS,
         for </span><span class="cov0" title="0">{
                 select </span>{
                 case &lt;-ctx.Done():<span class="cov0" title="0">
-                        return nil, nil</span>
+                        return nil, ctx.Err()</span>
                 case &lt;-t.C:<span class="cov0" title="0">
                         found, err := r.client.DBaas.GetDBaaS(dbaas.Project.PublicCloudId, dbaas.Project.ProjectId, id)
                         if err != nil </span><span class="cov0" title="0">{
                                 return nil, err
-                        }</span>
-
-                        <span class="cov0" title="0">if ctx.Err() != nil </span><span class="cov0" title="0">{
-                                return nil, nil
                         }</span>
 
                         <span class="cov0" title="0">if found.Status == "ready" </span><span class="cov0" title="0">{
@@ -6538,7 +6534,7 @@ func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data Kaa
         for </span><span class="cov0" title="0">{
                 select </span>{
                 case &lt;-ctx.Done():<span class="cov0" title="0">
-                        return nil, nil</span>
+                        return nil, ctx.Err()</span>
                 case &lt;-ticker.C:<span class="cov0" title="0">
                         found, err := r.client.Kaas.GetInstancePool(
                                 data.PublicCloudId.ValueInt64(),
@@ -7082,21 +7078,21 @@ func (state *KaasModel) canSetApiserverToNil() bool <span class="cov0" title="0"
 }</span>
 
 func (r *kaasResource) waitUntilActive(ctx context.Context, kaas *kaas.Kaas, id int64) (*kaas.Kaas, error) <span class="cov0" title="0">{
+        t := time.NewTicker(5 * time.Second)
         for </span><span class="cov0" title="0">{
-                found, err := r.client.Kaas.GetKaas(kaas.Project.PublicCloudId, kaas.Project.ProjectId, id)
-                if err != nil </span><span class="cov0" title="0">{
-                        return nil, err
-                }</span>
+                select </span>{
+                case &lt;-ctx.Done():<span class="cov0" title="0">
+                        return nil, ctx.Err()</span>
+                case &lt;-t.C:<span class="cov0" title="0">
+                        found, err := r.client.Kaas.GetKaas(kaas.Project.PublicCloudId, kaas.Project.ProjectId, id)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return nil, err
+                        }</span>
 
-                <span class="cov0" title="0">if ctx.Err() != nil </span><span class="cov0" title="0">{
-                        return nil, nil
-                }</span>
-
-                <span class="cov0" title="0">if found.Status == "Active" </span><span class="cov0" title="0">{
-                        return found, nil
-                }</span>
-
-                <span class="cov0" title="0">time.Sleep(5 * time.Second)</span>
+                        <span class="cov0" title="0">if found.Status == "Active" </span><span class="cov0" title="0">{
+                                return found, nil
+                        }</span>
+                }
         }
 }
 

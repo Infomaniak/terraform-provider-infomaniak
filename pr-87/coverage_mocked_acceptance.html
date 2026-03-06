@@ -145,7 +145,7 @@
 				
 				<option value="file44">terraform-provider-infomaniak/internal/services/kaas/kaas_instance_pool_resource_schema.go (100.0%)</option>
 				
-				<option value="file45">terraform-provider-infomaniak/internal/services/kaas/kaas_resource.go (41.5%)</option>
+				<option value="file45">terraform-provider-infomaniak/internal/services/kaas/kaas_resource.go (42.1%)</option>
 				
 				<option value="file46">terraform-provider-infomaniak/internal/services/kaas/kaas_resource_schema.go (100.0%)</option>
 				
@@ -779,7 +779,7 @@ func init() <span class="cov10" title="449">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="446">{
+        if err == nil </span><span class="cov9" title="444">{
                 // Delete DBaaS cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -789,17 +789,17 @@ func init() <span class="cov10" title="449">{
 
         // Try to get cache
         <span class="cov10" title="449">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="446">{
+        if err == nil </span><span class="cov9" title="444">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov2" title="3">{
+                if err != nil </span><span class="cov3" title="5">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="446">return</span>
+                <span class="cov9" title="444">return</span>
         }
 
         // Create DBaaS tmp file for caching
-        <span class="cov2" title="3">_, err = os.Create(mockedApiStatePath)
+        <span class="cov3" title="5">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -2074,7 +2074,7 @@ func init() <span class="cov10" title="449">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="443">{
+        if err == nil </span><span class="cov9" title="437">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -2084,17 +2084,17 @@ func init() <span class="cov10" title="449">{
 
         // Try to get cache
         <span class="cov10" title="449">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="443">{
+        if err == nil </span><span class="cov9" title="437">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov3" title="6">{
+                if err != nil </span><span class="cov4" title="12">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="443">return</span>
+                <span class="cov9" title="437">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov3" title="6">_, err = os.Create(mockedApiStatePath)
+        <span class="cov4" title="12">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -4941,15 +4941,11 @@ func (r *dbaasResource) waitUntilActive(ctx context.Context, dbaas *dbaas.DBaaS,
         for </span><span class="cov2" title="4">{
                 select </span>{
                 case &lt;-ctx.Done():<span class="cov0" title="0">
-                        return nil, nil</span>
+                        return nil, ctx.Err()</span>
                 case &lt;-t.C:<span class="cov2" title="4">
                         found, err := r.client.DBaas.GetDBaaS(dbaas.Project.PublicCloudId, dbaas.Project.ProjectId, id)
                         if err != nil </span><span class="cov0" title="0">{
                                 return nil, err
-                        }</span>
-
-                        <span class="cov2" title="4">if ctx.Err() != nil </span><span class="cov0" title="0">{
-                                return nil, nil
                         }</span>
 
                         <span class="cov2" title="4">if found.Status == "ready" </span><span class="cov2" title="4">{
@@ -6592,7 +6588,7 @@ func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data Kaa
         for </span><span class="cov3" title="6">{
                 select </span>{
                 case &lt;-ctx.Done():<span class="cov0" title="0">
-                        return nil, nil</span>
+                        return nil, ctx.Err()</span>
                 case &lt;-ticker.C:<span class="cov3" title="6">
                         found, err := r.client.Kaas.GetInstancePool(
                                 data.PublicCloudId.ValueInt64(),
@@ -7136,21 +7132,21 @@ func (state *KaasModel) canSetApiserverToNil() bool <span class="cov0" title="0"
 }</span>
 
 func (r *kaasResource) waitUntilActive(ctx context.Context, kaas *kaas.Kaas, id int64) (*kaas.Kaas, error) <span class="cov4" title="12">{
+        t := time.NewTicker(5 * time.Second)
         for </span><span class="cov4" title="12">{
-                found, err := r.client.Kaas.GetKaas(kaas.Project.PublicCloudId, kaas.Project.ProjectId, id)
-                if err != nil </span><span class="cov0" title="0">{
-                        return nil, err
-                }</span>
+                select </span>{
+                case &lt;-ctx.Done():<span class="cov0" title="0">
+                        return nil, ctx.Err()</span>
+                case &lt;-t.C:<span class="cov4" title="12">
+                        found, err := r.client.Kaas.GetKaas(kaas.Project.PublicCloudId, kaas.Project.ProjectId, id)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return nil, err
+                        }</span>
 
-                <span class="cov4" title="12">if ctx.Err() != nil </span><span class="cov0" title="0">{
-                        return nil, nil
-                }</span>
-
-                <span class="cov4" title="12">if found.Status == "Active" </span><span class="cov4" title="12">{
-                        return found, nil
-                }</span>
-
-                <span class="cov0" title="0">time.Sleep(5 * time.Second)</span>
+                        <span class="cov4" title="12">if found.Status == "Active" </span><span class="cov4" title="12">{
+                                return found, nil
+                        }</span>
+                }
         }
 }
 
