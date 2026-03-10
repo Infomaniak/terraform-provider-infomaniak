@@ -6063,6 +6063,11 @@ func getKaasDataSourceSchema() schema.Schema <span class="cov0" title="0">{
                                 Description:         "Kubernetes Apiserver editable params",
                                 MarkdownDescription: "Kubernetes Apiserver editable params",
                                 Attributes: map[string]schema.Attribute{
+                                        "acl_rules": schema.ListAttribute{
+                                                Computed:            true,
+                                                ElementType:         types.StringType,
+                                                MarkdownDescription: "List of CIDR blocks allowed to access to control plane. You can also set specific IPs (eg: 1.2.3.4)",
+                                        },
                                         "params": schema.MapAttribute{
                                                 ElementType:         types.StringType,
                                                 Optional:            true,
@@ -7339,6 +7344,7 @@ func (model *KaasModel) fill(kaas *kaas.Kaas) <span class="cov0" title="0">{
 import (
         "github.com/hashicorp/terraform-plugin-framework/resource/schema"
         "github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+        "github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
         "github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
         "github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
         "github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -7416,6 +7422,14 @@ func getKaasResourceSchema() schema.Schema <span class="cov0" title="0">{
                         "apiserver": schema.SingleNestedAttribute{
                                 MarkdownDescription: "Kubernetes Apiserver editable params",
                                 Attributes: map[string]schema.Attribute{
+                                        "acl_rules": schema.ListAttribute{
+                                                Optional:            true,
+                                                ElementType:         types.StringType,
+                                                MarkdownDescription: "List of CIDR blocks allowed to access to control plane. You can also set specific IPs (eg: 1.2.3.4)",
+                                                PlanModifiers: []planmodifier.List{
+                                                        listplanmodifier.UseStateForUnknown(),
+                                                },
+                                        },
                                         "params": schema.MapAttribute{
                                                 Optional:            true,
                                                 ElementType:         types.StringType,
