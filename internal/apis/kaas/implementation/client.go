@@ -306,7 +306,7 @@ func (client *Client) GetApiserverParams(publicCloudId int64, projectId int64, k
 	return result.Data, nil
 }
 
-func (client *Client) PatchIPFilters(cidrs []string, publicCloudId int, projectId int, kaasId int) (bool, error) {
+func (client *Client) PatchIPFilters(cidrs []string, publicCloudId int64, projectId int64, kaasId int64) (bool, error) {
 	var result helpers.NormalizedApiResponse[bool]
 	body := map[string][]string{
 		"ip_filters": cidrs,
@@ -316,7 +316,6 @@ func (client *Client) PatchIPFilters(cidrs []string, publicCloudId int, projectI
 		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
 		SetBody(body).
-		SetDebug(true).
 		SetResult(&result).
 		SetError(&result).
 		Put(EndpointIPFilter)
@@ -332,13 +331,12 @@ func (client *Client) PatchIPFilters(cidrs []string, publicCloudId int, projectI
 	return result.Data, nil
 }
 
-func (client *Client) GetIPFilters(publicCloudId int, projectId int, kaasId int) ([]string, error) {
+func (client *Client) GetIPFilters(publicCloudId int64, projectId int64, kaasId int64) ([]string, error) {
 	var result helpers.NormalizedApiResponse[[]string]
 	resp, err := client.resty.R().
 		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
 		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
-		SetDebug(true).
 		SetResult(&result).
 		SetError(&result).
 		Get(EndpointIPFilter)

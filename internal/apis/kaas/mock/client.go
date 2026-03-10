@@ -282,10 +282,10 @@ func (c *Client) GetApiserverParams(publicCloudId int64, projectId int64, kaasId
 func (c *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int64, projectId int64, kaasId int64) (bool, error) {
 	return true, nil
 }
-func (client *Client) PatchIPFilters(cidrs []string, publicCloudId int, projectId int, kaasId int) (bool, error) {
+func (client *Client) PatchIPFilters(cidrs []string, publicCloudId int64, projectId int64, kaasId int64) (bool, error) {
 	return true, nil
 }
 
-func (client *Client) GetIPFilters(publicCloudId int, projectId int, kaasId int) ([]string, error) {
+func (client *Client) GetIPFilters(publicCloudId int64, projectId int64, kaasId int64) ([]string, error) {
 	return nil, nil
 }

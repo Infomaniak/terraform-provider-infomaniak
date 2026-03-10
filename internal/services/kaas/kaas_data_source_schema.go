@@ -53,6 +53,11 @@ func getKaasDataSourceSchema() schema.Schema {
 				Description:         "Kubernetes Apiserver editable params",
 				MarkdownDescription: "Kubernetes Apiserver editable params",
 				Attributes: map[string]schema.Attribute{
+					"acl_rules": schema.ListAttribute{
+						Computed:            true,
+						ElementType:         types.StringType,
+						MarkdownDescription: "List of CIDR blocks allowed to access to control plane. You can also set specific IPs (eg: 1.2.3.4)",
+					},
 					"params": schema.MapAttribute{
 						ElementType:         types.StringType,
 						Optional:            true,

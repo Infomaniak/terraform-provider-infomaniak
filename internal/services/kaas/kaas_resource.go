@@ -343,7 +343,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		state.fillApiserverState(ctx, apiserverParams)
 	}
 
-	filteredIps, err := r.client.Kaas.GetIPFilters(int(state.PublicCloudId.ValueInt64()), int(state.PublicCloudProjectId.ValueInt64()), kaasObject.Id)
+	filteredIps, err := r.client.Kaas.GetIPFilters(state.PublicCloudId.ValueInt64(), state.PublicCloudProjectId.ValueInt64(), kaasObject.Id)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Could not get IP filter",
