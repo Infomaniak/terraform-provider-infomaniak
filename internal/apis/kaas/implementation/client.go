@@ -305,3 +305,48 @@ func (client *Client) GetApiserverParams(publicCloudId int64, projectId int64, k
 
 	return result.Data, nil
 }
+
+func (client *Client) PatchIPFilters(cidrs []string, publicCloudId int64, projectId int64, kaasId int64) (bool, error) {
+	var result helpers.NormalizedApiResponse[bool]
+	body := map[string][]string{
+		"ip_filters": cidrs,
+	}
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
+		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
+		SetBody(body).
+		SetResult(&result).
+		SetError(&result).
+		Put(EndpointIPFilter)
+
+	if err != nil {
+		return false, err
+	}
+
+	if resp.IsError() {
+		return false, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) GetIPFilters(publicCloudId int64, projectId int64, kaasId int64) ([]string, error) {
+	var result helpers.NormalizedApiResponse[[]string]
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
+		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointIPFilter)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	return result.Data, nil
+}

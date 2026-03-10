@@ -102,6 +102,15 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		data.fillApiserverState(ctx, apiserverParams)
 	}
 
+	filteredIps, err := d.client.Kaas.GetIPFilters(data.PublicCloudId.ValueInt64(), data.PublicCloudProjectId.ValueInt64(), data.Id.ValueInt64())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Could not get IP filter",
+			err.Error(),
+		)
+	}
+	resp.Diagnostics.Append(data.fillFilteredCidr(ctx, filteredIps)...)
+
 	// Set state
 	diags := resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
