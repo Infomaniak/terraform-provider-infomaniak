@@ -779,7 +779,7 @@ func init() <span class="cov10" title="319">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="312">{
+        if err == nil </span><span class="cov9" title="316">{
                 // Delete DBaaS cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -789,17 +789,17 @@ func init() <span class="cov10" title="319">{
 
         // Try to get cache
         <span class="cov10" title="319">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="312">{
+        if err == nil </span><span class="cov9" title="316">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov4" title="7">{
+                if err != nil </span><span class="cov2" title="3">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="312">return</span>
+                <span class="cov9" title="316">return</span>
         }
 
         // Create DBaaS tmp file for caching
-        <span class="cov4" title="7">_, err = os.Create(mockedApiStatePath)
+        <span class="cov2" title="3">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -1823,7 +1823,6 @@ func (client *Client) PatchIPFilters(cidrs []string, publicCloudId int64, projec
                 SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
                 SetPathParam("kaas_id", fmt.Sprint(kaasId)).
                 SetBody(body).
-                SetDebug(true).
                 SetResult(&amp;result).
                 SetError(&amp;result).
                 Put(EndpointIPFilter)
@@ -1845,7 +1844,6 @@ func (client *Client) GetIPFilters(publicCloudId int64, projectId int64, kaasId 
                 SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
                 SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
                 SetPathParam("kaas_id", fmt.Sprint(kaasId)).
-                SetDebug(true).
                 SetResult(&amp;result).
                 SetError(&amp;result).
                 Get(EndpointIPFilter)
@@ -1969,7 +1967,7 @@ func init() <span class="cov10" title="319">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="315">{
+        if err == nil </span><span class="cov9" title="299">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1979,17 +1977,17 @@ func init() <span class="cov10" title="319">{
 
         // Try to get cache
         <span class="cov10" title="319">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="315">{
+        if err == nil </span><span class="cov9" title="299">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov3" title="4">{
+                if err != nil </span><span class="cov5" title="20">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="315">return</span>
+                <span class="cov9" title="299">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov3" title="4">_, err = os.Create(mockedApiStatePath)
+        <span class="cov5" title="20">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
