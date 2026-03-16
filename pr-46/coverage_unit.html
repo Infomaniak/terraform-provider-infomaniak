@@ -1759,7 +1759,7 @@ func (client *Client) GetApiserverParams(publicCloudId int64, projectId int64, k
         <span class="cov0" title="0">return result.Data, nil</span>
 }
 
-func (client *Client) PatchIPFilters(cidrs []string, publicCloudId int64, projectId int64, kaasId int64) (bool, error) <span class="cov0" title="0">{
+func (client *Client) PutIPFilters(cidrs []string, publicCloudId int64, projectId int64, kaasId int64) (bool, error) <span class="cov0" title="0">{
         var result helpers.NormalizedApiResponse[bool]
         body := map[string][]string{
                 "ip_filters": cidrs,
@@ -2237,7 +2237,7 @@ func (c *Client) GetApiserverParams(publicCloudId int64, projectId int64, kaasId
 func (c *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int64, projectId int64, kaasId int64) (bool, error) <span class="cov0" title="0">{
         return true, nil
 }</span>
-func (client *Client) PatchIPFilters(cidrs []string, publicCloudId int64, projectId int64, kaasId int64) (bool, error) <span class="cov0" title="0">{
+func (client *Client) PutIPFilters(cidrs []string, publicCloudId int64, projectId int64, kaasId int64) (bool, error) <span class="cov0" title="0">{
         return true, nil
 }</span>
 
@@ -7190,7 +7190,7 @@ func (r *kaasResource) applyIPFilters(ctx context.Context, data *KaasModel, publ
                 return
         }</span>
 
-        <span class="cov0" title="0">ok, err := r.client.Kaas.PatchIPFilters(allowedCidrs, publicCloudId, projectId, kaasId)
+        <span class="cov0" title="0">ok, err := r.client.Kaas.PutIPFilters(allowedCidrs, publicCloudId, projectId, kaasId)
         if !ok || err != nil </span><span class="cov0" title="0">{
                 var errMsg string
                 if err != nil </span><span class="cov0" title="0">{
