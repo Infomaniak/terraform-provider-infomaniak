@@ -1759,7 +1759,7 @@ func (client *Client) GetApiserverParams(publicCloudId int64, projectId int64, k
         <span class="cov0" title="0">return result.Data, nil</span>
 }
 
-func (client *Client) PutIPFilters(cidrs []string, publicCloudId int64, projectId int64, kaasId int64) (bool, error) <span class="cov0" title="0">{
+func (client *Client) PutIPFilters(cidrs []string, publicCloudId, projectId, kaasId int64) (bool, error) <span class="cov0" title="0">{
         var result helpers.NormalizedApiResponse[bool]
         body := map[string][]string{
                 "ip_filters": cidrs,
@@ -1784,7 +1784,7 @@ func (client *Client) PutIPFilters(cidrs []string, publicCloudId int64, projectI
         <span class="cov0" title="0">return result.Data, nil</span>
 }
 
-func (client *Client) GetIPFilters(publicCloudId int64, projectId int64, kaasId int64) ([]string, error) <span class="cov0" title="0">{
+func (client *Client) GetIPFilters(publicCloudId, projectId, kaasId int64) ([]string, error) <span class="cov0" title="0">{
         var result helpers.NormalizedApiResponse[[]string]
         resp, err := client.resty.R().
                 SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).

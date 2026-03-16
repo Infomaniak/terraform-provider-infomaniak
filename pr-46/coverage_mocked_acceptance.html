@@ -1813,7 +1813,7 @@ func (client *Client) GetApiserverParams(publicCloudId int64, projectId int64, k
         <span class="cov0" title="0">return result.Data, nil</span>
 }
 
-func (client *Client) PutIPFilters(cidrs []string, publicCloudId int64, projectId int64, kaasId int64) (bool, error) <span class="cov0" title="0">{
+func (client *Client) PutIPFilters(cidrs []string, publicCloudId, projectId, kaasId int64) (bool, error) <span class="cov0" title="0">{
         var result helpers.NormalizedApiResponse[bool]
         body := map[string][]string{
                 "ip_filters": cidrs,
@@ -1838,7 +1838,7 @@ func (client *Client) PutIPFilters(cidrs []string, publicCloudId int64, projectI
         <span class="cov0" title="0">return result.Data, nil</span>
 }
 
-func (client *Client) GetIPFilters(publicCloudId int64, projectId int64, kaasId int64) ([]string, error) <span class="cov0" title="0">{
+func (client *Client) GetIPFilters(publicCloudId, projectId, kaasId int64) ([]string, error) <span class="cov0" title="0">{
         var result helpers.NormalizedApiResponse[[]string]
         resp, err := client.resty.R().
                 SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
@@ -1967,7 +1967,7 @@ func init() <span class="cov10" title="319">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="309">{
+        if err == nil </span><span class="cov9" title="305">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1977,17 +1977,17 @@ func init() <span class="cov10" title="319">{
 
         // Try to get cache
         <span class="cov10" title="319">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="309">{
+        if err == nil </span><span class="cov9" title="305">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov4" title="10">{
+                if err != nil </span><span class="cov5" title="13">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="309">return</span>
+                <span class="cov9" title="305">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov4" title="10">_, err = os.Create(mockedApiStatePath)
+        <span class="cov5" title="14">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
