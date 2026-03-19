@@ -5997,10 +5997,13 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
                 )
                 return
         }</span>
-        <span class="cov0" title="0">resp.Diagnostics.Append(data.fillFilteredCidr(ctx, ipFilters)...)
+
+        <span class="cov0" title="0">if data.Apiserver != nil </span><span class="cov0" title="0">{
+                resp.Diagnostics.Append(data.fillFilteredCidr(ctx, ipFilters)...)
+        }</span>
 
         // Set state
-        diags := resp.State.Set(ctx, &amp;data)
+        <span class="cov0" title="0">diags := resp.State.Set(ctx, &amp;data)
         resp.Diagnostics.Append(diags...)
         if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
                 return
@@ -6943,11 +6946,9 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
                         return
                 }</span>
 
-                <span class="cov0" title="0">if !data.Apiserver.IpFilters.IsNull() </span><span class="cov0" title="0">{
-                        r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, kaasId, &amp;resp.Diagnostics)
-                }</span>
+                <span class="cov0" title="0">r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, kaasId, &amp;resp.Diagnostics)
 
-                <span class="cov0" title="0">data.fillApiserverState(ctx, apiserverParamsInput)</span>
+                data.fillApiserverState(ctx, apiserverParamsInput)</span>
         }
 
         // Save data into Terraform state
@@ -6977,11 +6978,7 @@ func (state *KaasModel) fillFilteredCidr(ctx context.Context, cidrs []netip.Pref
         }</span>
 
         <span class="cov0" title="0">listValue, diags := types.ListValueFrom(ctx, types.StringType, convertedCirds)
-
-        if state.Apiserver == nil </span><span class="cov0" title="0">{
-                state.Apiserver = &amp;ApiserverModel{}
-        }</span>
-        <span class="cov0" title="0">state.Apiserver.IpFilters = listValue
+        state.Apiserver.IpFilters = listValue
         diagnostics = diags
 
         return diagnostics</span>
@@ -7101,18 +7098,19 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
                 state.fillApiserverState(ctx, apiserverParams)
         }</span>
 
-        <span class="cov0" title="0">ipFilters, err := r.client.Kaas.GetIPFilters(state.PublicCloudId.ValueInt64(), state.PublicCloudProjectId.ValueInt64(), kaasObject.Id)
-        if err != nil </span><span class="cov0" title="0">{
-                resp.Diagnostics.AddError(
-                        "Could not get IP filter",
-                        err.Error(),
-                )
-                return
-        }</span>
-        <span class="cov0" title="0">resp.Diagnostics.Append(state.fillFilteredCidr(ctx, ipFilters)...)
-
+        <span class="cov0" title="0">if state.Apiserver != nil </span><span class="cov0" title="0">{
+                ipFilters, err := r.client.Kaas.GetIPFilters(state.PublicCloudId.ValueInt64(), state.PublicCloudProjectId.ValueInt64(), kaasObject.Id)
+                if err != nil </span><span class="cov0" title="0">{
+                        resp.Diagnostics.AddError(
+                                "Could not get IP filter",
+                                err.Error(),
+                        )
+                        return
+                }</span>
+                <span class="cov0" title="0">resp.Diagnostics.Append(state.fillFilteredCidr(ctx, ipFilters)...)</span>
+        }
         // Save updated data into Terraform state
-        resp.Diagnostics.Append(resp.State.Set(ctx, &amp;state)...)</span>
+        <span class="cov0" title="0">resp.Diagnostics.Append(resp.State.Set(ctx, &amp;state)...)</span>
 }
 
 func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) <span class="cov0" title="0">{
@@ -7154,10 +7152,8 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
         if data.Apiserver != nil </span><span class="cov0" title="0">{
                 r.handleApiserverConfig(ctx, &amp;data, input, resp)
 
-                if !data.Apiserver.IpFilters.IsNull() </span><span class="cov0" title="0">{
-                        r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, input.Id, &amp;resp.Diagnostics)
-                }</span>
-        }
+                r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, input.Id, &amp;resp.Diagnostics)
+        }</span>
 
         <span class="cov0" title="0">resp.Diagnostics.Append(resp.State.Set(ctx, &amp;data)...)</span>
 }
@@ -7442,6 +7438,7 @@ func getKaasResourceSchema() schema.Schema <span class="cov0" title="0">{
                         },
                         "apiserver": schema.SingleNestedAttribute{
                                 MarkdownDescription: "Kubernetes Apiserver editable params",
+                                Optional:            true,
                                 Attributes: map[string]schema.Attribute{
                                         "ip_filters": schema.ListAttribute{
                                                 Optional:            true,
@@ -7552,7 +7549,6 @@ func getKaasResourceSchema() schema.Schema <span class="cov0" title="0">{
                                                 },
                                         },
                                 },
-                                Optional: true,
                         },
                 },
                 MarkdownDescription: "The kaas resource allows the user to manage a kaas project",
