@@ -6979,9 +6979,7 @@ func (state *KaasModel) fillFilteredCidr(ctx context.Context, cidrs []netip.Pref
         <span class="cov0" title="0">listValue, diags := types.ListValueFrom(ctx, types.StringType, convertedCirds)
 
         if state.Apiserver == nil </span><span class="cov0" title="0">{
-                state.Apiserver = &amp;ApiserverModel{
-                        Params: types.MapNull(types.StringType),
-                }
+                state.Apiserver = &amp;ApiserverModel{}
         }</span>
         <span class="cov0" title="0">state.Apiserver.IpFilters = listValue
         diagnostics = diags
