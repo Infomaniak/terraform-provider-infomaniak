@@ -80,11 +80,12 @@ func getKaasResourceSchema() schema.Schema {
 			},
 			"apiserver": schema.SingleNestedAttribute{
 				MarkdownDescription: "Kubernetes Apiserver editable params",
+				Optional:            true,
 				Attributes: map[string]schema.Attribute{
-					"acl_rules": schema.ListAttribute{
+					"ip_filters": schema.ListAttribute{
 						Optional:            true,
 						ElementType:         types.StringType,
-						MarkdownDescription: "List of CIDR blocks allowed to access to control plane. You can also set specific IPs (eg: 1.2.3.4)",
+						MarkdownDescription: "List of CIDR blocks allowed to access to control plane.",
 						PlanModifiers: []planmodifier.List{
 							listplanmodifier.UseStateForUnknown(),
 						},
@@ -190,7 +191,6 @@ func getKaasResourceSchema() schema.Schema {
 						},
 					},
 				},
-				Optional: true,
 			},
 		},
 		MarkdownDescription: "The kaas resource allows the user to manage a kaas project",

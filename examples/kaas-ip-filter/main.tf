@@ -23,6 +23,6 @@ resource "infomaniak_kaas" "create_kluster" {
   region             = var.cluster_region
 
   apiserver = {
-    acl_rules = var.acl_rules
+    ip_filters = var.ip_filters
   }
 }
