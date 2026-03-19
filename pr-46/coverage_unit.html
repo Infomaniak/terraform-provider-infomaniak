@@ -1455,6 +1455,7 @@ func GetUserAgent(version string) string <span class="cov0" title="0">{
 
 import (
         "fmt"
+        "net/netip"
         "terraform-provider-infomaniak/internal/apis/helpers"
         "terraform-provider-infomaniak/internal/apis/kaas"
 
@@ -1759,10 +1760,14 @@ func (client *Client) GetApiserverParams(publicCloudId int64, projectId int64, k
         <span class="cov0" title="0">return result.Data, nil</span>
 }
 
-func (client *Client) PutIPFilters(cidrs []string, publicCloudId, projectId, kaasId int64) (bool, error) <span class="cov0" title="0">{
+type putIpFilterBody struct {
+        IpFilters []netip.Prefix `json:"ip_filters"`
+}
+
+func (client *Client) PutIPFilters(cidrs []netip.Prefix, publicCloudId, projectId, kaasId int64) (bool, error) <span class="cov0" title="0">{
         var result helpers.NormalizedApiResponse[bool]
-        body := map[string][]string{
-                "ip_filters": cidrs,
+        body := putIpFilterBody{
+                IpFilters: cidrs,
         }
         resp, err := client.resty.R().
                 SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
@@ -1784,8 +1789,8 @@ func (client *Client) PutIPFilters(cidrs []string, publicCloudId, projectId, kaa
         <span class="cov0" title="0">return result.Data, nil</span>
 }
 
-func (client *Client) GetIPFilters(publicCloudId, projectId, kaasId int64) ([]string, error) <span class="cov0" title="0">{
-        var result helpers.NormalizedApiResponse[[]string]
+func (client *Client) GetIPFilters(publicCloudId, projectId, kaasId int64) ([]netip.Prefix, error) <span class="cov0" title="0">{
+        var result helpers.NormalizedApiResponse[[]netip.Prefix]
         resp, err := client.resty.R().
                 SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
                 SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
@@ -1958,6 +1963,7 @@ func ResetCache() <span class="cov0" title="0">{
 import (
         "fmt"
         "log"
+        "net/netip"
         "regexp"
         "terraform-provider-infomaniak/internal/apis/kaas"
 )
@@ -2237,11 +2243,11 @@ func (c *Client) GetApiserverParams(publicCloudId int64, projectId int64, kaasId
 func (c *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int64, projectId int64, kaasId int64) (bool, error) <span class="cov0" title="0">{
         return true, nil
 }</span>
-func (client *Client) PutIPFilters(cidrs []string, publicCloudId int64, projectId int64, kaasId int64) (bool, error) <span class="cov0" title="0">{
+func (client *Client) PutIPFilters(cidrs []netip.Prefix, publicCloudId int64, projectId int64, kaasId int64) (bool, error) <span class="cov0" title="0">{
         return true, nil
 }</span>
 
-func (client *Client) GetIPFilters(publicCloudId int64, projectId int64, kaasId int64) ([]string, error) <span class="cov0" title="0">{
+func (client *Client) GetIPFilters(publicCloudId int64, projectId int64, kaasId int64) ([]netip.Prefix, error) <span class="cov0" title="0">{
         return nil, nil
 }</span>
 </pre>
@@ -5983,14 +5989,15 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
                 data.fillApiserverState(ctx, apiserverParams)
         }</span>
 
-        <span class="cov0" title="0">filteredIps, err := d.client.Kaas.GetIPFilters(data.PublicCloudId.ValueInt64(), data.PublicCloudProjectId.ValueInt64(), data.Id.ValueInt64())
+        <span class="cov0" title="0">ipFilters, err := d.client.Kaas.GetIPFilters(data.PublicCloudId.ValueInt64(), data.PublicCloudProjectId.ValueInt64(), data.Id.ValueInt64())
         if err != nil </span><span class="cov0" title="0">{
                 resp.Diagnostics.AddError(
                         "Could not get IP filter",
                         err.Error(),
                 )
+                return
         }</span>
-        <span class="cov0" title="0">resp.Diagnostics.Append(data.fillFilteredCidr(ctx, filteredIps)...)
+        <span class="cov0" title="0">resp.Diagnostics.Append(data.fillFilteredCidr(ctx, ipFilters)...)
 
         // Set state
         diags := resp.State.Set(ctx, &amp;data)
@@ -6061,10 +6068,10 @@ func getKaasDataSourceSchema() schema.Schema <span class="cov0" title="0">{
                                 Description:         "Kubernetes Apiserver editable params",
                                 MarkdownDescription: "Kubernetes Apiserver editable params",
                                 Attributes: map[string]schema.Attribute{
-                                        "acl_rules": schema.ListAttribute{
+                                        "ip_filters": schema.ListAttribute{
                                                 Computed:            true,
                                                 ElementType:         types.StringType,
-                                                MarkdownDescription: "List of CIDR blocks allowed to access to control plane. You can also set specific IPs (eg: 1.2.3.4)",
+                                                MarkdownDescription: "List of CIDR blocks allowed to access to control plane.",
                                         },
                                         "params": schema.MapAttribute{
                                                 ElementType:         types.StringType,
@@ -6756,6 +6763,7 @@ import (
         "context"
         "errors"
         "fmt"
+        "net/netip"
         "strconv"
         "strings"
         "terraform-provider-infomaniak/internal/apis"
@@ -6813,10 +6821,10 @@ func (m *KaasModel) SetDefaultValues(ctx context.Context) <span class="cov0" tit
 }
 
 type ApiserverModel struct {
-        AllowRequestsFromCIDR types.List `tfsdk:"acl_rules"`
-        Params                types.Map  `tfsdk:"params"`
-        Oidc                  *OidcModel `tfsdk:"oidc"`
-        Audit                 *Audit     `tfsdk:"audit"`
+        IpFilters types.List `tfsdk:"ip_filters"`
+        Params    types.Map  `tfsdk:"params"`
+        Oidc      *OidcModel `tfsdk:"oidc"`
+        Audit     *Audit     `tfsdk:"audit"`
 }
 
 type OidcModel struct {
@@ -6935,9 +6943,11 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
                         return
                 }</span>
 
-                <span class="cov0" title="0">r.applyIPFilters(ctx, &amp;data, input.Project.PublicCloudId, input.Project.ProjectId, kaasId, &amp;resp.Diagnostics)
+                <span class="cov0" title="0">if !data.Apiserver.IpFilters.IsNull() </span><span class="cov0" title="0">{
+                        r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, kaasId, &amp;resp.Diagnostics)
+                }</span>
 
-                data.fillApiserverState(ctx, apiserverParamsInput)</span>
+                <span class="cov0" title="0">data.fillApiserverState(ctx, apiserverParamsInput)</span>
         }
 
         // Save data into Terraform state
@@ -6955,14 +6965,28 @@ func (state *KaasModel) fillApiserverState(ctx context.Context, apiserverParams 
         }
 }
 
-func (state *KaasModel) fillFilteredCidr(ctx context.Context, cidr []string) diag.Diagnostics <span class="cov0" title="0">{
+func (state *KaasModel) fillFilteredCidr(ctx context.Context, cidrs []netip.Prefix) diag.Diagnostics <span class="cov0" title="0">{
         var diagnostics diag.Diagnostics
-        if len(cidr) &gt; 0 </span><span class="cov0" title="0">{
-                listValue, diags := types.ListValueFrom(ctx, types.StringType, cidr)
-                state.Apiserver.AllowRequestsFromCIDR = listValue
-                diagnostics = diags
+        if len(cidrs) == 0 </span><span class="cov0" title="0">{
+                return diagnostics
         }</span>
-        <span class="cov0" title="0">return diagnostics</span>
+
+        <span class="cov0" title="0">convertedCirds := make([]string, len(cidrs))
+        for i, cidr := range cidrs </span><span class="cov0" title="0">{
+                convertedCirds[i] = cidr.String()
+        }</span>
+
+        <span class="cov0" title="0">listValue, diags := types.ListValueFrom(ctx, types.StringType, convertedCirds)
+
+        if state.Apiserver == nil </span><span class="cov0" title="0">{
+                state.Apiserver = &amp;ApiserverModel{
+                        Params: types.MapNull(types.StringType),
+                }
+        }</span>
+        <span class="cov0" title="0">state.Apiserver.IpFilters = listValue
+        diagnostics = diags
+
+        return diagnostics</span>
 }
 
 func (state *KaasModel) shouldUpdateApiserver() bool <span class="cov0" title="0">{
@@ -7079,14 +7103,15 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
                 state.fillApiserverState(ctx, apiserverParams)
         }</span>
 
-        <span class="cov0" title="0">filteredIps, err := r.client.Kaas.GetIPFilters(state.PublicCloudId.ValueInt64(), state.PublicCloudProjectId.ValueInt64(), kaasObject.Id)
+        <span class="cov0" title="0">ipFilters, err := r.client.Kaas.GetIPFilters(state.PublicCloudId.ValueInt64(), state.PublicCloudProjectId.ValueInt64(), kaasObject.Id)
         if err != nil </span><span class="cov0" title="0">{
                 resp.Diagnostics.AddError(
                         "Could not get IP filter",
                         err.Error(),
                 )
+                return
         }</span>
-        <span class="cov0" title="0">resp.Diagnostics.Append(state.fillFilteredCidr(ctx, filteredIps)...)
+        <span class="cov0" title="0">resp.Diagnostics.Append(state.fillFilteredCidr(ctx, ipFilters)...)
 
         // Save updated data into Terraform state
         resp.Diagnostics.Append(resp.State.Set(ctx, &amp;state)...)</span>
@@ -7130,8 +7155,11 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
         if data.Apiserver != nil </span><span class="cov0" title="0">{
                 r.handleApiserverConfig(ctx, &amp;data, input, resp)
-                r.applyIPFilters(ctx, &amp;data, input.Project.PublicCloudId, input.Project.ProjectId, input.Id, &amp;resp.Diagnostics)
-        }</span>
+
+                if !data.Apiserver.IpFilters.IsNull() </span><span class="cov0" title="0">{
+                        r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, input.Id, &amp;resp.Diagnostics)
+                }</span>
+        }
 
         <span class="cov0" title="0">resp.Diagnostics.Append(resp.State.Set(ctx, &amp;data)...)</span>
 }
@@ -7179,26 +7207,33 @@ func (r *kaasResource) handleApiserverConfig(ctx context.Context, data *KaasMode
         <span class="cov0" title="0">data.fillApiserverState(ctx, apiserverParamsInput)</span>
 }
 
-func (r *kaasResource) applyIPFilters(ctx context.Context, data *KaasModel, publicCloudId, projectId, kaasId int64, diags *diag.Diagnostics) <span class="cov0" title="0">{
-        if data.Apiserver == nil || data.Apiserver.AllowRequestsFromCIDR.IsNull() </span><span class="cov0" title="0">{
-                return
-        }</span>
-
-        <span class="cov0" title="0">allowedCidrs := make([]string, 0, len(data.Apiserver.AllowRequestsFromCIDR.Elements()))
-        diags.Append(data.Apiserver.AllowRequestsFromCIDR.ElementsAs(ctx, &amp;allowedCidrs, true)...)
+func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters types.List, publicCloudId, projectId, kaasId int64, diags *diag.Diagnostics) <span class="cov0" title="0">{
+        ipFilters := make([]string, 0, len(terraformIpFilters.Elements()))
+        diags.Append(terraformIpFilters.ElementsAs(ctx, &amp;ipFilters, true)...)
         if diags.HasError() </span><span class="cov0" title="0">{
                 return
         }</span>
 
-        <span class="cov0" title="0">ok, err := r.client.Kaas.PutIPFilters(allowedCidrs, publicCloudId, projectId, kaasId)
+        <span class="cov0" title="0">convertedIpFilters := make([]netip.Prefix, len(ipFilters))
+        for i, cidr := range ipFilters </span><span class="cov0" title="0">{
+                prefix, err := netip.ParsePrefix(cidr)
+                if err != nil </span><span class="cov0" title="0">{
+                        diags.AddError("invalid cidr format", err.Error())
+                        return
+                }</span>
+
+                <span class="cov0" title="0">convertedIpFilters[i] = prefix</span>
+        }
+
+        <span class="cov0" title="0">ok, err := r.client.Kaas.PutIPFilters(convertedIpFilters, publicCloudId, projectId, kaasId)
         if !ok || err != nil </span><span class="cov0" title="0">{
                 var errMsg string
                 if err != nil </span><span class="cov0" title="0">{
                         errMsg = err.Error()
                 }</span> else<span class="cov0" title="0"> {
-                        errMsg = "PatchIPFilters returned false but no error was provided"
+                        errMsg = "PutIPFilters returned false but no error was provided"
                 }</span>
-                <span class="cov0" title="0">diags.AddError("Error when applying network filtering", errMsg)</span>
+                <span class="cov0" title="0">diags.AddError("Error when applying ip filters", errMsg)</span>
         }
 }
 
@@ -7410,10 +7445,10 @@ func getKaasResourceSchema() schema.Schema <span class="cov0" title="0">{
                         "apiserver": schema.SingleNestedAttribute{
                                 MarkdownDescription: "Kubernetes Apiserver editable params",
                                 Attributes: map[string]schema.Attribute{
-                                        "acl_rules": schema.ListAttribute{
+                                        "ip_filters": schema.ListAttribute{
                                                 Optional:            true,
                                                 ElementType:         types.StringType,
-                                                MarkdownDescription: "List of CIDR blocks allowed to access to control plane. You can also set specific IPs (eg: 1.2.3.4)",
+                                                MarkdownDescription: "List of CIDR blocks allowed to access to control plane.",
                                                 PlanModifiers: []planmodifier.List{
                                                         listplanmodifier.UseStateForUnknown(),
                                                 },
