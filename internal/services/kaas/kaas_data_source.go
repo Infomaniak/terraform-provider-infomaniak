@@ -112,7 +112,7 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	if data.Apiserver != nil {
-		resp.Diagnostics.Append(data.fillFilteredCidr(ctx, ipFilters)...)
+		resp.Diagnostics.Append(data.fillIpFilters(ctx, ipFilters)...)
 	}
 
 	// Set state

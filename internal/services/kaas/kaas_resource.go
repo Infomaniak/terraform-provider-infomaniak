@@ -184,7 +184,11 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 			return
 		}
 
-		r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, kaasId, &resp.Diagnostics)
+		applyFiltersDiags := r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
+		resp.Diagnostics.Append(applyFiltersDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
 		data.fillApiserverState(ctx, apiserverParamsInput)
 	}
@@ -204,7 +208,7 @@ func (state *KaasModel) fillApiserverState(ctx context.Context, apiserverParams 
 	}
 }
 
-func (state *KaasModel) fillFilteredCidr(ctx context.Context, cidrs []netip.Prefix) diag.Diagnostics {
+func (state *KaasModel) fillIpFilters(ctx context.Context, cidrs []netip.Prefix) diag.Diagnostics {
 	var diagnostics diag.Diagnostics
 	if len(cidrs) == 0 {
 		return diagnostics
@@ -345,7 +349,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 			)
 			return
 		}
-		resp.Diagnostics.Append(state.fillFilteredCidr(ctx, ipFilters)...)
+		resp.Diagnostics.Append(state.fillIpFilters(ctx, ipFilters)...)
 	}
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -390,7 +394,11 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	if data.Apiserver != nil {
 		r.handleApiserverConfig(ctx, &data, input, resp)
 
-		r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, input.Id, &resp.Diagnostics)
+		applyFiltersDiags := r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
+		resp.Diagnostics.Append(applyFiltersDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -439,11 +447,12 @@ func (r *kaasResource) handleApiserverConfig(ctx context.Context, data *KaasMode
 	data.fillApiserverState(ctx, apiserverParamsInput)
 }
 
-func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters types.List, publicCloudId, projectId, kaasId int64, diags *diag.Diagnostics) {
+func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters types.List, publicCloudId, projectId, kaasId int64) diag.Diagnostics {
+	var diags diag.Diagnostics
 	ipFilters := make([]string, 0, len(terraformIpFilters.Elements()))
 	diags.Append(terraformIpFilters.ElementsAs(ctx, &ipFilters, true)...)
 	if diags.HasError() {
-		return
+		return diags
 	}
 
 	convertedIpFilters := make([]netip.Prefix, len(ipFilters))
@@ -451,7 +460,7 @@ func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters ty
 		prefix, err := netip.ParsePrefix(cidr)
 		if err != nil {
 			diags.AddError("invalid cidr format", err.Error())
-			return
+			return diags
 		}
 
 		convertedIpFilters[i] = prefix
@@ -467,6 +476,8 @@ func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters ty
 		}
 		diags.AddError("Error when applying ip filters", errMsg)
 	}
+
+	return diags
 }
 
 func (r *kaasResource) buildApiserverParamsInput(data KaasModel) *kaas.Apiserver {
