@@ -6946,9 +6946,13 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
                         return
                 }</span>
 
-                <span class="cov0" title="0">r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, kaasId, &amp;resp.Diagnostics)
+                <span class="cov0" title="0">applyFiltersDiags := r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
+                resp.Diagnostics.Append(applyFiltersDiags...)
+                if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
+                        return
+                }</span>
 
-                data.fillApiserverState(ctx, apiserverParamsInput)</span>
+                <span class="cov0" title="0">data.fillApiserverState(ctx, apiserverParamsInput)</span>
         }
 
         // Save data into Terraform state
@@ -7152,8 +7156,12 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
         if data.Apiserver != nil </span><span class="cov0" title="0">{
                 r.handleApiserverConfig(ctx, &amp;data, input, resp)
 
-                r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, input.Id, &amp;resp.Diagnostics)
-        }</span>
+                applyFiltersDiags := r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
+                resp.Diagnostics.Append(applyFiltersDiags...)
+                if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
+                        return
+                }</span>
+        }
 
         <span class="cov0" title="0">resp.Diagnostics.Append(resp.State.Set(ctx, &amp;data)...)</span>
 }
@@ -7201,11 +7209,12 @@ func (r *kaasResource) handleApiserverConfig(ctx context.Context, data *KaasMode
         <span class="cov0" title="0">data.fillApiserverState(ctx, apiserverParamsInput)</span>
 }
 
-func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters types.List, publicCloudId, projectId, kaasId int64, diags *diag.Diagnostics) <span class="cov0" title="0">{
+func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters types.List, publicCloudId, projectId, kaasId int64) diag.Diagnostics <span class="cov0" title="0">{
+        var diags diag.Diagnostics
         ipFilters := make([]string, 0, len(terraformIpFilters.Elements()))
         diags.Append(terraformIpFilters.ElementsAs(ctx, &amp;ipFilters, true)...)
         if diags.HasError() </span><span class="cov0" title="0">{
-                return
+                return diags
         }</span>
 
         <span class="cov0" title="0">convertedIpFilters := make([]netip.Prefix, len(ipFilters))
@@ -7213,7 +7222,7 @@ func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters ty
                 prefix, err := netip.ParsePrefix(cidr)
                 if err != nil </span><span class="cov0" title="0">{
                         diags.AddError("invalid cidr format", err.Error())
-                        return
+                        return diags
                 }</span>
 
                 <span class="cov0" title="0">convertedIpFilters[i] = prefix</span>
@@ -7229,6 +7238,8 @@ func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters ty
                 }</span>
                 <span class="cov0" title="0">diags.AddError("Error when applying ip filters", errMsg)</span>
         }
+
+        <span class="cov0" title="0">return diags</span>
 }
 
 func (r *kaasResource) buildApiserverParamsInput(data KaasModel) *kaas.Apiserver <span class="cov0" title="0">{

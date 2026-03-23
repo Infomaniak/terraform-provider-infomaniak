@@ -145,7 +145,7 @@
 				
 				<option value="file44">terraform-provider-infomaniak/internal/services/kaas/kaas_instance_pool_resource_schema.go (100.0%)</option>
 				
-				<option value="file45">terraform-provider-infomaniak/internal/services/kaas/kaas_resource.go (35.9%)</option>
+				<option value="file45">terraform-provider-infomaniak/internal/services/kaas/kaas_resource.go (34.7%)</option>
 				
 				<option value="file46">terraform-provider-infomaniak/internal/services/kaas/kaas_resource_schema.go (100.0%)</option>
 				
@@ -779,7 +779,7 @@ func init() <span class="cov10" title="319">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="316">{
+        if err == nil </span><span class="cov9" title="315">{
                 // Delete DBaaS cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -789,17 +789,17 @@ func init() <span class="cov10" title="319">{
 
         // Try to get cache
         <span class="cov10" title="319">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="316">{
+        if err == nil </span><span class="cov9" title="315">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov2" title="3">{
+                if err != nil </span><span class="cov3" title="4">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="316">return</span>
+                <span class="cov9" title="315">return</span>
         }
 
         // Create DBaaS tmp file for caching
-        <span class="cov2" title="3">_, err = os.Create(mockedApiStatePath)
+        <span class="cov3" title="4">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -1972,7 +1972,7 @@ func init() <span class="cov10" title="319">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="311">{
+        if err == nil </span><span class="cov9" title="300">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1982,17 +1982,17 @@ func init() <span class="cov10" title="319">{
 
         // Try to get cache
         <span class="cov10" title="319">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="311">{
+        if err == nil </span><span class="cov9" title="300">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov4" title="8">{
+                if err != nil </span><span class="cov5" title="19">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="311">return</span>
+                <span class="cov9" title="300">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov4" title="8">_, err = os.Create(mockedApiStatePath)
+        <span class="cov5" title="19">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -7000,9 +7000,13 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
                         return
                 }</span>
 
-                <span class="cov0" title="0">r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, kaasId, &amp;resp.Diagnostics)
+                <span class="cov0" title="0">applyFiltersDiags := r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
+                resp.Diagnostics.Append(applyFiltersDiags...)
+                if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
+                        return
+                }</span>
 
-                data.fillApiserverState(ctx, apiserverParamsInput)</span>
+                <span class="cov0" title="0">data.fillApiserverState(ctx, apiserverParamsInput)</span>
         }
 
         // Save data into Terraform state
@@ -7206,8 +7210,12 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
         if data.Apiserver != nil </span><span class="cov0" title="0">{
                 r.handleApiserverConfig(ctx, &amp;data, input, resp)
 
-                r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, input.Id, &amp;resp.Diagnostics)
-        }</span>
+                applyFiltersDiags := r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
+                resp.Diagnostics.Append(applyFiltersDiags...)
+                if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
+                        return
+                }</span>
+        }
 
         <span class="cov0" title="0">resp.Diagnostics.Append(resp.State.Set(ctx, &amp;data)...)</span>
 }
@@ -7255,11 +7263,12 @@ func (r *kaasResource) handleApiserverConfig(ctx context.Context, data *KaasMode
         <span class="cov0" title="0">data.fillApiserverState(ctx, apiserverParamsInput)</span>
 }
 
-func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters types.List, publicCloudId, projectId, kaasId int64, diags *diag.Diagnostics) <span class="cov0" title="0">{
+func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters types.List, publicCloudId, projectId, kaasId int64) diag.Diagnostics <span class="cov0" title="0">{
+        var diags diag.Diagnostics
         ipFilters := make([]string, 0, len(terraformIpFilters.Elements()))
         diags.Append(terraformIpFilters.ElementsAs(ctx, &amp;ipFilters, true)...)
         if diags.HasError() </span><span class="cov0" title="0">{
-                return
+                return diags
         }</span>
 
         <span class="cov0" title="0">convertedIpFilters := make([]netip.Prefix, len(ipFilters))
@@ -7267,7 +7276,7 @@ func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters ty
                 prefix, err := netip.ParsePrefix(cidr)
                 if err != nil </span><span class="cov0" title="0">{
                         diags.AddError("invalid cidr format", err.Error())
-                        return
+                        return diags
                 }</span>
 
                 <span class="cov0" title="0">convertedIpFilters[i] = prefix</span>
@@ -7283,6 +7292,8 @@ func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters ty
                 }</span>
                 <span class="cov0" title="0">diags.AddError("Error when applying ip filters", errMsg)</span>
         }
+
+        <span class="cov0" title="0">return diags</span>
 }
 
 func (r *kaasResource) buildApiserverParamsInput(data KaasModel) *kaas.Apiserver <span class="cov0" title="0">{
