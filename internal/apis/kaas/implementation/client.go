@@ -2,6 +2,7 @@ package implementation
 
 import (
 	"fmt"
+	"net/netip"
 	"terraform-provider-infomaniak/internal/apis/helpers"
 	"terraform-provider-infomaniak/internal/apis/kaas"
 
@@ -295,6 +296,55 @@ func (client *Client) GetApiserverParams(publicCloudId int64, projectId int64, k
 		SetResult(&result).
 		SetError(&result).
 		Get(EndpointApiserver)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsError() {
+		return nil, result.Error
+	}
+
+	return result.Data, nil
+}
+
+type putIpFilterBody struct {
+	IpFilters []netip.Prefix `json:"ip_filters"`
+}
+
+func (client *Client) PutIPFilters(cidrs []netip.Prefix, publicCloudId, projectId, kaasId int64) (bool, error) {
+	var result helpers.NormalizedApiResponse[bool]
+	body := putIpFilterBody{
+		IpFilters: cidrs,
+	}
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
+		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
+		SetBody(body).
+		SetResult(&result).
+		SetError(&result).
+		Put(EndpointIPFilter)
+
+	if err != nil {
+		return false, err
+	}
+
+	if resp.IsError() {
+		return false, result.Error
+	}
+
+	return result.Data, nil
+}
+
+func (client *Client) GetIPFilters(publicCloudId, projectId, kaasId int64) ([]netip.Prefix, error) {
+	var result helpers.NormalizedApiResponse[[]netip.Prefix]
+	resp, err := client.resty.R().
+		SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
+		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
+		SetResult(&result).
+		SetError(&result).
+		Get(EndpointIPFilter)
 	if err != nil {
 		return nil, err
 	}

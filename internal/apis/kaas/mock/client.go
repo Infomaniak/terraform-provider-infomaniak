@@ -3,6 +3,7 @@ package mock
 import (
 	"fmt"
 	"log"
+	"net/netip"
 	"regexp"
 	"terraform-provider-infomaniak/internal/apis/kaas"
 )
@@ -281,4 +282,11 @@ func (c *Client) GetApiserverParams(publicCloudId int64, projectId int64, kaasId
 }
 func (c *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int64, projectId int64, kaasId int64) (bool, error) {
 	return true, nil
+}
+func (client *Client) PutIPFilters(cidrs []netip.Prefix, publicCloudId int64, projectId int64, kaasId int64) (bool, error) {
+	return true, nil
+}
+
+func (client *Client) GetIPFilters(publicCloudId int64, projectId int64, kaasId int64) ([]netip.Prefix, error) {
+	return nil, nil
 }

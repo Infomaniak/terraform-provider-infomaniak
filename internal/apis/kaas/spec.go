@@ -1,5 +1,7 @@
 package kaas
 
+import "net/netip"
+
 type Api interface {
 	GetPacks() ([]*KaasPack, error)
 	GetVersions() ([]string, error)
@@ -18,4 +20,6 @@ type Api interface {
 
 	GetApiserverParams(publicCloudId int64, projectId int64, kaasId int64) (*Apiserver, error)
 	PatchApiserverParams(input *Apiserver, publicCloudId int64, projectId int64, kaasId int64) (bool, error)
+	PutIPFilters(cidrs []netip.Prefix, publicCloudId, projectId, kaasId int64) (bool, error)
+	GetIPFilters(publicCloudId, projectId, kaasId int64) ([]netip.Prefix, error)
 }

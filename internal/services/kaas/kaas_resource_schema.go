@@ -3,6 +3,7 @@ package kaas
 import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -79,7 +80,16 @@ func getKaasResourceSchema() schema.Schema {
 			},
 			"apiserver": schema.SingleNestedAttribute{
 				MarkdownDescription: "Kubernetes Apiserver editable params",
+				Optional:            true,
 				Attributes: map[string]schema.Attribute{
+					"ip_filters": schema.ListAttribute{
+						Optional:            true,
+						ElementType:         types.StringType,
+						MarkdownDescription: "List of CIDR blocks allowed to access to control plane.",
+						PlanModifiers: []planmodifier.List{
+							listplanmodifier.UseStateForUnknown(),
+						},
+					},
 					"params": schema.MapAttribute{
 						Optional:            true,
 						ElementType:         types.StringType,
@@ -181,7 +191,6 @@ func getKaasResourceSchema() schema.Schema {
 						},
 					},
 				},
-				Optional: true,
 			},
 		},
 		MarkdownDescription: "The kaas resource allows the user to manage a kaas project",

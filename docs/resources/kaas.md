@@ -34,6 +34,13 @@ resource "infomaniak_kaas" "kluster" {
   region = "zzzzz"
 
   apiserver = {
+    ip_filters = [
+      "2.2.2.2/32",
+      "192.168.0.0/24",
+      "2001:db8:85a3::8a2e:370:7334/64",
+      "2001:db8::/32"
+    ]
+
     audit = {
       webhook_config = file("some/file/path/webhook.yaml")
       policy = file("some/file/path/policy.yaml")
@@ -65,6 +72,7 @@ resource "infomaniak_kaas" "kluster" {
 ### Optional Configuration
 
 - `apiserver` (Object): The object to configure Kubernetes Apiserver settings. This configuration allows you to customize the behavior of the Apiserver, including audit logging and authentication settings.
+  - `ip_filters` (List): The whitelisted CIDRs allowed to access the Kubernetes API Server.
   - `audit` (Object): The object to configure Kubernetes audit logs using [Kubernetes YAML resources](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/). Audit logs provide a record of all requests made to the Apiserver, and can be used for security and compliance purposes.
     - `webhook_config` (File): The YAML file specifying the Webhook Config for audit logs. This file defines the endpoint where audit logs will be sent, and can be used to integrate with external logging and monitoring systems.
     - `policy` (File): The YAML file defining the [Audit Policy](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/#audit-policy) for the cluster. This file specifies the types of events that will be audited, and the level of logging that will be performed.
