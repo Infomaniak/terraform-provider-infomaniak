@@ -79,7 +79,7 @@
 				
 				<option value="file11">terraform-provider-infomaniak/internal/apis/kaas/mock/cache.go (60.6%)</option>
 				
-				<option value="file12">terraform-provider-infomaniak/internal/apis/kaas/mock/client.go (46.4%)</option>
+				<option value="file12">terraform-provider-infomaniak/internal/apis/kaas/mock/client.go (45.5%)</option>
 				
 				<option value="file13">terraform-provider-infomaniak/internal/apis/kaas/mock/gen.go (81.8%)</option>
 				
@@ -133,7 +133,7 @@
 				
 				<option value="file38">terraform-provider-infomaniak/internal/services/domain/zone_resource_schema.go (100.0%)</option>
 				
-				<option value="file39">terraform-provider-infomaniak/internal/services/kaas/kaas_data_source.go (9.1%)</option>
+				<option value="file39">terraform-provider-infomaniak/internal/services/kaas/kaas_data_source.go (7.7%)</option>
 				
 				<option value="file40">terraform-provider-infomaniak/internal/services/kaas/kaas_data_source_schema.go (100.0%)</option>
 				
@@ -145,7 +145,7 @@
 				
 				<option value="file44">terraform-provider-infomaniak/internal/services/kaas/kaas_instance_pool_resource_schema.go (100.0%)</option>
 				
-				<option value="file45">terraform-provider-infomaniak/internal/services/kaas/kaas_resource.go (42.1%)</option>
+				<option value="file45">terraform-provider-infomaniak/internal/services/kaas/kaas_resource.go (34.7%)</option>
 				
 				<option value="file46">terraform-provider-infomaniak/internal/services/kaas/kaas_resource_schema.go (100.0%)</option>
 				
@@ -779,7 +779,7 @@ func init() <span class="cov10" title="319">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="315">{
+        if err == nil </span><span class="cov9" title="316">{
                 // Delete DBaaS cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -789,17 +789,17 @@ func init() <span class="cov10" title="319">{
 
         // Try to get cache
         <span class="cov10" title="319">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="315">{
+        if err == nil </span><span class="cov9" title="316">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov3" title="4">{
+                if err != nil </span><span class="cov2" title="3">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="315">return</span>
+                <span class="cov9" title="316">return</span>
         }
 
         // Create DBaaS tmp file for caching
-        <span class="cov3" title="4">_, err = os.Create(mockedApiStatePath)
+        <span class="cov2" title="3">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -1509,6 +1509,7 @@ func GetUserAgent(version string) string <span class="cov0" title="0">{
 
 import (
         "fmt"
+        "net/netip"
         "terraform-provider-infomaniak/internal/apis/helpers"
         "terraform-provider-infomaniak/internal/apis/kaas"
 
@@ -1812,6 +1813,55 @@ func (client *Client) GetApiserverParams(publicCloudId int64, projectId int64, k
 
         <span class="cov0" title="0">return result.Data, nil</span>
 }
+
+type putIpFilterBody struct {
+        IpFilters []netip.Prefix `json:"ip_filters"`
+}
+
+func (client *Client) PutIPFilters(cidrs []netip.Prefix, publicCloudId, projectId, kaasId int64) (bool, error) <span class="cov0" title="0">{
+        var result helpers.NormalizedApiResponse[bool]
+        body := putIpFilterBody{
+                IpFilters: cidrs,
+        }
+        resp, err := client.resty.R().
+                SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+                SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
+                SetPathParam("kaas_id", fmt.Sprint(kaasId)).
+                SetBody(body).
+                SetResult(&amp;result).
+                SetError(&amp;result).
+                Put(EndpointIPFilter)
+
+        if err != nil </span><span class="cov0" title="0">{
+                return false, err
+        }</span>
+
+        <span class="cov0" title="0">if resp.IsError() </span><span class="cov0" title="0">{
+                return false, result.Error
+        }</span>
+
+        <span class="cov0" title="0">return result.Data, nil</span>
+}
+
+func (client *Client) GetIPFilters(publicCloudId, projectId, kaasId int64) ([]netip.Prefix, error) <span class="cov0" title="0">{
+        var result helpers.NormalizedApiResponse[[]netip.Prefix]
+        resp, err := client.resty.R().
+                SetPathParam("public_cloud_id", fmt.Sprint(publicCloudId)).
+                SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
+                SetPathParam("kaas_id", fmt.Sprint(kaasId)).
+                SetResult(&amp;result).
+                SetError(&amp;result).
+                Get(EndpointIPFilter)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">if resp.IsError() </span><span class="cov0" title="0">{
+                return nil, result.Error
+        }</span>
+
+        <span class="cov0" title="0">return result.Data, nil</span>
+}
 </pre>
 		
 		<pre class="file" id="file11" style="display: none">package mock
@@ -1922,7 +1972,7 @@ func init() <span class="cov10" title="319">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="311">{
+        if err == nil </span><span class="cov9" title="310">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1932,17 +1982,17 @@ func init() <span class="cov10" title="319">{
 
         // Try to get cache
         <span class="cov10" title="319">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="311">{
+        if err == nil </span><span class="cov9" title="310">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov4" title="8">{
+                if err != nil </span><span class="cov4" title="9">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="311">return</span>
+                <span class="cov9" title="310">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov4" title="8">_, err = os.Create(mockedApiStatePath)
+        <span class="cov4" title="9">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -1967,6 +2017,7 @@ func ResetCache() <span class="cov0" title="0">{
 import (
         "fmt"
         "log"
+        "net/netip"
         "regexp"
         "terraform-provider-infomaniak/internal/apis/kaas"
 )
@@ -2245,6 +2296,13 @@ func (c *Client) GetApiserverParams(publicCloudId int64, projectId int64, kaasId
 }</span>
 func (c *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int64, projectId int64, kaasId int64) (bool, error) <span class="cov0" title="0">{
         return true, nil
+}</span>
+func (client *Client) PutIPFilters(cidrs []netip.Prefix, publicCloudId int64, projectId int64, kaasId int64) (bool, error) <span class="cov0" title="0">{
+        return true, nil
+}</span>
+
+func (client *Client) GetIPFilters(publicCloudId int64, projectId int64, kaasId int64) ([]netip.Prefix, error) <span class="cov0" title="0">{
+        return nil, nil
 }</span>
 </pre>
 		
@@ -5985,6 +6043,19 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
                 data.fillApiserverState(ctx, apiserverParams)
         }</span>
 
+        <span class="cov0" title="0">ipFilters, err := d.client.Kaas.GetIPFilters(data.PublicCloudId.ValueInt64(), data.PublicCloudProjectId.ValueInt64(), data.Id.ValueInt64())
+        if err != nil </span><span class="cov0" title="0">{
+                resp.Diagnostics.AddError(
+                        "Could not get IP filter",
+                        err.Error(),
+                )
+                return
+        }</span>
+
+        <span class="cov0" title="0">if data.Apiserver != nil </span><span class="cov0" title="0">{
+                resp.Diagnostics.Append(data.fillIpFilters(ctx, ipFilters)...)
+        }</span>
+
         // Set state
         <span class="cov0" title="0">diags := resp.State.Set(ctx, &amp;data)
         resp.Diagnostics.Append(diags...)
@@ -6054,6 +6125,11 @@ func getKaasDataSourceSchema() schema.Schema <span class="cov10" title="159">{
                                 Description:         "Kubernetes Apiserver editable params",
                                 MarkdownDescription: "Kubernetes Apiserver editable params",
                                 Attributes: map[string]schema.Attribute{
+                                        "ip_filters": schema.ListAttribute{
+                                                Computed:            true,
+                                                ElementType:         types.StringType,
+                                                MarkdownDescription: "List of CIDR blocks allowed to access to control plane.",
+                                        },
                                         "params": schema.MapAttribute{
                                                 ElementType:         types.StringType,
                                                 Optional:            true,
@@ -6744,6 +6820,7 @@ import (
         "context"
         "errors"
         "fmt"
+        "net/netip"
         "strconv"
         "strings"
         "terraform-provider-infomaniak/internal/apis"
@@ -6801,9 +6878,10 @@ func (m *KaasModel) SetDefaultValues(ctx context.Context) <span class="cov0" tit
 }
 
 type ApiserverModel struct {
-        Params types.Map  `tfsdk:"params"`
-        Oidc   *OidcModel `tfsdk:"oidc"`
-        Audit  *Audit     `tfsdk:"audit"`
+        IpFilters types.List `tfsdk:"ip_filters"`
+        Params    types.Map  `tfsdk:"params"`
+        Oidc      *OidcModel `tfsdk:"oidc"`
+        Audit     *Audit     `tfsdk:"audit"`
 }
 
 type OidcModel struct {
@@ -6922,6 +7000,12 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
                         return
                 }</span>
 
+                <span class="cov0" title="0">applyFiltersDiags := r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
+                resp.Diagnostics.Append(applyFiltersDiags...)
+                if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
+                        return
+                }</span>
+
                 <span class="cov0" title="0">data.fillApiserverState(ctx, apiserverParamsInput)</span>
         }
 
@@ -6938,6 +7022,24 @@ func (state *KaasModel) fillApiserverState(ctx context.Context, apiserverParams 
                         state.Apiserver = nil
                 }</span>
         }
+}
+
+func (state *KaasModel) fillIpFilters(ctx context.Context, cidrs []netip.Prefix) diag.Diagnostics <span class="cov0" title="0">{
+        var diagnostics diag.Diagnostics
+        if len(cidrs) == 0 </span><span class="cov0" title="0">{
+                return diagnostics
+        }</span>
+
+        <span class="cov0" title="0">convertedCirds := make([]string, len(cidrs))
+        for i, cidr := range cidrs </span><span class="cov0" title="0">{
+                convertedCirds[i] = cidr.String()
+        }</span>
+
+        <span class="cov0" title="0">listValue, diags := types.ListValueFrom(ctx, types.StringType, convertedCirds)
+        state.Apiserver.IpFilters = listValue
+        diagnostics = diags
+
+        return diagnostics</span>
 }
 
 func (state *KaasModel) shouldUpdateApiserver() bool <span class="cov0" title="0">{
@@ -7054,6 +7156,17 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
                 state.fillApiserverState(ctx, apiserverParams)
         }</span>
 
+        <span class="cov4" title="21">if state.Apiserver != nil </span><span class="cov0" title="0">{
+                ipFilters, err := r.client.Kaas.GetIPFilters(state.PublicCloudId.ValueInt64(), state.PublicCloudProjectId.ValueInt64(), kaasObject.Id)
+                if err != nil </span><span class="cov0" title="0">{
+                        resp.Diagnostics.AddError(
+                                "Could not get IP filter",
+                                err.Error(),
+                        )
+                        return
+                }</span>
+                <span class="cov0" title="0">resp.Diagnostics.Append(state.fillIpFilters(ctx, ipFilters)...)</span>
+        }
         // Save updated data into Terraform state
         <span class="cov4" title="21">resp.Diagnostics.Append(resp.State.Set(ctx, &amp;state)...)</span>
 }
@@ -7096,7 +7209,13 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
         if data.Apiserver != nil </span><span class="cov0" title="0">{
                 r.handleApiserverConfig(ctx, &amp;data, input, resp)
-        }</span>
+
+                applyFiltersDiags := r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
+                resp.Diagnostics.Append(applyFiltersDiags...)
+                if resp.Diagnostics.HasError() </span><span class="cov0" title="0">{
+                        return
+                }</span>
+        }
 
         <span class="cov0" title="0">resp.Diagnostics.Append(resp.State.Set(ctx, &amp;data)...)</span>
 }
@@ -7142,6 +7261,39 @@ func (r *kaasResource) handleApiserverConfig(ctx context.Context, data *KaasMode
                 return
         }</span>
         <span class="cov0" title="0">data.fillApiserverState(ctx, apiserverParamsInput)</span>
+}
+
+func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters types.List, publicCloudId, projectId, kaasId int64) diag.Diagnostics <span class="cov0" title="0">{
+        var diags diag.Diagnostics
+        ipFilters := make([]string, 0, len(terraformIpFilters.Elements()))
+        diags.Append(terraformIpFilters.ElementsAs(ctx, &amp;ipFilters, true)...)
+        if diags.HasError() </span><span class="cov0" title="0">{
+                return diags
+        }</span>
+
+        <span class="cov0" title="0">convertedIpFilters := make([]netip.Prefix, len(ipFilters))
+        for i, cidr := range ipFilters </span><span class="cov0" title="0">{
+                prefix, err := netip.ParsePrefix(cidr)
+                if err != nil </span><span class="cov0" title="0">{
+                        diags.AddError("invalid cidr format", err.Error())
+                        return diags
+                }</span>
+
+                <span class="cov0" title="0">convertedIpFilters[i] = prefix</span>
+        }
+
+        <span class="cov0" title="0">ok, err := r.client.Kaas.PutIPFilters(convertedIpFilters, publicCloudId, projectId, kaasId)
+        if !ok || err != nil </span><span class="cov0" title="0">{
+                var errMsg string
+                if err != nil </span><span class="cov0" title="0">{
+                        errMsg = err.Error()
+                }</span> else<span class="cov0" title="0"> {
+                        errMsg = "PutIPFilters returned false but no error was provided"
+                }</span>
+                <span class="cov0" title="0">diags.AddError("Error when applying ip filters", errMsg)</span>
+        }
+
+        <span class="cov0" title="0">return diags</span>
 }
 
 func (r *kaasResource) buildApiserverParamsInput(data KaasModel) *kaas.Apiserver <span class="cov0" title="0">{
@@ -7274,6 +7426,7 @@ func (model *KaasModel) fill(kaas *kaas.Kaas) <span class="cov5" title="33">{
 import (
         "github.com/hashicorp/terraform-plugin-framework/resource/schema"
         "github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+        "github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
         "github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
         "github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
         "github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -7350,7 +7503,16 @@ func getKaasResourceSchema() schema.Schema <span class="cov10" title="300">{
                         },
                         "apiserver": schema.SingleNestedAttribute{
                                 MarkdownDescription: "Kubernetes Apiserver editable params",
+                                Optional:            true,
                                 Attributes: map[string]schema.Attribute{
+                                        "ip_filters": schema.ListAttribute{
+                                                Optional:            true,
+                                                ElementType:         types.StringType,
+                                                MarkdownDescription: "List of CIDR blocks allowed to access to control plane.",
+                                                PlanModifiers: []planmodifier.List{
+                                                        listplanmodifier.UseStateForUnknown(),
+                                                },
+                                        },
                                         "params": schema.MapAttribute{
                                                 Optional:            true,
                                                 ElementType:         types.StringType,
@@ -7452,7 +7614,6 @@ func getKaasResourceSchema() schema.Schema <span class="cov10" title="300">{
                                                 },
                                         },
                                 },
-                                Optional: true,
                         },
                 },
                 MarkdownDescription: "The kaas resource allows the user to manage a kaas project",
