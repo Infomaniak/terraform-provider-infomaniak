@@ -1972,7 +1972,7 @@ func init() <span class="cov10" title="319">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="300">{
+        if err == nil </span><span class="cov9" title="310">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1982,17 +1982,17 @@ func init() <span class="cov10" title="319">{
 
         // Try to get cache
         <span class="cov10" title="319">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="300">{
+        if err == nil </span><span class="cov9" title="310">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov5" title="19">{
+                if err != nil </span><span class="cov4" title="9">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="300">return</span>
+                <span class="cov9" title="310">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov5" title="19">_, err = os.Create(mockedApiStatePath)
+        <span class="cov4" title="9">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -6053,7 +6053,7 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
         }</span>
 
         <span class="cov0" title="0">if data.Apiserver != nil </span><span class="cov0" title="0">{
-                resp.Diagnostics.Append(data.fillFilteredCidr(ctx, ipFilters)...)
+                resp.Diagnostics.Append(data.fillIpFilters(ctx, ipFilters)...)
         }</span>
 
         // Set state
@@ -7024,7 +7024,7 @@ func (state *KaasModel) fillApiserverState(ctx context.Context, apiserverParams 
         }
 }
 
-func (state *KaasModel) fillFilteredCidr(ctx context.Context, cidrs []netip.Prefix) diag.Diagnostics <span class="cov0" title="0">{
+func (state *KaasModel) fillIpFilters(ctx context.Context, cidrs []netip.Prefix) diag.Diagnostics <span class="cov0" title="0">{
         var diagnostics diag.Diagnostics
         if len(cidrs) == 0 </span><span class="cov0" title="0">{
                 return diagnostics
@@ -7165,7 +7165,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
                         )
                         return
                 }</span>
-                <span class="cov0" title="0">resp.Diagnostics.Append(state.fillFilteredCidr(ctx, ipFilters)...)</span>
+                <span class="cov0" title="0">resp.Diagnostics.Append(state.fillIpFilters(ctx, ipFilters)...)</span>
         }
         // Save updated data into Terraform state
         <span class="cov4" title="21">resp.Diagnostics.Append(resp.State.Set(ctx, &amp;state)...)</span>
