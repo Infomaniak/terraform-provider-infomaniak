@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/netip"
 	"strconv"
 	"strings"
 	"terraform-provider-infomaniak/internal/apis"
@@ -61,9 +62,10 @@ func (m *KaasModel) SetDefaultValues(ctx context.Context) {
 }
 
 type ApiserverModel struct {
-	Params types.Map  `tfsdk:"params"`
-	Oidc   *OidcModel `tfsdk:"oidc"`
-	Audit  *Audit     `tfsdk:"audit"`
+	IpFilters types.List `tfsdk:"ip_filters"`
+	Params    types.Map  `tfsdk:"params"`
+	Oidc      *OidcModel `tfsdk:"oidc"`
+	Audit     *Audit     `tfsdk:"audit"`
 }
 
 type OidcModel struct {
@@ -182,6 +184,12 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 			return
 		}
 
+		applyFiltersDiags := r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, kaasId)
+		resp.Diagnostics.Append(applyFiltersDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
 		data.fillApiserverState(ctx, apiserverParamsInput)
 	}
 
@@ -198,6 +206,24 @@ func (state *KaasModel) fillApiserverState(ctx context.Context, apiserverParams 
 			state.Apiserver = nil
 		}
 	}
+}
+
+func (state *KaasModel) fillIpFilters(ctx context.Context, cidrs []netip.Prefix) diag.Diagnostics {
+	var diagnostics diag.Diagnostics
+	if len(cidrs) == 0 {
+		return diagnostics
+	}
+
+	convertedCirds := make([]string, len(cidrs))
+	for i, cidr := range cidrs {
+		convertedCirds[i] = cidr.String()
+	}
+
+	listValue, diags := types.ListValueFrom(ctx, types.StringType, convertedCirds)
+	state.Apiserver.IpFilters = listValue
+	diagnostics = diags
+
+	return diagnostics
 }
 
 func (state *KaasModel) shouldUpdateApiserver() bool {
@@ -314,6 +340,17 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		state.fillApiserverState(ctx, apiserverParams)
 	}
 
+	if state.Apiserver != nil {
+		ipFilters, err := r.client.Kaas.GetIPFilters(state.PublicCloudId.ValueInt64(), state.PublicCloudProjectId.ValueInt64(), kaasObject.Id)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Could not get IP filter",
+				err.Error(),
+			)
+			return
+		}
+		resp.Diagnostics.Append(state.fillIpFilters(ctx, ipFilters)...)
+	}
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -356,6 +393,12 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	if data.Apiserver != nil {
 		r.handleApiserverConfig(ctx, &data, input, resp)
+
+		applyFiltersDiags := r.applyIPFilters(ctx, data.Apiserver.IpFilters, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
+		resp.Diagnostics.Append(applyFiltersDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -402,6 +445,39 @@ func (r *kaasResource) handleApiserverConfig(ctx context.Context, data *KaasMode
 		return
 	}
 	data.fillApiserverState(ctx, apiserverParamsInput)
+}
+
+func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters types.List, publicCloudId, projectId, kaasId int64) diag.Diagnostics {
+	var diags diag.Diagnostics
+	ipFilters := make([]string, 0, len(terraformIpFilters.Elements()))
+	diags.Append(terraformIpFilters.ElementsAs(ctx, &ipFilters, true)...)
+	if diags.HasError() {
+		return diags
+	}
+
+	convertedIpFilters := make([]netip.Prefix, len(ipFilters))
+	for i, cidr := range ipFilters {
+		prefix, err := netip.ParsePrefix(cidr)
+		if err != nil {
+			diags.AddError("invalid cidr format", err.Error())
+			return diags
+		}
+
+		convertedIpFilters[i] = prefix
+	}
+
+	ok, err := r.client.Kaas.PutIPFilters(convertedIpFilters, publicCloudId, projectId, kaasId)
+	if !ok || err != nil {
+		var errMsg string
+		if err != nil {
+			errMsg = err.Error()
+		} else {
+			errMsg = "PutIPFilters returned false but no error was provided"
+		}
+		diags.AddError("Error when applying ip filters", errMsg)
+	}
+
+	return diags
 }
 
 func (r *kaasResource) buildApiserverParamsInput(data KaasModel) *kaas.Apiserver {
