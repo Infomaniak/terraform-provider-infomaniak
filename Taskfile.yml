@@ -4,7 +4,7 @@ version: '3'
 
 vars:
   LOG_DIRS:
-    sh: echo "./internal/services/kaas/tmp ./internal/services/dbaas/tmp"
+    sh: echo "./internal/controllers/kaas/tmp ./internal/controllers/dbaas/tmp"
   REPORT_DIR:
     sh: echo "$(pwd)/reports"
   OS:
