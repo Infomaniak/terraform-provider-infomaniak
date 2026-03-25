@@ -12,7 +12,7 @@ import (
 	"terraform-provider-infomaniak/internal/apis/dbaas"
 	"terraform-provider-infomaniak/internal/dynamic"
 	"terraform-provider-infomaniak/internal/provider"
-	dbaasmigration "terraform-provider-infomaniak/internal/services/dbaas/dbaas_migration"
+	dbaasmigration "terraform-provider-infomaniak/internal/controllers/dbaas/dbaas_migration"
 	"terraform-provider-infomaniak/internal/utils"
 	"time"
 

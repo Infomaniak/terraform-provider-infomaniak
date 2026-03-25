@@ -5,9 +5,9 @@ import (
 	"flag"
 	"log"
 	"terraform-provider-infomaniak/internal/provider"
-	"terraform-provider-infomaniak/internal/services/dbaas"
-	"terraform-provider-infomaniak/internal/services/domain"
-	"terraform-provider-infomaniak/internal/services/kaas"
+	"terraform-provider-infomaniak/internal/controllers/dbaas"
+	"terraform-provider-infomaniak/internal/controllers/domain"
+	"terraform-provider-infomaniak/internal/controllers/kaas"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )
