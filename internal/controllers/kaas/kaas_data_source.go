@@ -5,9 +5,9 @@ import (
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/provider"
 	kaas_schemas "terraform-provider-infomaniak/internal/schemas/kaas"
+	"terraform-provider-infomaniak/internal/services"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -17,7 +17,8 @@ var (
 )
 
 type kaasDataSource struct {
-	client *apis.Client
+	client      *apis.Client
+	kaasService *services.KaasService
 }
 
 // NewKaasDataSource is a helper function to simplify the provider implementation.
@@ -43,6 +44,7 @@ func (d *kaasDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 	}
 
 	d.client = client
+	d.kaasService = services.NewKaasService(d.client)
 }
 
 // Schema defines the schema for the data source.
@@ -52,76 +54,41 @@ func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest,
 
 // Read refreshes the Terraform state with the latest data.
 func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var state kaas_schemas.KaasModel
 	var data kaas_schemas.KaasModel
 
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-
-	obj, err := d.client.Kaas.GetKaas(
-		data.PublicCloudId.ValueInt64(),
-		data.PublicCloudProjectId.ValueInt64(),
-		data.Id.ValueInt64(),
-	)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to find KaaS",
-			err.Error(),
-		)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	kubeconfig, err := d.client.Kaas.GetKubeconfig(
-		data.PublicCloudId.ValueInt64(),
-		data.PublicCloudProjectId.ValueInt64(),
-		data.Id.ValueInt64(),
-	)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to get kubeconfig from KaaS",
-			err.Error(),
-		)
-		return
-	}
+	kaasId := data.Id.ValueInt64()
 
-	data.Kubeconfig = types.StringValue(kubeconfig)
-	data.Region = types.StringValue(obj.Region)
-	data.KubernetesVersion = types.StringValue(obj.KubernetesVersion)
-
-	apiserverParams, err := d.client.Kaas.GetApiserverParams(
-		data.PublicCloudId.ValueInt64(),
-		data.PublicCloudProjectId.ValueInt64(),
-		data.Id.ValueInt64(),
-	)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to get Oidc from KaaS",
-			err.Error(),
-		)
-		return
-	}
-
-	if apiserverParams != nil {
-		data.FillApiserverState(ctx, apiserverParams)
-	}
-
-	ipFilters, err := d.client.Kaas.GetIPFilters(data.PublicCloudId.ValueInt64(), data.PublicCloudProjectId.ValueInt64(), data.Id.ValueInt64())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Could not get IP filter",
-			err.Error(),
-		)
-		return
-	}
-
-	if data.Apiserver != nil {
-		resp.Diagnostics.Append(data.FillIpFilters(ctx, ipFilters)...)
-	}
-
-	// Set state
-	diags := resp.State.Set(ctx, &data)
+	_, diags := d.kaasService.GetKaasOnceActive(ctx, data, kaasId, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	_, diags = d.kaasService.GetKubeconfig(data, kaasId, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(d.kaasService.ReadApiserverConfig(ctx, data, kaasId, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 // Metadata returns the data source type name.
