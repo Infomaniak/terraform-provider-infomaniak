@@ -9,6 +9,7 @@ import (
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/kaas"
 	"terraform-provider-infomaniak/internal/provider"
+	kaas_schemas "terraform-provider-infomaniak/internal/schemas/kaas"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -28,20 +29,6 @@ func NewKaasInstancePoolResource() resource.Resource {
 
 type kaasInstancePoolResource struct {
 	client *apis.Client
-}
-
-type KaasInstancePoolModel struct {
-	PublicCloudId        types.Int64 `tfsdk:"public_cloud_id"`
-	PublicCloudProjectId types.Int64 `tfsdk:"public_cloud_project_id"`
-	KaasId               types.Int64 `tfsdk:"kaas_id"`
-	Id                   types.Int64 `tfsdk:"id"`
-
-	Name             types.String `tfsdk:"name"`
-	AvailabilityZone types.String `tfsdk:"availability_zone"`
-	FlavorName       types.String `tfsdk:"flavor_name"`
-	MinInstances     types.Int64  `tfsdk:"min_instances"`
-	MaxInstances     types.Int64  `tfsdk:"max_instances"`
-	Labels           types.Map    `tfsdk:"labels"`
 }
 
 func (r *kaasInstancePoolResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -69,11 +56,11 @@ func (r *kaasInstancePoolResource) Configure(_ context.Context, req resource.Con
 }
 
 func (r *kaasInstancePoolResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = getKaasInstancePoolResourceSchema()
+	resp.Schema = kaas_schemas.KaasInstancePoolResourceSchema
 }
 
 func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data KaasInstancePoolModel
+	var data kaas_schemas.KaasInstancePoolModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -123,13 +110,13 @@ func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.Crea
 		return
 	}
 
-	data.fill(instancePoolObject)
+	data.Fill(instancePoolObject)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *kaasInstancePoolResource) getLabelsValues(data KaasInstancePoolModel) map[string]string {
+func (r *kaasInstancePoolResource) getLabelsValues(data kaas_schemas.KaasInstancePoolModel) map[string]string {
 	labels := make(map[string]string)
 
 	if !data.Labels.IsNull() && !data.Labels.IsUnknown() {
@@ -143,7 +130,7 @@ func (r *kaasInstancePoolResource) getLabelsValues(data KaasInstancePoolModel) m
 	return labels
 }
 
-func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data KaasInstancePoolModel, id int64, scalingDown bool) (*kaas.InstancePool, error) {
+func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data kaas_schemas.KaasInstancePoolModel, id int64, scalingDown bool) (*kaas.InstancePool, error) {
 	scaleDownFailedQuotaCount := 0
 	scaleDownFailedQuotaAllowedRetrys := 5
 	ticker := time.NewTicker(5 * time.Second)
@@ -184,7 +171,7 @@ func (r *kaasInstancePoolResource) waitUntilActive(ctx context.Context, data Kaa
 }
 
 func (r *kaasInstancePoolResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data KaasInstancePoolModel
+	var data kaas_schemas.KaasInstancePoolModel
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -215,15 +202,15 @@ func (r *kaasInstancePoolResource) Read(ctx context.Context, req resource.ReadRe
 		)
 	}
 
-	data.fill(obj)
+	data.Fill(obj)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *kaasInstancePoolResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var state KaasInstancePoolModel
-	var data KaasInstancePoolModel
+	var state kaas_schemas.KaasInstancePoolModel
+	var data kaas_schemas.KaasInstancePoolModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -272,14 +259,14 @@ func (r *kaasInstancePoolResource) Update(ctx context.Context, req resource.Upda
 		return
 	}
 
-	data.fill(instancePoolObject)
+	data.Fill(instancePoolObject)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *kaasInstancePoolResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data KaasInstancePoolModel
+	var data kaas_schemas.KaasInstancePoolModel
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -338,13 +325,4 @@ func (r *kaasInstancePoolResource) ImportState(ctx context.Context, req resource
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_project_id"), publicCloudProjectId)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("kaas_id"), kaasId)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), instancePoolId)...)
-}
-
-func (model *KaasInstancePoolModel) fill(instancePool *kaas.InstancePool) {
-	model.Id = types.Int64Value(instancePool.Id)
-	model.Name = types.StringValue(instancePool.Name)
-	model.FlavorName = types.StringValue(instancePool.FlavorName)
-	model.MinInstances = types.Int64Value(instancePool.MinInstances)
-	model.MaxInstances = types.Int64Value(instancePool.MaxInstances)
-	model.AvailabilityZone = types.StringValue(instancePool.AvailabilityZone)
 }
