@@ -34,58 +34,6 @@ type kaasResource struct {
 	client *apis.Client
 }
 
-type KaasModel struct {
-	PublicCloudId        types.Int64 `tfsdk:"public_cloud_id"`
-	PublicCloudProjectId types.Int64 `tfsdk:"public_cloud_project_id"`
-	Id                   types.Int64 `tfsdk:"id"`
-
-	Name              types.String    `tfsdk:"name"`
-	PackName          types.String    `tfsdk:"pack_name"`
-	Region            types.String    `tfsdk:"region"`
-	Kubeconfig        types.String    `tfsdk:"kubeconfig"`
-	KubernetesVersion types.String    `tfsdk:"kubernetes_version"`
-	Apiserver         *ApiserverModel `tfsdk:"apiserver"`
-}
-
-func (m *KaasModel) SetDefaultValues(ctx context.Context) {
-	if m.Apiserver == nil {
-		defaultParams, _ := types.MapValueFrom(ctx, types.StringType, map[string]string{})
-		m.Apiserver = &ApiserverModel{
-			Params: defaultParams,
-		}
-	}
-	if m.Apiserver.Audit == nil {
-		m.Apiserver.Audit = &Audit{}
-	}
-	if m.Apiserver.Oidc == nil {
-		m.Apiserver.Oidc = &OidcModel{}
-	}
-}
-
-type ApiserverModel struct {
-	IpFilters types.List `tfsdk:"ip_filters"`
-	Params    types.Map  `tfsdk:"params"`
-	Oidc      *OidcModel `tfsdk:"oidc"`
-	Audit     *Audit     `tfsdk:"audit"`
-}
-
-type OidcModel struct {
-	IssuerUrl      types.String `tfsdk:"issuer_url"`
-	ClientId       types.String `tfsdk:"client_id"`
-	UsernameClaim  types.String `tfsdk:"username_claim"`
-	UsernamePrefix types.String `tfsdk:"username_prefix"`
-	SigningAlgs    types.String `tfsdk:"signing_algs"`
-	GroupsClaim    types.String `tfsdk:"groups_claim"`
-	GroupsPrefix   types.String `tfsdk:"groups_prefix"`
-	RequiredClaim  types.String `tfsdk:"required_claim"`
-	Ca             types.String `tfsdk:"ca"`
-}
-
-type Audit struct {
-	WebhookConfig types.String `tfsdk:"webhook_config"`
-	Policy        types.String `tfsdk:"policy"`
-}
-
 func (r *kaasResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_kaas"
 }
@@ -115,7 +63,7 @@ func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 }
 
 func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data KaasModel
+	var data kaas_schemas.KaasModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -170,7 +118,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 		resp.Diagnostics.AddWarning("could not fetch and set kubeconfig", err.Error())
 	}
 
-	data.fill(kaasObject)
+	data.Fill(kaasObject)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
@@ -191,79 +139,11 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 			return
 		}
 
-		data.fillApiserverState(ctx, apiserverParamsInput)
+		data.FillApiserverState(ctx, apiserverParamsInput)
 	}
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func (state *KaasModel) fillApiserverState(ctx context.Context, apiserverParams *kaas.Apiserver) {
-	if state.shouldUpdateApiserver() {
-		state.SetDefaultValues(ctx)
-		state.updateAuditConfig(apiserverParams)
-		state.updateOIDCConfig(apiserverParams)
-		if state.canSetApiserverToNil() {
-			state.Apiserver = nil
-		}
-	}
-}
-
-func (state *KaasModel) fillIpFilters(ctx context.Context, cidrs []netip.Prefix) diag.Diagnostics {
-	var diagnostics diag.Diagnostics
-	if len(cidrs) == 0 {
-		return diagnostics
-	}
-
-	convertedCirds := make([]string, len(cidrs))
-	for i, cidr := range cidrs {
-		convertedCirds[i] = cidr.String()
-	}
-
-	listValue, diags := types.ListValueFrom(ctx, types.StringType, convertedCirds)
-	state.Apiserver.IpFilters = listValue
-	diagnostics = diags
-
-	return diagnostics
-}
-
-func (state *KaasModel) shouldUpdateApiserver() bool {
-	apiserver := state.Apiserver
-	return apiserver != nil && (apiserver.Audit != nil || apiserver.Oidc != nil || !apiserver.Params.IsNull())
-}
-
-func (state *KaasModel) updateAuditConfig(apiserverParams *kaas.Apiserver) {
-	if apiserverParams.AuditLogPolicy == nil && apiserverParams.AuditLogWebhook == nil {
-		state.Apiserver.Audit = nil
-	} else {
-		state.Apiserver.Audit.Policy = types.StringPointerValue(apiserverParams.AuditLogPolicy)
-		state.Apiserver.Audit.WebhookConfig = types.StringPointerValue(apiserverParams.AuditLogWebhook)
-	}
-}
-
-func (state *KaasModel) updateOIDCConfig(apiserverParams *kaas.Apiserver) {
-	if apiserverParams.Params != nil {
-		params := apiserverParams.Params
-		state.Apiserver.Oidc = &OidcModel{
-			ClientId:       types.StringPointerValue(params.ClientId),
-			IssuerUrl:      types.StringPointerValue(params.IssuerUrl),
-			UsernameClaim:  types.StringPointerValue(params.UsernameClaim),
-			UsernamePrefix: types.StringPointerValue(params.UsernamePrefix),
-			SigningAlgs:    types.StringPointerValue(params.SigningAlgs),
-			GroupsClaim:    types.StringPointerValue(params.GroupsClaim),
-			GroupsPrefix:   types.StringPointerValue(params.GroupsPrefix),
-			RequiredClaim:  types.StringPointerValue(params.RequiredClaim),
-			Ca:             types.StringPointerValue(apiserverParams.OidcCa),
-		}
-	} else {
-		state.Apiserver.Oidc = nil
-		state.Apiserver.Params = types.MapNull(types.StringType)
-	}
-}
-
-func (state *KaasModel) canSetApiserverToNil() bool {
-	apiserver := state.Apiserver
-	return apiserver.Audit == nil && apiserver.Oidc == nil && apiserver.Params.IsNull()
 }
 
 func (r *kaasResource) waitUntilActive(ctx context.Context, kaas *kaas.Kaas, id int64) (*kaas.Kaas, error) {
@@ -285,7 +165,7 @@ func (r *kaasResource) waitUntilActive(ctx context.Context, kaas *kaas.Kaas, id 
 	}
 }
 
-func (r *kaasResource) getApiserverParamsValues(data KaasModel) map[string]string {
+func (r *kaasResource) getApiserverParamsValues(data kaas_schemas.KaasModel) map[string]string {
 	params := make(map[string]string)
 	if !data.Apiserver.Params.IsNull() && !data.Apiserver.Params.IsUnknown() {
 		for key, val := range data.Apiserver.Params.Elements() {
@@ -299,7 +179,7 @@ func (r *kaasResource) getApiserverParamsValues(data KaasModel) map[string]strin
 }
 
 func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state KaasModel
+	var state kaas_schemas.KaasModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -322,7 +202,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	state.fill(kaasObject)
+	state.Fill(kaasObject)
 
 	err = r.fetchAndSetKubeconfig(&state, kaasObject)
 	if err != nil {
@@ -338,7 +218,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	if apiserverParams != nil {
-		state.fillApiserverState(ctx, apiserverParams)
+		state.FillApiserverState(ctx, apiserverParams)
 	}
 
 	if state.Apiserver != nil {
@@ -350,15 +230,15 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 			)
 			return
 		}
-		resp.Diagnostics.Append(state.fillIpFilters(ctx, ipFilters)...)
+		resp.Diagnostics.Append(state.FillIpFilters(ctx, ipFilters)...)
 	}
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var state KaasModel
-	var data KaasModel
+	var state kaas_schemas.KaasModel
+	var data kaas_schemas.KaasModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -390,7 +270,7 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		resp.Diagnostics.AddWarning("could not fetch and set kubeconfig", err.Error())
 	}
 
-	data.fill(kaasObject)
+	data.Fill(kaasObject)
 
 	if data.Apiserver != nil {
 		r.handleApiserverConfig(ctx, &data, input, resp)
@@ -405,7 +285,7 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *kaasResource) prepareUpdateInput(state, data KaasModel, packID int64) *kaas.Kaas {
+func (r *kaasResource) prepareUpdateInput(state, data kaas_schemas.KaasModel, packID int64) *kaas.Kaas {
 	input := &kaas.Kaas{
 		Project: kaas.KaasProject{
 			PublicCloudId: data.PublicCloudId.ValueInt64(),
@@ -425,7 +305,7 @@ func (r *kaasResource) prepareUpdateInput(state, data KaasModel, packID int64) *
 	return input
 }
 
-func (r *kaasResource) fetchAndSetKubeconfig(data *KaasModel, input *kaas.Kaas) error {
+func (r *kaasResource) fetchAndSetKubeconfig(data *kaas_schemas.KaasModel, input *kaas.Kaas) error {
 	kubeconfig, err := r.client.Kaas.GetKubeconfig(
 		input.Project.PublicCloudId,
 		input.Project.ProjectId,
@@ -438,14 +318,14 @@ func (r *kaasResource) fetchAndSetKubeconfig(data *KaasModel, input *kaas.Kaas) 
 	return nil
 }
 
-func (r *kaasResource) handleApiserverConfig(ctx context.Context, data *KaasModel, input *kaas.Kaas, resp *resource.UpdateResponse) {
+func (r *kaasResource) handleApiserverConfig(ctx context.Context, data *kaas_schemas.KaasModel, input *kaas.Kaas, resp *resource.UpdateResponse) {
 	apiserverParamsInput := r.buildApiserverParamsInput(*data)
 	patched, err := r.client.Kaas.PatchApiserverParams(apiserverParamsInput, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
 	if !patched || err != nil {
 		resp.Diagnostics.AddError("Error when patching Apiserver params", err.Error())
 		return
 	}
-	data.fillApiserverState(ctx, apiserverParamsInput)
+	data.FillApiserverState(ctx, apiserverParamsInput)
 }
 
 func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters types.List, publicCloudId, projectId, kaasId int64) diag.Diagnostics {
@@ -481,7 +361,7 @@ func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters ty
 	return diags
 }
 
-func (r *kaasResource) buildApiserverParamsInput(data KaasModel) *kaas.Apiserver {
+func (r *kaasResource) buildApiserverParamsInput(data kaas_schemas.KaasModel) *kaas.Apiserver {
 	apiserverParamsInput := &kaas.Apiserver{
 		NonSpecificApiServerParams: r.getApiserverParamsValues(data),
 	}
@@ -506,7 +386,7 @@ func (r *kaasResource) buildApiserverParamsInput(data KaasModel) *kaas.Apiserver
 }
 
 func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data KaasModel
+	var data kaas_schemas.KaasModel
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -563,7 +443,7 @@ func (r *kaasResource) ImportState(ctx context.Context, req resource.ImportState
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), kaasId)...)
 }
 
-func (r *kaasResource) getPackId(data KaasModel, diagnostic *diag.Diagnostics) (*kaas.KaasPack, error) {
+func (r *kaasResource) getPackId(data kaas_schemas.KaasModel, diagnostic *diag.Diagnostics) (*kaas.KaasPack, error) {
 	packs, err := r.client.Kaas.GetPacks()
 	if err != nil {
 		diagnostic.AddError(
@@ -595,12 +475,4 @@ func (r *kaasResource) getPackId(data KaasModel, diagnostic *diag.Diagnostics) (
 	}
 
 	return chosenPack, nil
-}
-
-func (model *KaasModel) fill(kaas *kaas.Kaas) {
-	model.Id = types.Int64Value(kaas.Id)
-	model.Region = types.StringValue(kaas.Region)
-	model.KubernetesVersion = types.StringValue(kaas.KubernetesVersion)
-	model.Name = types.StringValue(kaas.Name)
-	model.PackName = types.StringValue(kaas.Pack.Name)
 }
