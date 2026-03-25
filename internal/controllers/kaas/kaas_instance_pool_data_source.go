@@ -4,6 +4,7 @@ import (
 	"context"
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/provider"
+	kaas_schemas "terraform-provider-infomaniak/internal/schemas/kaas"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -46,7 +47,7 @@ func (d *kaasInstancePoolDataSource) Configure(_ context.Context, req datasource
 
 // Schema defines the schema for the data source.
 func (d *kaasInstancePoolDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = getKaasInstancePoolDataSourceSchema()
+	resp.Schema = kaas_schemas.GetKaasInstancePoolDataSourceSchema()
 }
 
 // Read refreshes the Terraform state with the latest data.

@@ -1,4 +1,4 @@
-package kaas
+package kaas_schemas
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func getKaasResourceSchema() schema.Schema {
+func GetKaasResourceSchema() schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"public_cloud_id": schema.Int64Attribute{

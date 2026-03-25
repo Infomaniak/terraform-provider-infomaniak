@@ -9,6 +9,7 @@ import (
 	"terraform-provider-infomaniak/internal/apis"
 	"terraform-provider-infomaniak/internal/apis/kaas"
 	"terraform-provider-infomaniak/internal/provider"
+	kaas_schemas "terraform-provider-infomaniak/internal/schemas/kaas"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -69,7 +70,7 @@ func (r *kaasInstancePoolResource) Configure(_ context.Context, req resource.Con
 }
 
 func (r *kaasInstancePoolResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = getKaasInstancePoolResourceSchema()
+	resp.Schema = kaas_schemas.GetKaasInstancePoolResourceSchema()
 }
 
 func (r *kaasInstancePoolResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
