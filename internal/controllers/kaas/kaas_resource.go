@@ -59,7 +59,7 @@ func (r *kaasResource) Configure(ctx context.Context, req resource.ConfigureRequ
 }
 
 func (r *kaasResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = kaas_schemas.GetKaasResourceSchema()
+	resp.Schema = kaas_schemas.KaasResourceSchema
 }
 
 func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

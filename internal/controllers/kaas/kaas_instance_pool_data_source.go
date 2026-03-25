@@ -47,12 +47,12 @@ func (d *kaasInstancePoolDataSource) Configure(_ context.Context, req datasource
 
 // Schema defines the schema for the data source.
 func (d *kaasInstancePoolDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = kaas_schemas.GetKaasInstancePoolDataSourceSchema()
+	resp.Schema = kaas_schemas.KaasInstancePoolDataSourceSchema
 }
 
 // Read refreshes the Terraform state with the latest data.
 func (d *kaasInstancePoolDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data KaasInstancePoolModel
+	var data kaas_schemas.KaasInstancePoolModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 

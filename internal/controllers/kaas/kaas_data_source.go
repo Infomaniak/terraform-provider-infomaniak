@@ -47,7 +47,7 @@ func (d *kaasDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 
 // Schema defines the schema for the data source.
 func (d *kaasDataSource) Schema(ctx context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = kaas_schemas.GetKaasDataSourceSchema()
+	resp.Schema = kaas_schemas.KaasDataSourceSchema
 }
 
 // Read refreshes the Terraform state with the latest data.
