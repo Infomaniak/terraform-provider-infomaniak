@@ -80,6 +80,9 @@ var KaasResourceSchema schema.Schema = schema.Schema{
 		"apiserver": schema.SingleNestedAttribute{
 			MarkdownDescription: "Kubernetes Apiserver editable params",
 			Optional:            true,
+			PlanModifiers: []planmodifier.Object{
+				objectplanmodifier.UseStateForUnknown(),
+			},
 			Attributes: map[string]schema.Attribute{
 				"ip_filters": schema.ListAttribute{
 					Optional:            true,
@@ -123,6 +126,9 @@ var KaasResourceSchema schema.Schema = schema.Schema{
 				"oidc": schema.SingleNestedAttribute{
 					MarkdownDescription: "OIDC specific Apiserver params",
 					Optional:            true,
+					PlanModifiers: []planmodifier.Object{
+						objectplanmodifier.UseStateForUnknown(),
+					},
 					Attributes: map[string]schema.Attribute{
 						"ca": schema.StringAttribute{
 							Optional: true,

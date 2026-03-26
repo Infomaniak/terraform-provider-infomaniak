@@ -134,6 +134,7 @@ func (s *KaasService) SetApiserverConfig(ctx context.Context, model kaas_schemas
 	var diags diag.Diagnostics
 
 	if model.Apiserver.IsNull() || model.Apiserver.IsUnknown() {
+		state.Apiserver = model.Apiserver
 		return diags
 	}
 
@@ -161,20 +162,39 @@ func (s *KaasService) SetApiserverConfig(ctx context.Context, model kaas_schemas
 func (s *KaasService) ReadApiserverConfig(ctx context.Context, model kaas_schemas.KaasModel, kaasId int64, state *kaas_schemas.KaasModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	var apiserverState kaas_schemas.ApiserverModel
-	if !state.Apiserver.IsNull() && !state.Apiserver.IsUnknown() {
-		diags.Append(state.Apiserver.As(ctx, &apiserverState, basetypes.ObjectAsOptions{})...)
-		if diags.HasError() {
-			return diags
-		}
+	if model.Apiserver.IsNull() || model.Apiserver.IsUnknown() {
+		state.Apiserver = model.Apiserver
+		return diags
 	}
 
-	diags.Append(s.readIpFilters(ctx, &apiserverState, model.PublicCloudId.ValueInt64(), model.PublicCloudProjectId.ValueInt64(), kaasId)...)
+	var apiserverState kaas_schemas.ApiserverModel
+	diags.Append(state.Apiserver.As(ctx, &apiserverState, basetypes.ObjectAsOptions{})...)
+	if diags.HasError() {
+		return diags
+	}
+
+	var apiserverModel kaas_schemas.ApiserverModel
+	diags.Append(model.Apiserver.As(ctx, &apiserverModel, basetypes.ObjectAsOptions{})...)
+	if diags.HasError() {
+		return diags
+	}
+
+	diags.Append(s.readIpFilters(ctx, apiserverModel, &apiserverState, model.PublicCloudId.ValueInt64(), model.PublicCloudProjectId.ValueInt64(), kaasId)...)
 	if diags.HasError() {
 		return diags
 	}
 
 	diags.Append(s.readApiserverParams(ctx, &apiserverState, model.PublicCloudId.ValueInt64(), model.PublicCloudProjectId.ValueInt64(), kaasId)...)
+	if diags.HasError() {
+		return diags
+	}
+
+	diags.Append(s.readApiserverOidc(ctx, apiserverModel, &apiserverState, model.PublicCloudId.ValueInt64(), model.PublicCloudProjectId.ValueInt64(), kaasId)...)
+	if diags.HasError() {
+		return diags
+	}
+
+	diags.Append(s.readApiserverAudit(ctx, apiserverModel, &apiserverState, model.PublicCloudId.ValueInt64(), model.PublicCloudProjectId.ValueInt64(), kaasId)...)
 	if diags.HasError() {
 		return diags
 	}
@@ -188,23 +208,18 @@ func (s *KaasService) ReadApiserverConfig(ctx context.Context, model kaas_schema
 	return diags
 }
 
-func (s *KaasService) readApiserverParams(ctx context.Context, state *kaas_schemas.ApiserverModel, publicCloudId, projectId, kaasId int64) diag.Diagnostics {
+func (s *KaasService) readApiserverOidc(ctx context.Context, model kaas_schemas.ApiserverModel, state *kaas_schemas.ApiserverModel, publicCloudId, projectId, kaasId int64) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	var auditState kaas_schemas.Audit
-	if !state.Audit.IsNull() && !state.Audit.IsUnknown() {
-		diags.Append(state.Audit.As(ctx, &auditState, basetypes.ObjectAsOptions{})...)
-		if diags.HasError() {
-			return diags
-		}
+	if model.Oidc.IsNull() {
+		state.Oidc = model.Oidc
+		return diags
 	}
 
 	var oidcState kaas_schemas.OidcModel
-	if !state.Oidc.IsNull() && !state.Oidc.IsUnknown() {
-		diags.Append(state.Oidc.As(ctx, &oidcState, basetypes.ObjectAsOptions{})...)
-		if diags.HasError() {
-			return diags
-		}
+	diags.Append(state.Oidc.As(ctx, &oidcState, basetypes.ObjectAsOptions{})...)
+	if diags.HasError() {
+		return diags
 	}
 
 	apiserverParams, err := s.client.Kaas.GetApiserverParams(publicCloudId, projectId, kaasId)
@@ -212,14 +227,6 @@ func (s *KaasService) readApiserverParams(ctx context.Context, state *kaas_schem
 		diags.AddError("could not read apiserver params", err.Error())
 		return diags
 	}
-
-	auditState.Policy = types.StringPointerValue(apiserverParams.AuditLogPolicy)
-	auditState.WebhookConfig = types.StringPointerValue(apiserverParams.AuditLogWebhook)
-	auditTfObject, diags := types.ObjectValueFrom(ctx, auditState.AttributeTypes(), auditState)
-	if diags.HasError() {
-		return diags
-	}
-	state.Audit = auditTfObject
 
 	oidcState.Ca = types.StringPointerValue(apiserverParams.OidcCa)
 	if apiserverParams.Params != nil {
@@ -238,13 +245,55 @@ func (s *KaasService) readApiserverParams(ctx context.Context, state *kaas_schem
 	}
 	state.Oidc = oidcTfObject
 
+	return diags
+}
+
+func (s *KaasService) readApiserverAudit(ctx context.Context, model kaas_schemas.ApiserverModel, state *kaas_schemas.ApiserverModel, publicCloudId, projectId, kaasId int64) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if model.Audit.IsNull() {
+		state.Audit = model.Audit
+		return diags
+	}
+
+	var auditState kaas_schemas.Audit
+	diags.Append(state.Audit.As(ctx, &auditState, basetypes.ObjectAsOptions{})...)
+	if diags.HasError() {
+		return diags
+	}
+
+	apiserverParams, err := s.client.Kaas.GetApiserverParams(publicCloudId, projectId, kaasId)
+	if err != nil {
+		diags.AddError("could not read apiserver params", err.Error())
+		return diags
+	}
+
+	auditState.Policy = types.StringPointerValue(apiserverParams.AuditLogPolicy)
+	auditState.WebhookConfig = types.StringPointerValue(apiserverParams.AuditLogWebhook)
+	auditTfObject, diags := types.ObjectValueFrom(ctx, auditState.AttributeTypes(), auditState)
+	if diags.HasError() {
+		return diags
+	}
+	state.Audit = auditTfObject
+
+	return diags
+}
+
+func (s *KaasService) readApiserverParams(ctx context.Context, state *kaas_schemas.ApiserverModel, publicCloudId, projectId, kaasId int64) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	state.Params = basetypes.NewMapNull(types.StringType)
 
 	return diags
 }
 
-func (s *KaasService) readIpFilters(ctx context.Context, state *kaas_schemas.ApiserverModel, publicCloudId, projectId, kaasId int64) diag.Diagnostics {
+func (s *KaasService) readIpFilters(ctx context.Context, model kaas_schemas.ApiserverModel, state *kaas_schemas.ApiserverModel, publicCloudId, projectId, kaasId int64) diag.Diagnostics {
 	var diags diag.Diagnostics
+
+	if model.IpFilters.IsNull() {
+		state.IpFilters = model.IpFilters
+		return diags
+	}
 
 	ipFilters, err := s.client.Kaas.GetIPFilters(publicCloudId, projectId, kaasId)
 	if err != nil {
