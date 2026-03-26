@@ -16,8 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var (
@@ -102,7 +100,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	resp.Diagnostics.Append(r.kaasService.SetApiserverConfig(ctx, data, kaasId)...)
+	resp.Diagnostics.Append(r.kaasService.SetApiserverConfig(ctx, data, kaasId, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -185,10 +183,8 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	input := r.prepareUpdateInput(state, data, chosenPackState.Id)
-
-	if _, err := r.client.Kaas.UpdateKaas(input); err != nil {
-		resp.Diagnostics.AddError("Error when updating KaaS", err.Error())
+	resp.Diagnostics.Append(r.kaasService.UpdateKaas(data, *chosenPackState, &state)...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -204,45 +200,12 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	resp.Diagnostics.Append(r.kaasService.SetApiserverConfig(ctx, data, input.Id)...)
+	resp.Diagnostics.Append(r.kaasService.SetApiserverConfig(ctx, data, kaasId, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func (r *kaasResource) prepareUpdateInput(state, data kaas_schemas.KaasModel, packID int64) *kaas.Kaas {
-	input := &kaas.Kaas{
-		Project: kaas.KaasProject{
-			PublicCloudId: data.PublicCloudId.ValueInt64(),
-			ProjectId:     data.PublicCloudProjectId.ValueInt64(),
-		},
-		Id:                state.Id.ValueInt64(),
-		Name:              data.Name.ValueString(),
-		PackId:            packID,
-		Region:            state.Region.ValueString(),
-		KubernetesVersion: data.KubernetesVersion.ValueString(),
-	}
-
-	if state.KubernetesVersion.ValueString() == data.KubernetesVersion.ValueString() {
-		input.KubernetesVersion = ""
-	}
-
-	return input
-}
-
-func (r *kaasResource) fetchAndSetKubeconfig(data *kaas_schemas.KaasModel, input *kaas.Kaas) error {
-	kubeconfig, err := r.client.Kaas.GetKubeconfig(
-		input.Project.PublicCloudId,
-		input.Project.ProjectId,
-		input.Id,
-	)
-	if err != nil {
-		return fmt.Errorf("could not get kubeconfig: %w", err)
-	}
-	data.Kubeconfig = types.StringValue(kubeconfig)
-	return nil
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

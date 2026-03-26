@@ -49,6 +49,41 @@ func (s *KaasService) CreateKaas(model kaas_schemas.KaasModel, pack kaas.KaasPac
 	return kaasId, diags
 }
 
+func (s *KaasService) UpdateKaas(model kaas_schemas.KaasModel, pack kaas.KaasPack, state *kaas_schemas.KaasModel) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	input := &kaas.Kaas{
+		Project: kaas.KaasProject{
+			PublicCloudId: model.PublicCloudId.ValueInt64(),
+			ProjectId:     model.PublicCloudProjectId.ValueInt64(),
+		},
+		Region:            model.Region.ValueString(),
+		KubernetesVersion: model.KubernetesVersion.ValueString(),
+		Name:              model.Name.ValueString(),
+		PackId:            pack.Id,
+		Id:                model.Id.ValueInt64(),
+	}
+
+	if state.KubernetesVersion.ValueString() == model.KubernetesVersion.ValueString() {
+		input.KubernetesVersion = ""
+	}
+
+	_, err := s.client.Kaas.UpdateKaas(input)
+	if err != nil {
+		diags.AddError("error when updating KaaS", err.Error())
+		return diags
+	}
+
+	state.PublicCloudProjectId = model.PublicCloudProjectId
+	state.PublicCloudId = model.PublicCloudId
+	state.Region = model.Region
+	state.Name = model.Name
+	state.PackName = model.PackName
+	state.Id = model.Id
+
+	return diags
+}
+
 func (s *KaasService) GetKaasOnceActive(ctx context.Context, model kaas_schemas.KaasModel, kaasId int64, state *kaas_schemas.KaasModel) (*kaas.Kaas, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -95,7 +130,7 @@ func (s *KaasService) GetKubeconfig(model kaas_schemas.KaasModel, kaasId int64, 
 	return kubeconfig, diags
 }
 
-func (s *KaasService) SetApiserverConfig(ctx context.Context, model kaas_schemas.KaasModel, kaasId int64) diag.Diagnostics {
+func (s *KaasService) SetApiserverConfig(ctx context.Context, model kaas_schemas.KaasModel, kaasId int64, state *kaas_schemas.KaasModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if model.Apiserver.IsNull() || model.Apiserver.IsUnknown() {
@@ -118,6 +153,8 @@ func (s *KaasService) SetApiserverConfig(ctx context.Context, model kaas_schemas
 		return diags
 	}
 
+	state.Apiserver = model.Apiserver
+
 	return diags
 }
 
@@ -125,7 +162,14 @@ func (s *KaasService) ReadApiserverConfig(ctx context.Context, model kaas_schema
 	var diags diag.Diagnostics
 
 	var apiserverState kaas_schemas.ApiserverModel
-	diags.Append(state.Apiserver.As(ctx, &apiserverState, basetypes.ObjectAsOptions{})...)
+	if !state.Apiserver.IsNull() && !state.Apiserver.IsUnknown() {
+		diags.Append(state.Apiserver.As(ctx, &apiserverState, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return diags
+		}
+	}
+
+	diags.Append(s.readIpFilters(ctx, &apiserverState, model.PublicCloudId.ValueInt64(), model.PublicCloudProjectId.ValueInt64(), kaasId)...)
 	if diags.HasError() {
 		return diags
 	}
@@ -134,8 +178,8 @@ func (s *KaasService) ReadApiserverConfig(ctx context.Context, model kaas_schema
 	if diags.HasError() {
 		return diags
 	}
-	
-	apiserverTfObject, diags := types.ObjectValueFrom(ctx, state.Apiserver.AttributeTypes(ctx), apiserverState)
+
+	apiserverTfObject, diags := types.ObjectValueFrom(ctx, apiserverState.AttributeTypes(), apiserverState)
 	if diags.HasError() {
 		return diags
 	}
@@ -148,15 +192,19 @@ func (s *KaasService) readApiserverParams(ctx context.Context, state *kaas_schem
 	var diags diag.Diagnostics
 
 	var auditState kaas_schemas.Audit
-	diags.Append(state.Audit.As(ctx, &auditState, basetypes.ObjectAsOptions{})...)
-	if diags.HasError() {
-		return diags
+	if !state.Audit.IsNull() && !state.Audit.IsUnknown() {
+		diags.Append(state.Audit.As(ctx, &auditState, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return diags
+		}
 	}
 
 	var oidcState kaas_schemas.OidcModel
-	diags.Append(state.Oidc.As(ctx, &oidcState, basetypes.ObjectAsOptions{})...)
-	if diags.HasError() {
-		return diags
+	if !state.Oidc.IsNull() && !state.Oidc.IsUnknown() {
+		diags.Append(state.Oidc.As(ctx, &oidcState, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return diags
+		}
 	}
 
 	apiserverParams, err := s.client.Kaas.GetApiserverParams(publicCloudId, projectId, kaasId)
@@ -167,26 +215,55 @@ func (s *KaasService) readApiserverParams(ctx context.Context, state *kaas_schem
 
 	auditState.Policy = types.StringPointerValue(apiserverParams.AuditLogPolicy)
 	auditState.WebhookConfig = types.StringPointerValue(apiserverParams.AuditLogWebhook)
-	auditTfObject, diags := types.ObjectValueFrom(ctx, state.Audit.AttributeTypes(ctx), auditState)
+	auditTfObject, diags := types.ObjectValueFrom(ctx, auditState.AttributeTypes(), auditState)
 	if diags.HasError() {
 		return diags
 	}
 	state.Audit = auditTfObject
 
 	oidcState.Ca = types.StringPointerValue(apiserverParams.OidcCa)
-	oidcState.ClientId = types.StringPointerValue(apiserverParams.Params.ClientId)
-	oidcState.IssuerUrl = types.StringPointerValue(apiserverParams.Params.IssuerUrl)
-	oidcState.UsernameClaim = types.StringPointerValue(apiserverParams.Params.UsernameClaim)
-	oidcState.UsernamePrefix = types.StringPointerValue(apiserverParams.Params.UsernamePrefix)
-	oidcState.SigningAlgs = types.StringPointerValue(apiserverParams.Params.SigningAlgs)
-	oidcState.GroupsClaim = types.StringPointerValue(apiserverParams.Params.GroupsClaim)
-	oidcState.GroupsPrefix = types.StringPointerValue(apiserverParams.Params.GroupsPrefix)
-	oidcState.RequiredClaim = types.StringPointerValue(apiserverParams.Params.RequiredClaim)
-	oidcTfObject, diags := types.ObjectValueFrom(ctx, state.Oidc.AttributeTypes(ctx), oidcState)
+	if apiserverParams.Params != nil {
+		oidcState.ClientId = types.StringPointerValue(apiserverParams.Params.ClientId)
+		oidcState.IssuerUrl = types.StringPointerValue(apiserverParams.Params.IssuerUrl)
+		oidcState.UsernameClaim = types.StringPointerValue(apiserverParams.Params.UsernameClaim)
+		oidcState.UsernamePrefix = types.StringPointerValue(apiserverParams.Params.UsernamePrefix)
+		oidcState.SigningAlgs = types.StringPointerValue(apiserverParams.Params.SigningAlgs)
+		oidcState.GroupsClaim = types.StringPointerValue(apiserverParams.Params.GroupsClaim)
+		oidcState.GroupsPrefix = types.StringPointerValue(apiserverParams.Params.GroupsPrefix)
+		oidcState.RequiredClaim = types.StringPointerValue(apiserverParams.Params.RequiredClaim)
+	}
+	oidcTfObject, diags := types.ObjectValueFrom(ctx, oidcState.AttributeTypes(), oidcState)
 	if diags.HasError() {
 		return diags
 	}
 	state.Oidc = oidcTfObject
+
+	state.Params = basetypes.NewMapNull(types.StringType)
+
+	return diags
+}
+
+func (s *KaasService) readIpFilters(ctx context.Context, state *kaas_schemas.ApiserverModel, publicCloudId, projectId, kaasId int64) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	ipFilters, err := s.client.Kaas.GetIPFilters(publicCloudId, projectId, kaasId)
+	if err != nil {
+		diags.AddError("could not read Ip Filters", err.Error())
+		return diags
+	}
+
+	stringIpFilter := make([]string, len(ipFilters))
+	for i, ipFilter := range ipFilters {
+		stringIpFilter[i] = ipFilter.String()
+	}
+
+	terraformIpFilters, diagnostics := types.ListValueFrom(ctx, types.StringType, stringIpFilter)
+	diags.Append(diagnostics...)
+	if diags.HasError() {
+		return diags
+	}
+
+	state.IpFilters = terraformIpFilters
 
 	return diags
 }
