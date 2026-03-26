@@ -278,7 +278,7 @@ func (c *Client) DeleteInstancePool(publicCloudId int64, publicCloudProjectId in
 }
 
 func (c *Client) GetApiserverParams(publicCloudId int64, projectId int64, kaasId int64) (*kaas.Apiserver, error) {
-	return nil, nil
+	return &kaas.Apiserver{}, nil
 }
 func (c *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId int64, projectId int64, kaasId int64) (bool, error) {
 	return true, nil
@@ -288,5 +288,5 @@ func (client *Client) PutIPFilters(cidrs []netip.Prefix, publicCloudId int64, pr
 }
 
 func (client *Client) GetIPFilters(publicCloudId int64, projectId int64, kaasId int64) ([]netip.Prefix, error) {
-	return nil, nil
+	return []netip.Prefix{}, nil
 }
