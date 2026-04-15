@@ -1972,7 +1972,7 @@ func init() <span class="cov10" title="319">{
 
         // Check cache age
         stat, err := os.Stat(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="311">{
+        if err == nil </span><span class="cov9" title="298">{
                 // DeleteKaas cache if old
                 if time.Since(stat.ModTime()) &gt; 24*time.Hour </span><span class="cov0" title="0">{
                         os.Remove(mockedApiStatePath)
@@ -1982,17 +1982,17 @@ func init() <span class="cov10" title="319">{
 
         // Try to get cache
         <span class="cov10" title="319">bdy, err := os.ReadFile(mockedApiStatePath)
-        if err == nil </span><span class="cov9" title="311">{
+        if err == nil </span><span class="cov9" title="298">{
                 // Cache found
                 err := json.Unmarshal(bdy, &amp;mockedApiState)
-                if err != nil </span><span class="cov4" title="8">{
+                if err != nil </span><span class="cov5" title="21">{
                         os.Remove(mockedApiStatePath)
                 }</span>
-                <span class="cov9" title="311">return</span>
+                <span class="cov9" title="298">return</span>
         }
 
         // Create Kaas tmp file for caching
-        <span class="cov4" title="8">_, err = os.Create(mockedApiStatePath)
+        <span class="cov5" title="21">_, err = os.Create(mockedApiStatePath)
         if err != nil </span><span class="cov0" title="0">{
                 panic(err)</span>
         }
@@ -5592,12 +5592,12 @@ func getRecordResourceSchema() schema.Schema <span class="cov10" title="159">{
                         "source": schema.StringAttribute{
                                 Required:            true,
                                 MarkdownDescription: "The source of the Record.",
+                                Validators: []validator.String{
+                                        stringvalidator.LengthAtLeast(1),
+                                },
                                 PlanModifiers: []planmodifier.String{
                                         stringplanmodifier.RequiresReplace(),
                                         stringplanmodifier.UseStateForUnknown(),
-                                },
-                                Validators: []validator.String{
-                                        stringvalidator.LengthAtLeast(1),
                                 },
                         },
                         "type": schema.StringAttribute{
