@@ -27,6 +27,9 @@ func getRecordResourceSchema() schema.Schema {
 			"source": schema.StringAttribute{
 				Required:            true,
 				MarkdownDescription: "The source of the Record.",
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 					stringplanmodifier.UseStateForUnknown(),
