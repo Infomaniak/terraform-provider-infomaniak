@@ -20,6 +20,16 @@ jobs:
       with:
         go-version-file: 'go.mod'
 
+    # terraform-plugin-testing tries to auto-download Terraform and verify its
+    # GPG signature; HashiCorp's signing key has expired and the in-library key
+    # ring (hc-install) is no longer accepted. Installing Terraform up front
+    # lets the test framework find the binary on PATH and skip the verified
+    # download entirely.
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+      with:
+        terraform_wrapper: false
+
     - name: Download dependencies
       run: go mod download
     
