@@ -214,24 +214,24 @@ func (r *publicCloudUserResource) ImportState(ctx context.Context, req resource.
 	parts := strings.Split(req.ID, ",")
 	if len(parts) != 3 {
 		resp.Diagnostics.AddError(
-			"Invalid import ID",
+			errInvalidImportID,
 			fmt.Sprintf("Expected `<public_cloud_id>,<project_id>,<user_id>`; got: %q", req.ID),
 		)
 		return
 	}
 	cloudId, err := strconv.ParseInt(parts[0], 10, 64)
 	if err != nil {
-		resp.Diagnostics.AddError("Invalid import ID", "public_cloud_id must be numeric: "+parts[0])
+		resp.Diagnostics.AddError(errInvalidImportID, "public_cloud_id must be numeric: "+parts[0])
 		return
 	}
 	projectId, err := strconv.ParseInt(parts[1], 10, 64)
 	if err != nil {
-		resp.Diagnostics.AddError("Invalid import ID", "project_id must be numeric: "+parts[1])
+		resp.Diagnostics.AddError(errInvalidImportID, "project_id must be numeric: "+parts[1])
 		return
 	}
 	userId, err := strconv.ParseInt(parts[2], 10, 64)
 	if err != nil {
-		resp.Diagnostics.AddError("Invalid import ID", "user_id must be numeric: "+parts[2])
+		resp.Diagnostics.AddError(errInvalidImportID, "user_id must be numeric: "+parts[2])
 		return
 	}
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("public_cloud_id"), types.Int64Value(cloudId))...)

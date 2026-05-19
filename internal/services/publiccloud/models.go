@@ -2,6 +2,11 @@ package publiccloud
 
 import "github.com/hashicorp/terraform-plugin-framework/types"
 
+// errInvalidImportID is the diagnostic summary used by every Public Cloud
+// resource when a terraform import receives an ID that doesn't match the
+// expected colon-separated layout.
+const errInvalidImportID = "Invalid import ID"
+
 // PublicCloudModel mirrors apis/publiccloud.PublicCloud for Terraform state.
 type PublicCloudModel struct {
 	Id                     types.Int64  `tfsdk:"id"`

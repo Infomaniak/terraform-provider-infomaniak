@@ -118,7 +118,7 @@ func (r *publicCloudResource) ImportState(ctx context.Context, req resource.Impo
 	id, err := strconv.ParseInt(req.ID, 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Invalid import ID",
+			errInvalidImportID,
 			"Expected a numeric Public Cloud id; got: "+req.ID,
 		)
 		return
