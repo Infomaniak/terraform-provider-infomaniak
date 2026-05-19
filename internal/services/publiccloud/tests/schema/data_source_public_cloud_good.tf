@@ -1,0 +1,18 @@
+terraform {
+  required_version = ">= 1.5"
+
+  required_providers {
+    infomaniak = {
+      source  = "Infomaniak/infomaniak"
+      version = "~> 1.0"
+    }
+  }
+}
+
+provider "infomaniak" {
+  token = "fake-token"
+}
+
+data "infomaniak_public_cloud" "this" {
+  id = 42
+}
