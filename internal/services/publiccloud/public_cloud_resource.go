@@ -88,7 +88,7 @@ func (r *publicCloudResource) Update(ctx context.Context, req resource.UpdateReq
 		Description:   plan.Description.ValueString(),
 		BillReference: plan.BillReference.ValueString(),
 	}
-	if _, err := r.client.PublicCloud.UpdatePublicCloud(input); err != nil {
+	if err := r.client.PublicCloud.UpdatePublicCloud(input); err != nil {
 		resp.Diagnostics.AddError("Unable to update Public Cloud", err.Error())
 		return
 	}

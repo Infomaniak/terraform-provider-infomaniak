@@ -1,7 +1,6 @@
 package implementation
 
 import (
-	"encoding/json"
 	"fmt"
 	"terraform-provider-infomaniak/internal/apis/helpers"
 	"terraform-provider-infomaniak/internal/apis/publiccloud"
@@ -64,7 +63,7 @@ func (c *Client) GetPublicCloud(publicCloudId int64) (*publiccloud.PublicCloud, 
 
 // UpdatePublicCloud PATCHes the writable fields (customer_name, description,
 // bill_reference) of an existing Public Cloud product.
-func (c *Client) UpdatePublicCloud(input *publiccloud.PublicCloud) (bool, error) {
+func (c *Client) UpdatePublicCloud(input *publiccloud.PublicCloud) error {
 	body := map[string]string{}
 	if input.CustomerName != "" {
 		body["customer_name"] = input.CustomerName
@@ -76,7 +75,7 @@ func (c *Client) UpdatePublicCloud(input *publiccloud.PublicCloud) (bool, error)
 		body["bill_reference"] = input.BillReference
 	}
 
-	return c.patchAsyncBool(EndpointPublicCloud, map[string]string{
+	return c.patchAsync(EndpointPublicCloud, map[string]string{
 		"public_cloud_id": fmt.Sprint(input.Id),
 	}, body)
 }
@@ -125,19 +124,19 @@ func (c *Client) CreateProject(publicCloudId int64, input *publiccloud.ProjectCr
 	}, input)
 }
 
-func (c *Client) UpdateProject(input *publiccloud.Project) (bool, error) {
+func (c *Client) UpdateProject(input *publiccloud.Project) error {
 	body := map[string]string{}
 	if input.Name != "" {
 		body["name"] = input.Name
 	}
-	return c.patchAsyncBool(EndpointProject, map[string]string{
+	return c.patchAsync(EndpointProject, map[string]string{
 		"public_cloud_id":         fmt.Sprint(input.PublicCloudId),
 		"public_cloud_project_id": fmt.Sprint(input.Id),
 	}, body)
 }
 
-func (c *Client) DeleteProject(publicCloudId, projectId int64) (bool, error) {
-	return c.deleteAsyncBool(EndpointProject, map[string]string{
+func (c *Client) DeleteProject(publicCloudId, projectId int64) error {
+	return c.deleteAsync(EndpointProject, map[string]string{
 		"public_cloud_id":         fmt.Sprint(publicCloudId),
 		"public_cloud_project_id": fmt.Sprint(projectId),
 	})
@@ -189,26 +188,26 @@ func (c *Client) CreateUser(publicCloudId, projectId int64, input *publiccloud.U
 	}, input)
 }
 
-func (c *Client) UpdateUser(publicCloudId, projectId, userId int64, input *publiccloud.UserUpdate) (bool, error) {
-	return c.patchAsyncBool(EndpointUser, map[string]string{
+func (c *Client) UpdateUser(publicCloudId, projectId, userId int64, input *publiccloud.UserUpdate) error {
+	return c.patchAsync(EndpointUser, map[string]string{
 		"public_cloud_id":         fmt.Sprint(publicCloudId),
 		"public_cloud_project_id": fmt.Sprint(projectId),
 		"public_cloud_user_id":    fmt.Sprint(userId),
 	}, input)
 }
 
-func (c *Client) DeleteUser(publicCloudId, projectId, userId int64) (bool, error) {
-	return c.deleteAsyncBool(EndpointUser, map[string]string{
+func (c *Client) DeleteUser(publicCloudId, projectId, userId int64) error {
+	return c.deleteAsync(EndpointUser, map[string]string{
 		"public_cloud_id":         fmt.Sprint(publicCloudId),
 		"public_cloud_project_id": fmt.Sprint(projectId),
 		"public_cloud_user_id":    fmt.Sprint(userId),
 	})
 }
 
-// postAsyncInt64 issues a POST that may return either a sync result with an
-// integer id or a delayed envelope, and returns the final integer id.
+// postAsyncInt64 issues a POST on an endpoint known to be asynchronous and
+// returns the final integer id resolved from the async task.
 func (c *Client) postAsyncInt64(endpoint string, pathParams map[string]string, body any) (int64, error) {
-	var raw helpers.NormalizedApiResponse[json.RawMessage]
+	var raw helpers.AsyncResponse
 	req := c.resty.R().SetBody(body).SetResult(&raw).SetError(&raw)
 	for k, v := range pathParams {
 		req = req.SetPathParam(k, v)
@@ -217,67 +216,39 @@ func (c *Client) postAsyncInt64(endpoint string, pathParams map[string]string, b
 	if err != nil {
 		return 0, err
 	}
-	data, err := helpers.ResolveAsync(c.resty, resp, raw, asyncTimeout)
-	if err != nil {
-		return 0, err
-	}
-	var id int64
-	if err := json.Unmarshal(data, &id); err != nil {
-		return 0, fmt.Errorf("decode id from %s: %w", endpoint, err)
-	}
-	return id, nil
+	return helpers.ResolveAsync[int64](c.resty, resp, raw, asyncTimeout)
 }
 
-// patchAsyncBool issues a PATCH that returns either a sync boolean or a
-// delayed envelope, and surfaces the final boolean (defaulting to true when
-// the async task succeeded without returning a body).
-func (c *Client) patchAsyncBool(endpoint string, pathParams map[string]string, body any) (bool, error) {
-	var raw helpers.NormalizedApiResponse[json.RawMessage]
+// patchAsync issues a PATCH on an endpoint known to be asynchronous and waits
+// for the resulting async task to complete. The task payload is discarded.
+func (c *Client) patchAsync(endpoint string, pathParams map[string]string, body any) error {
+	var raw helpers.AsyncResponse
 	req := c.resty.R().SetBody(body).SetResult(&raw).SetError(&raw)
 	for k, v := range pathParams {
 		req = req.SetPathParam(k, v)
 	}
 	resp, err := req.Patch(endpoint)
 	if err != nil {
-		return false, err
+		return err
 	}
-	data, err := helpers.ResolveAsync(c.resty, resp, raw, asyncTimeout)
-	if err != nil {
-		return false, err
-	}
-	return decodeBoolOrTrue(data), nil
+	_, err = helpers.ResolveAsync[any](c.resty, resp, raw, asyncTimeout)
+	return err
 }
 
-// deleteAsyncBool issues a DELETE that returns either a sync boolean or a
-// delayed envelope, and surfaces the final boolean.
-func (c *Client) deleteAsyncBool(endpoint string, pathParams map[string]string) (bool, error) {
-	var raw helpers.NormalizedApiResponse[json.RawMessage]
+// deleteAsync issues a DELETE on an endpoint known to be asynchronous and
+// waits for the resulting async task to complete. The task payload is discarded.
+func (c *Client) deleteAsync(endpoint string, pathParams map[string]string) error {
+	var raw helpers.AsyncResponse
 	req := c.resty.R().SetResult(&raw).SetError(&raw)
 	for k, v := range pathParams {
 		req = req.SetPathParam(k, v)
 	}
 	resp, err := req.Delete(endpoint)
 	if err != nil {
-		return false, err
+		return err
 	}
-	data, err := helpers.ResolveAsync(c.resty, resp, raw, asyncTimeout)
-	if err != nil {
-		return false, err
-	}
-	return decodeBoolOrTrue(data), nil
-}
-
-// decodeBoolOrTrue accepts either a JSON boolean or null/empty (treated as
-// "operation succeeded").
-func decodeBoolOrTrue(data json.RawMessage) bool {
-	if len(data) == 0 || string(data) == "null" {
-		return true
-	}
-	var b bool
-	if err := json.Unmarshal(data, &b); err != nil {
-		return true
-	}
-	return b
+	_, err = helpers.ResolveAsync[any](c.resty, resp, raw, asyncTimeout)
+	return err
 }
 
 // GetOpenrc fetches the openrc.sh file content for a user in the given region.

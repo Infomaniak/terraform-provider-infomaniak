@@ -41,9 +41,9 @@ func (c *Client) GetPublicCloud(publicCloudId int64) (*publiccloud.PublicCloud, 
 
 // UpdatePublicCloud applies PATCHable fields to a Public Cloud, persisting the
 // result in the mock cache so subsequent reads return the new values.
-func (c *Client) UpdatePublicCloud(input *publiccloud.PublicCloud) (bool, error) {
+func (c *Client) UpdatePublicCloud(input *publiccloud.PublicCloud) error {
 	if input.Id <= 0 {
-		return false, fmt.Errorf("public cloud id must be > 0")
+		return fmt.Errorf("public cloud id must be > 0")
 	}
 
 	current, err := getFromCache[*publiccloud.PublicCloud](input.Key())
@@ -51,10 +51,10 @@ func (c *Client) UpdatePublicCloud(input *publiccloud.PublicCloud) (bool, error)
 		// Seed from the synthetic baseline when the cache is empty.
 		current = c.syntheticPublicCloud(input.Id)
 		if addErr := addToCache(current); addErr != nil {
-			return false, addErr
+			return addErr
 		}
 	} else if err != nil {
-		return false, err
+		return err
 	}
 
 	if input.CustomerName != "" {
@@ -67,10 +67,7 @@ func (c *Client) UpdatePublicCloud(input *publiccloud.PublicCloud) (bool, error)
 		current.BillReference = input.BillReference
 	}
 
-	if err := updateCache(current); err != nil {
-		return false, err
-	}
-	return true, nil
+	return updateCache(current)
 }
 
 // SeedPublicCloud lets tests insert a Public Cloud into the mock cache before
@@ -152,19 +149,19 @@ func (c *Client) CreateProject(publicCloudId int64, input *publiccloud.ProjectCr
 	return project.Id, nil
 }
 
-func (c *Client) UpdateProject(input *publiccloud.Project) (bool, error) {
+func (c *Client) UpdateProject(input *publiccloud.Project) error {
 	if input.PublicCloudId <= 0 || input.Id <= 0 {
-		return false, fmt.Errorf("public_cloud_id and project id must be > 0")
+		return fmt.Errorf("public_cloud_id and project id must be > 0")
 	}
 
 	current, err := getFromCache[*publiccloud.Project](input.Key())
 	if err == ErrKeyNotFound {
 		current = c.syntheticProject(input.PublicCloudId, input.Id)
 		if addErr := addToCache(current); addErr != nil {
-			return false, addErr
+			return addErr
 		}
 	} else if err != nil {
-		return false, err
+		return err
 	}
 
 	if input.Name != "" {
@@ -172,21 +169,18 @@ func (c *Client) UpdateProject(input *publiccloud.Project) (bool, error) {
 	}
 	current.UpdatedAt = fixedNow
 
-	if err := updateCache(current); err != nil {
-		return false, err
-	}
-	return true, nil
+	return updateCache(current)
 }
 
-func (c *Client) DeleteProject(publicCloudId, projectId int64) (bool, error) {
+func (c *Client) DeleteProject(publicCloudId, projectId int64) error {
 	if publicCloudId <= 0 || projectId <= 0 {
-		return false, fmt.Errorf("public_cloud_id and project id must be > 0")
+		return fmt.Errorf("public_cloud_id and project id must be > 0")
 	}
 	obj := &publiccloud.Project{PublicCloudId: publicCloudId, Id: projectId}
 	if err := removeFromCache(obj); err != nil && err != ErrKeyNotFound {
-		return false, err
+		return err
 	}
-	return true, nil
+	return nil
 }
 
 // SeedProject inserts a Project into the mock cache for tests.
@@ -253,9 +247,9 @@ func (c *Client) CreateUser(publicCloudId, projectId int64, input *publiccloud.U
 	return user.Id, nil
 }
 
-func (c *Client) UpdateUser(publicCloudId, projectId, userId int64, input *publiccloud.UserUpdate) (bool, error) {
+func (c *Client) UpdateUser(publicCloudId, projectId, userId int64, input *publiccloud.UserUpdate) error {
 	if publicCloudId <= 0 || projectId <= 0 || userId <= 0 {
-		return false, fmt.Errorf("public_cloud_id, project_id and user_id must be > 0")
+		return fmt.Errorf("public_cloud_id, project_id and user_id must be > 0")
 	}
 
 	key := (&publiccloud.User{PublicCloudId: publicCloudId, PublicCloudProjectId: projectId, Id: userId}).Key()
@@ -263,10 +257,10 @@ func (c *Client) UpdateUser(publicCloudId, projectId, userId int64, input *publi
 	if err == ErrKeyNotFound {
 		current = c.syntheticUser(publicCloudId, projectId, userId)
 		if addErr := addToCache(current); addErr != nil {
-			return false, addErr
+			return addErr
 		}
 	} else if err != nil {
-		return false, err
+		return err
 	}
 
 	if input.Description != "" {
@@ -274,21 +268,18 @@ func (c *Client) UpdateUser(publicCloudId, projectId, userId int64, input *publi
 	}
 	current.UpdatedAt = fixedNow
 
-	if err := updateCache(current); err != nil {
-		return false, err
-	}
-	return true, nil
+	return updateCache(current)
 }
 
-func (c *Client) DeleteUser(publicCloudId, projectId, userId int64) (bool, error) {
+func (c *Client) DeleteUser(publicCloudId, projectId, userId int64) error {
 	if publicCloudId <= 0 || projectId <= 0 || userId <= 0 {
-		return false, fmt.Errorf("public_cloud_id, project_id and user_id must be > 0")
+		return fmt.Errorf("public_cloud_id, project_id and user_id must be > 0")
 	}
 	obj := &publiccloud.User{PublicCloudId: publicCloudId, PublicCloudProjectId: projectId, Id: userId}
 	if err := removeFromCache(obj); err != nil && err != ErrKeyNotFound {
-		return false, err
+		return err
 	}
-	return true, nil
+	return nil
 }
 
 // SeedUser inserts a User into the mock cache for tests.

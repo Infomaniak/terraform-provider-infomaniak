@@ -184,7 +184,7 @@ func (r *publicCloudProjectResource) Update(ctx context.Context, req resource.Up
 		PublicCloudId: plan.PublicCloudId.ValueInt64(),
 		Name:          plan.Name.ValueString(),
 	}
-	if _, err := r.client.PublicCloud.UpdateProject(input); err != nil {
+	if err := r.client.PublicCloud.UpdateProject(input); err != nil {
 		resp.Diagnostics.AddError("Unable to update Public Cloud project", err.Error())
 		return
 	}
@@ -206,7 +206,7 @@ func (r *publicCloudProjectResource) Delete(ctx context.Context, req resource.De
 		return
 	}
 
-	if _, err := r.client.PublicCloud.DeleteProject(state.PublicCloudId.ValueInt64(), state.Id.ValueInt64()); err != nil {
+	if err := r.client.PublicCloud.DeleteProject(state.PublicCloudId.ValueInt64(), state.Id.ValueInt64()); err != nil {
 		resp.Diagnostics.AddError("Unable to delete Public Cloud project", err.Error())
 		return
 	}

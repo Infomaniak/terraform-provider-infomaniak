@@ -181,7 +181,7 @@ func (r *publicCloudUserResource) Update(ctx context.Context, req resource.Updat
 		input.Password = plan.Password.ValueString()
 	}
 
-	if _, err := r.client.PublicCloud.UpdateUser(plan.PublicCloudId.ValueInt64(), plan.PublicCloudProjectId.ValueInt64(), plan.Id.ValueInt64(), input); err != nil {
+	if err := r.client.PublicCloud.UpdateUser(plan.PublicCloudId.ValueInt64(), plan.PublicCloudProjectId.ValueInt64(), plan.Id.ValueInt64(), input); err != nil {
 		resp.Diagnostics.AddError("Unable to update Public Cloud user", err.Error())
 		return
 	}
@@ -203,7 +203,7 @@ func (r *publicCloudUserResource) Delete(ctx context.Context, req resource.Delet
 		return
 	}
 
-	if _, err := r.client.PublicCloud.DeleteUser(state.PublicCloudId.ValueInt64(), state.PublicCloudProjectId.ValueInt64(), state.Id.ValueInt64()); err != nil {
+	if err := r.client.PublicCloud.DeleteUser(state.PublicCloudId.ValueInt64(), state.PublicCloudProjectId.ValueInt64(), state.Id.ValueInt64()); err != nil {
 		resp.Diagnostics.AddError("Unable to delete Public Cloud user", err.Error())
 		return
 	}
