@@ -61,53 +61,79 @@ func ResolveAsync[R any](client *resty.Client, resp *resty.Response, raw AsyncRe
 	}
 }
 
+// pollInitialInterval is the first wait between polls; it ramps up to pollMaxInterval.
+const (
+	pollInitialInterval = 1 * time.Second
+	pollMaxInterval     = 5 * time.Second
+)
+
 // PollAsyncTask blocks until the task is executed (and returns its typed inner
 // data), fails, or the timeout fires. The poll interval ramps from 1s up to 5s.
 func PollAsyncTask[R any](client *resty.Client, taskUUID string, timeout time.Duration) (R, error) {
 	var zero R
 	deadline := time.Now().Add(timeout)
-	interval := 1 * time.Second
+	interval := pollInitialInterval
 
 	for {
-		var env NormalizedApiResponse[*AsyncTask[R]]
-		resp, err := client.R().
-			SetPathParam("task_uuid", taskUUID).
-			SetResult(&env).
-			SetError(&env).
-			Get(EndpointAsyncTask)
+		task, err := fetchAsyncTask[R](client, taskUUID)
 		if err != nil {
-			return zero, fmt.Errorf("poll task %s: %w", taskUUID, err)
+			return zero, err
 		}
-		if resp.IsError() {
-			if env.Error != nil {
-				return zero, env.Error
-			}
-			return zero, fmt.Errorf("poll task %s: HTTP %d", taskUUID, resp.StatusCode())
+		if result, done, err := interpretAsyncTask(task, taskUUID); done {
+			return result, err
 		}
-		if env.Data == nil {
-			return zero, fmt.Errorf("poll task %s: empty data", taskUUID)
-		}
-
-		switch env.Data.Status {
-		case "executed":
-			inner := env.Data.Response
-			if inner.Result == "error" || inner.Error != nil {
-				if inner.Error != nil {
-					return zero, inner.Error
-				}
-				return zero, fmt.Errorf("task %s finished with error", taskUUID)
-			}
-			return inner.Data, nil
-		case "failed", "error":
-			return zero, fmt.Errorf("task %s failed", taskUUID)
-		}
-
 		if time.Now().After(deadline) {
-			return zero, fmt.Errorf("timeout waiting for task %s (last status=%q)", taskUUID, env.Data.Status)
+			return zero, fmt.Errorf("timeout waiting for task %s (last status=%q)", taskUUID, task.Status)
 		}
 		time.Sleep(interval)
-		if interval < 5*time.Second {
+		if interval < pollMaxInterval {
 			interval += 1 * time.Second
 		}
+	}
+}
+
+// fetchAsyncTask issues a single GET on the polling endpoint and returns the
+// decoded task, normalising HTTP- and envelope-level errors into Go errors.
+func fetchAsyncTask[R any](client *resty.Client, taskUUID string) (*AsyncTask[R], error) {
+	var env NormalizedApiResponse[*AsyncTask[R]]
+	resp, err := client.R().
+		SetPathParam("task_uuid", taskUUID).
+		SetResult(&env).
+		SetError(&env).
+		Get(EndpointAsyncTask)
+	if err != nil {
+		return nil, fmt.Errorf("poll task %s: %w", taskUUID, err)
+	}
+	if resp.IsError() {
+		if env.Error != nil {
+			return nil, env.Error
+		}
+		return nil, fmt.Errorf("poll task %s: HTTP %d", taskUUID, resp.StatusCode())
+	}
+	if env.Data == nil {
+		return nil, fmt.Errorf("poll task %s: empty data", taskUUID)
+	}
+	return env.Data, nil
+}
+
+// interpretAsyncTask examines a polled task's status. The returned `done` flag
+// signals to the caller that polling should stop; when true, (result, err)
+// carries the final outcome. When false, polling should continue.
+func interpretAsyncTask[R any](task *AsyncTask[R], taskUUID string) (R, bool, error) {
+	var zero R
+	switch task.Status {
+	case "executed":
+		inner := task.Response
+		if inner.Error != nil {
+			return zero, true, inner.Error
+		}
+		if inner.Result == "error" {
+			return zero, true, fmt.Errorf("task %s finished with error", taskUUID)
+		}
+		return inner.Data, true, nil
+	case "failed", "error":
+		return zero, true, fmt.Errorf("task %s failed", taskUUID)
+	default:
+		return zero, false, nil
 	}
 }
