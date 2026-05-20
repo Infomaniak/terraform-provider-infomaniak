@@ -45,7 +45,7 @@ type DBaasBackupScheduleModel struct {
 func (model *DBaasBackupScheduleModel) fill(backupSchedule *dbaas.DBaasBackupSchedule) {
 	model.ScheduledAt = types.StringPointerValue(backupSchedule.ScheduledAt)
 	model.Retention = types.Int64PointerValue(backupSchedule.Retention)
-	model.IsPitrEnabled = types.BoolPointerValue(backupSchedule.IsPitrEnabled)
+	model.IsPitrEnabled = types.BoolValue(backupSchedule.IsPitrEnabled)
 	model.Name = types.StringPointerValue(backupSchedule.Name)
 	model.Id = types.Int64PointerValue(backupSchedule.Id)
 }
@@ -91,7 +91,7 @@ func (r *dbaasBackupScheduleResource) Create(ctx context.Context, req resource.C
 	input := &dbaas.DBaasBackupSchedule{
 		ScheduledAt:   data.ScheduledAt.ValueStringPointer(),
 		Retention:     data.Retention.ValueInt64Pointer(),
-		IsPitrEnabled: data.IsPitrEnabled.ValueBoolPointer(),
+		IsPitrEnabled: data.IsPitrEnabled.ValueBool(),
 	}
 
 	scheduleId, err := r.client.DBaas.CreateDBaasScheduleBackup(
@@ -144,7 +144,7 @@ func (r *dbaasBackupScheduleResource) Update(ctx context.Context, req resource.U
 	input := &dbaas.DBaasBackupSchedule{
 		ScheduledAt:   data.ScheduledAt.ValueStringPointer(),
 		Retention:     data.Retention.ValueInt64Pointer(),
-		IsPitrEnabled: data.IsPitrEnabled.ValueBoolPointer(),
+		IsPitrEnabled: data.IsPitrEnabled.ValueBool(),
 	}
 
 	ok, err := r.client.DBaas.UpdateDBaasScheduleBackup(
