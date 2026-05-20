@@ -8,6 +8,7 @@ import (
 	"terraform-provider-infomaniak/internal/services/dbaas"
 	"terraform-provider-infomaniak/internal/services/domain"
 	"terraform-provider-infomaniak/internal/services/kaas"
+	"terraform-provider-infomaniak/internal/services/project"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )
@@ -36,6 +37,7 @@ func main() {
 	kaas.Register()
 	domain.Register()
 	dbaas.Register()
+	project.Register()
 
 	err := providerserver.Serve(context.Background(), provider.New(version), opts)
 
