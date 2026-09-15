@@ -33,7 +33,7 @@ func (client *Client) FindPack(dbType string, name string) (*dbaas.DBaaSPack, er
 
 	resp, err := client.resty.R().
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		SetQueryParam("filter[type]", dbType).
 		SetQueryParam("filter[names][]", name).
 		Get(EndpointPacks)
@@ -41,7 +41,7 @@ func (client *Client) FindPack(dbType string, name string) (*dbaas.DBaaSPack, er
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -62,13 +62,13 @@ func (client *Client) GetDBaaS(publicCloudId int64, publicCloudProjectId int64, 
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
 		SetQueryParam("with", "packs,projects,tags,connection").
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointDatabase)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -83,13 +83,13 @@ func (client *Client) CreateDBaaS(input *dbaas.DBaaS) (*dbaas.DBaaSCreateInfo, e
 		SetPathParam("public_cloud_project_id", fmt.Sprint(input.Project.ProjectId)).
 		SetBody(input).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Post(EndpointDatabases)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -105,13 +105,13 @@ func (client *Client) UpdateDBaaS(input *dbaas.DBaaS) (bool, error) {
 		SetPathParam("dbaas_id", fmt.Sprint(input.Id)).
 		SetBody(input).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Patch(EndpointDatabase)
 	if err != nil {
 		return false, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return false, result.Error
 	}
 
@@ -126,13 +126,13 @@ func (client *Client) DeleteDBaaS(publicCloudId int64, publicCloudProjectId int6
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Delete(EndpointDatabase)
 	if err != nil {
 		return false, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return false, result.Error
 	}
 
@@ -148,13 +148,13 @@ func (client *Client) PatchIpFilters(publicCloudId int64, publicCloudProjectId i
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
 		SetBody(filters).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Put(EndpointDatabaseIpFilter)
 	if err != nil {
 		return false, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return false, result.Error
 	}
 
@@ -170,13 +170,13 @@ func (client *Client) PutConfiguration(publicCloudId int64, publicCloudProjectId
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
 		SetBody(configuration).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Put(EndpointDatabaseConfiguration)
 	if err != nil {
 		return false, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return false, result.Error
 	}
 
@@ -191,13 +191,13 @@ func (client *Client) GetConfiguration(publicCloudId int64, publicCloudProjectId
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointDatabaseConfiguration)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -212,13 +212,13 @@ func (client *Client) GetIpFilters(publicCloudId int64, publicCloudProjectId int
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointDatabaseIpFilter)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -234,13 +234,13 @@ func (client *Client) CreateDBaasScheduleBackup(publicCloudId int64, publicCloud
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
 		SetBody(backupSchedules).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Post(EndpointDatabaseBackupSchedules)
 	if err != nil {
 		return 0, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return 0, result.Error
 	}
 
@@ -257,13 +257,13 @@ func (client *Client) UpdateDBaasScheduleBackup(publicCloudId int64, publicCloud
 		SetPathParam("schedule_id", fmt.Sprint(id)).
 		SetBody(backupSchedules).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Patch(EndpointDatabaseBackupSchedule)
 	if err != nil {
 		return false, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return false, result.Error
 	}
 
@@ -279,13 +279,13 @@ func (client *Client) GetDBaasScheduleBackup(publicCloudId int64, publicCloudPro
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
 		SetPathParam("schedule_id", fmt.Sprint(id)).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointDatabaseBackupSchedule)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -301,13 +301,13 @@ func (client *Client) DeleteDBaasScheduleBackup(publicCloudId int64, publicCloud
 		SetPathParam("dbaas_id", fmt.Sprint(dbaasId)).
 		SetPathParam("schedule_id", fmt.Sprint(id)).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Delete(EndpointDatabaseBackupSchedule)
 	if err != nil {
 		return false, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return false, result.Error
 	}
 
@@ -319,13 +319,13 @@ func (client *Client) GetDbaasRegions() ([]string, error) {
 
 	resp, err := client.resty.R().
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointDbaasDataRegion)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -337,13 +337,13 @@ func (client *Client) GetDbaasTypes() ([]*dbaas.DbaasType, error) {
 
 	resp, err := client.resty.R().
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointDbaasDataTypes)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -355,7 +355,7 @@ func (client *Client) GetDbaasPack(params dbaas.PackFilter) (*dbaas.Pack, error)
 
 	builder := client.resty.R().
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		SetQueryParam("filter[type]", params.DbType)
 
 	if params.Name != nil {
@@ -387,7 +387,7 @@ func (client *Client) GetDbaasPack(params dbaas.PackFilter) (*dbaas.Pack, error)
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
