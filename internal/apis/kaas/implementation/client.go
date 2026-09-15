@@ -32,13 +32,13 @@ func (client *Client) GetPacks() ([]*kaas.KaasPack, error) {
 
 	resp, err := client.resty.R().
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointPacks)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -50,13 +50,13 @@ func (client *Client) GetVersions() ([]string, error) {
 
 	resp, err := client.resty.R().
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointVersions)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -72,13 +72,13 @@ func (client *Client) GetKaas(publicCloudId int64, publicCloudProjectId int64, k
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
 		SetQueryParam("with", "packs,projects,instances,tags").
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointKaas)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -93,13 +93,13 @@ func (client *Client) GetKubeconfig(publicCloudId int64, publicCloudProjectId in
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointKaasKubeconfig)
 	if err != nil {
 		return "", err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return "", result.Error
 	}
 
@@ -114,13 +114,13 @@ func (client *Client) CreateKaas(input *kaas.Kaas) (int64, error) {
 		SetPathParam("public_cloud_project_id", fmt.Sprint(input.Project.ProjectId)).
 		SetBody(input).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Post(EndpointKaases)
 	if err != nil {
 		return 0, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return 0, result.Error
 	}
 
@@ -136,13 +136,13 @@ func (client *Client) UpdateKaas(input *kaas.Kaas) (bool, error) {
 		SetPathParam("kaas_id", fmt.Sprint(input.Id)).
 		SetBody(input).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Patch(EndpointKaas)
 	if err != nil {
 		return false, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return false, result.Error
 	}
 
@@ -157,13 +157,13 @@ func (client *Client) DeleteKaas(publicCloudId int64, publicCloudProjectId int64
 		SetPathParam("public_cloud_project_id", fmt.Sprint(publicCloudProjectId)).
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Delete(EndpointKaas)
 	if err != nil {
 		return false, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return false, result.Error
 	}
 
@@ -179,13 +179,13 @@ func (client *Client) GetInstancePool(publicCloudId int64, publicCloudProjectId 
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
 		SetPathParam("kaas_instance_pool_id", fmt.Sprint(instancePoolId)).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointInstancePool)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -206,13 +206,13 @@ func (client *Client) CreateInstancePool(publicCloudId int64, publicCloudProject
 		SetPathParam("kaas_id", fmt.Sprint(input.KaasId)).
 		SetBody(input).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Post(EndpointInstancePools)
 	if err != nil {
 		return 0, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return 0, result.Error
 	}
 
@@ -229,13 +229,13 @@ func (client *Client) UpdateInstancePool(publicCloudId int64, publicCloudProject
 		SetPathParam("kaas_instance_pool_id", fmt.Sprint(input.Id)).
 		SetBody(input).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Patch(EndpointInstancePool)
 	if err != nil {
 		return false, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return false, result.Error
 	}
 
@@ -251,13 +251,13 @@ func (client *Client) DeleteInstancePool(publicCloudId int64, publicCloudProject
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
 		SetPathParam("kaas_instance_pool_id", fmt.Sprint(instancePoolId)).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Delete(EndpointInstancePool)
 	if err != nil {
 		return false, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return false, result.Error
 	}
 
@@ -272,14 +272,14 @@ func (client *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId 
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
 		SetBody(input).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Patch(EndpointApiserver)
 
 	if err != nil {
 		return false, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return false, result.Error
 	}
 
@@ -294,13 +294,13 @@ func (client *Client) GetApiserverParams(publicCloudId int64, projectId int64, k
 		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointApiserver)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -322,14 +322,14 @@ func (client *Client) PutIPFilters(cidrs []netip.Prefix, publicCloudId, projectI
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
 		SetBody(body).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Put(EndpointIPFilter)
 
 	if err != nil {
 		return false, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return false, result.Error
 	}
 
@@ -343,13 +343,13 @@ func (client *Client) GetIPFilters(publicCloudId, projectId, kaasId int64) ([]ne
 		SetPathParam("public_cloud_project_id", fmt.Sprint(projectId)).
 		SetPathParam("kaas_id", fmt.Sprint(kaasId)).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointIPFilter)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 

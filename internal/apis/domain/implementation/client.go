@@ -34,13 +34,13 @@ func (client *Client) GetZone(fqdn string) (*domain.Zone, error) {
 		SetPathParam("fqdn", fmt.Sprint(fqdn)).
 		SetQueryParam("with", "records,idn").
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointZone)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -54,13 +54,13 @@ func (client *Client) CreateZone(fqdn string) (*domain.Zone, error) {
 		SetPathParam("fqdn", fmt.Sprint(fqdn)).
 		SetQueryParam("with", "records,idn").
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Post(EndpointZone)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -73,13 +73,13 @@ func (client *Client) DeleteZone(fqdn string) (bool, error) {
 	resp, err := client.resty.R().
 		SetPathParam("fqdn", fmt.Sprint(fqdn)).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Delete(EndpointZone)
 	if err != nil {
 		return false, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return false, result.Error
 	}
 
@@ -94,13 +94,13 @@ func (client *Client) GetRecord(zoneFqdn string, id int64) (*domain.Record, erro
 		SetPathParam("id", fmt.Sprint(id)).
 		SetQueryParam("with", "idn,records_description").
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Get(EndpointRecord)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -129,13 +129,13 @@ func (client *Client) CreateRecord(zoneFqdn, recordType, source, target string, 
 		SetQueryParam("with", "idn,records_description").
 		SetResult(&result).
 		SetBody(input).
-		SetError(&result).
+		SetResultError(&result).
 		Post(EndpointRecords)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -158,13 +158,13 @@ func (client *Client) UpdateRecord(zoneFqdn string, id int64, recordType, source
 		SetQueryParam("with", "idn,records_description").
 		SetResult(&result).
 		SetBody(input).
-		SetError(&result).
+		SetResultError(&result).
 		Put(EndpointRecord)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return nil, result.Error
 	}
 
@@ -178,13 +178,13 @@ func (client *Client) DeleteRecord(zoneFqdn string, id int64) (bool, error) {
 		SetPathParam("zone_fqdn", strings.TrimSuffix(zoneFqdn, ".")).
 		SetPathParam("id", fmt.Sprint(id)).
 		SetResult(&result).
-		SetError(&result).
+		SetResultError(&result).
 		Delete(EndpointRecord)
 	if err != nil {
 		return false, err
 	}
 
-	if resp.IsError() {
+	if resp.IsStatusFailure() {
 		return false, result.Error
 	}
 
