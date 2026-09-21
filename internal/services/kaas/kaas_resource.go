@@ -179,7 +179,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 		if !created || err != nil {
 			resp.Diagnostics.AddError(
 				"Error when creating Oidc",
-				err.Error(),
+				apiErrMessage(err, "PatchApiserverParams returned false but no error was provided"),
 			)
 			return
 		}
@@ -380,7 +380,7 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	kaasObject, err := r.waitUntilActive(ctx, input, input.Id)
 	if err != nil || kaasObject == nil {
-		resp.Diagnostics.AddError("Error waiting for KaaS activation", err.Error())
+		resp.Diagnostics.AddError("Error waiting for KaaS activation", apiErrMessage(err, "waitUntilActive returned nil object but no error was provided"))
 		return
 	}
 
@@ -441,7 +441,7 @@ func (r *kaasResource) handleApiserverConfig(ctx context.Context, data *KaasMode
 	apiserverParamsInput := r.buildApiserverParamsInput(*data)
 	patched, err := r.client.Kaas.PatchApiserverParams(apiserverParamsInput, input.Project.PublicCloudId, input.Project.ProjectId, input.Id)
 	if !patched || err != nil {
-		resp.Diagnostics.AddError("Error when patching Apiserver params", err.Error())
+		resp.Diagnostics.AddError("Error when patching Apiserver params", apiErrMessage(err, "PatchApiserverParams returned false but no error was provided"))
 		return
 	}
 	data.fillApiserverState(ctx, apiserverParamsInput)
@@ -468,16 +468,17 @@ func (r *kaasResource) applyIPFilters(ctx context.Context, terraformIpFilters ty
 
 	ok, err := r.client.Kaas.PutIPFilters(convertedIpFilters, publicCloudId, projectId, kaasId)
 	if !ok || err != nil {
-		var errMsg string
-		if err != nil {
-			errMsg = err.Error()
-		} else {
-			errMsg = "PutIPFilters returned false but no error was provided"
-		}
-		diags.AddError("Error when applying ip filters", errMsg)
+		diags.AddError("Error when applying ip filters", apiErrMessage(err, "PutIPFilters returned false but no error was provided"))
 	}
 
 	return diags
+}
+
+func apiErrMessage(err error, fallback string) string {
+	if err != nil {
+		return err.Error()
+	}
+	return fallback
 }
 
 func (r *kaasResource) buildApiserverParamsInput(data KaasModel) *kaas.Apiserver {
