@@ -40,7 +40,7 @@ func (client *Client) GetZone(fqdn string) (*domain.Zone, error) {
 		return nil, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return nil, result.Error
 	}
 
@@ -60,7 +60,7 @@ func (client *Client) CreateZone(fqdn string) (*domain.Zone, error) {
 		return nil, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return nil, result.Error
 	}
 
@@ -79,7 +79,7 @@ func (client *Client) DeleteZone(fqdn string) (bool, error) {
 		return false, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return false, result.Error
 	}
 
@@ -100,7 +100,7 @@ func (client *Client) GetRecord(zoneFqdn string, id int64) (*domain.Record, erro
 		return nil, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return nil, result.Error
 	}
 
@@ -135,7 +135,7 @@ func (client *Client) CreateRecord(zoneFqdn, recordType, source, target string, 
 		return nil, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return nil, result.Error
 	}
 
@@ -164,7 +164,7 @@ func (client *Client) UpdateRecord(zoneFqdn string, id int64, recordType, source
 		return nil, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return nil, result.Error
 	}
 
@@ -184,7 +184,7 @@ func (client *Client) DeleteRecord(zoneFqdn string, id int64) (bool, error) {
 		return false, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return false, result.Error
 	}
 

@@ -38,7 +38,7 @@ func (client *Client) GetPacks() ([]*kaas.KaasPack, error) {
 		return nil, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return nil, result.Error
 	}
 
@@ -56,7 +56,7 @@ func (client *Client) GetVersions() ([]string, error) {
 		return nil, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return nil, result.Error
 	}
 
@@ -78,7 +78,7 @@ func (client *Client) GetKaas(publicCloudId int64, publicCloudProjectId int64, k
 		return nil, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return nil, result.Error
 	}
 
@@ -99,7 +99,7 @@ func (client *Client) GetKubeconfig(publicCloudId int64, publicCloudProjectId in
 		return "", err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return "", result.Error
 	}
 
@@ -120,7 +120,7 @@ func (client *Client) CreateKaas(input *kaas.Kaas) (int64, error) {
 		return 0, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return 0, result.Error
 	}
 
@@ -142,7 +142,7 @@ func (client *Client) UpdateKaas(input *kaas.Kaas) (bool, error) {
 		return false, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return false, result.Error
 	}
 
@@ -163,7 +163,7 @@ func (client *Client) DeleteKaas(publicCloudId int64, publicCloudProjectId int64
 		return false, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return false, result.Error
 	}
 
@@ -185,7 +185,7 @@ func (client *Client) GetInstancePool(publicCloudId int64, publicCloudProjectId 
 		return nil, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return nil, result.Error
 	}
 
@@ -212,7 +212,7 @@ func (client *Client) CreateInstancePool(publicCloudId int64, publicCloudProject
 		return 0, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return 0, result.Error
 	}
 
@@ -235,7 +235,7 @@ func (client *Client) UpdateInstancePool(publicCloudId int64, publicCloudProject
 		return false, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return false, result.Error
 	}
 
@@ -257,7 +257,7 @@ func (client *Client) DeleteInstancePool(publicCloudId int64, publicCloudProject
 		return false, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return false, result.Error
 	}
 
@@ -279,7 +279,7 @@ func (client *Client) PatchApiserverParams(input *kaas.Apiserver, publicCloudId 
 		return false, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return false, result.Error
 	}
 
@@ -300,7 +300,7 @@ func (client *Client) GetApiserverParams(publicCloudId int64, projectId int64, k
 		return nil, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return nil, result.Error
 	}
 
@@ -329,7 +329,7 @@ func (client *Client) PutIPFilters(cidrs []netip.Prefix, publicCloudId, projectI
 		return false, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return false, result.Error
 	}
 
@@ -349,7 +349,7 @@ func (client *Client) GetIPFilters(publicCloudId, projectId, kaasId int64) ([]ne
 		return nil, err
 	}
 
-	if resp.IsStatusFailure() {
+	if resp.IsStatusFailure() || result.IsFailure() {
 		return nil, result.Error
 	}
 

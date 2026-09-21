@@ -74,6 +74,23 @@ var _ = Describe("KaaS API Client", func() {
 			Expect(kaas.Id).To(Equal(expectedResult.Id))
 		})
 
+		It("should err when the API returns a success status with an error result", func() {
+			httpmock.ActivateNonDefault(client.resty.Client())
+			defer httpmock.DeactivateAndReset()
+
+			httpmock.RegisterResponder("GET", TestEndpointKaas, httpmock.NewJsonResponderOrPanic(200, helpers.NormalizedApiResponse[*kaas.Kaas]{
+				Result: "error",
+				Error: &helpers.ApiError{
+					Description: "kaas not found",
+				},
+			}))
+
+			kaas, err := client.GetKaas(1, 1, 12)
+			Expect(err).Should(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("kaas not found"))
+			Expect(kaas).To(BeNil())
+		})
+
 		It("should be able to create KaaS", func() {
 			httpmock.ActivateNonDefault(client.resty.Client())
 			defer httpmock.DeactivateAndReset()
