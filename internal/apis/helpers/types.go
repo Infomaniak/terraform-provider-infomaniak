@@ -11,6 +11,10 @@ type NormalizedApiResponse[K any] struct {
 	Error  *ApiError `json:"error"`
 }
 
+func (response NormalizedApiResponse[K]) IsFailure() bool {
+	return response.Result == "error"
+}
+
 type ApiError struct {
 	Description string          `json:"description"`
 	Errors      []*ApiError     `json:"errors"`
