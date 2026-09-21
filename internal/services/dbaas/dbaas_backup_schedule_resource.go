@@ -247,7 +247,7 @@ func (r *dbaasBackupScheduleResource) ImportState(ctx context.Context, req resou
 	if len(idParts) != 4 || idParts[0] == "" || idParts[1] == "" || idParts[2] == "" || idParts[3] == "" {
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
-			fmt.Sprintf("Expected import identifier with format: public_cloud_id,public_cloud_project_id,id. Got: %q", req.ID),
+			fmt.Sprintf("Expected import identifier with format: public_cloud_id,public_cloud_project_id,dbaas_id,id. Got: %q", req.ID),
 		)
 		return
 	}

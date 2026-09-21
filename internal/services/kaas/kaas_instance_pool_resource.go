@@ -297,7 +297,7 @@ func (r *kaasInstancePoolResource) Delete(ctx context.Context, req resource.Dele
 	)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error when deleting KaaS",
+			"Error when deleting KaaS Instance Pool",
 			err.Error(),
 		)
 		return

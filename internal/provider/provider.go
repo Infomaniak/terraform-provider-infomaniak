@@ -66,8 +66,7 @@ func (p *IkProvider) Schema(ctx context.Context, req provider.SchemaRequest, res
 				MarkdownDescription: "The base endpoint for Infomaniak's API (including scheme).",
 			},
 			"token": schema.StringAttribute{
-				Required:            os.Getenv(INFOMANIAK_TOKEN) == "",
-				Optional:            os.Getenv(INFOMANIAK_TOKEN) != "",
+				Optional:            true,
 				Sensitive:           true,
 				Description:         "The token used for authenticating against Infomaniak's API.",
 				MarkdownDescription: "The token used for authenticating against Infomaniak's API.",
@@ -138,10 +137,10 @@ func (p *IkProvider) Configure(ctx context.Context, req provider.ConfigureReques
 
 	if token == "" {
 		resp.Diagnostics.AddAttributeError(
-			path.Root("username"),
-			"Missing Infomaniak API Username",
-			"The provider cannot create the Infomaniak API client as there is a missing or empty value for the Infomaniak API username. "+
-				"Set the username value in the configuration or use the INFOMANIAK_TOKEN environment variable. "+
+			path.Root("token"),
+			"Missing Infomaniak API Token",
+			"The provider cannot create the Infomaniak API client as there is a missing or empty value for the Infomaniak API token. "+
+				"Set the token value in the configuration or use the INFOMANIAK_TOKEN environment variable. "+
 				"If either is already set, ensure the value is not empty.",
 		)
 	}
