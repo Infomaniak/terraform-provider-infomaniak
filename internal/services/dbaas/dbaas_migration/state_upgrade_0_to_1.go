@@ -3,6 +3,9 @@ package dbaasmigration
 import (
 	"context"
 
+	"terraform-provider-infomaniak/internal/utils"
+
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
@@ -172,6 +175,16 @@ func GetV0Schema() *schema.Schema {
 	}
 }
 
+func mapToDynamic(ctx context.Context, m types.Map, diags *diag.Diagnostics) types.Dynamic {
+	if m.IsUnknown() {
+		return types.DynamicUnknown()
+	}
+
+	dyn, d := utils.ConvertMapToDynamicObject(ctx, m.Elements())
+	diags.Append(d...)
+	return dyn
+}
+
 func StateUpgrader(ctx context.Context, request resource.UpgradeStateRequest, response *resource.UpgradeStateResponse) {
 	var state DBaasModelV0
 
@@ -199,11 +212,11 @@ func StateUpgrader(ctx context.Context, request resource.UpgradeStateRequest, re
 
 	newState.AllowedCIDRs = state.AllowedCIDRs
 
-	newState.EffectiveConfiguration = types.DynamicNull()
-	if state.Configuration.IsUnknown() {
-		newState.Configuration = types.DynamicUnknown()
+	newState.Configuration = mapToDynamic(ctx, state.Configuration, &response.Diagnostics)
+	newState.EffectiveConfiguration = mapToDynamic(ctx, state.EffectiveConfiguration, &response.Diagnostics)
+	if response.Diagnostics.HasError() {
 		return
 	}
-	newState.Configuration = types.DynamicNull()
+
 	response.Diagnostics.Append(response.State.Set(ctx, &newState)...)
 }
