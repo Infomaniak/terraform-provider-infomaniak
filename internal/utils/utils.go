@@ -39,11 +39,13 @@ func ObjectStateManager(ctx context.Context, newEffective types.Dynamic, stateEf
 			// The user changed the value from an other source than terraform
 			stateEffectiveTfValue, err := stateEffectiveValue.ToTerraformValue(ctx)
 			if err != nil {
-				diags.AddError("could not get terraform value", "could not get a state effective value")
+				diags.AddError("could not get terraform value", fmt.Sprintf("could not get a state effective value: %v", err))
+				return types.DynamicNull(), types.DynamicNull(), diags
 			}
 			incomingEffectiveTfValue, err := incomingEffectiveValue.ToTerraformValue(ctx)
 			if err != nil {
-				diags.AddError("could not get terraform value", "could not get an incoming from api effective value")
+				diags.AddError("could not get terraform value", fmt.Sprintf("could not get an incoming from api effective value: %v", err))
+				return types.DynamicNull(), types.DynamicNull(), diags
 			}
 			if !stateEffectiveTfValue.Equal(incomingEffectiveTfValue) {
 				local[incomingEffectiveKey] = incomingEffectiveValue
@@ -94,6 +96,7 @@ func ConvertDynamicObjectToMapAny(dyn types.Dynamic) (map[string]any, diag.Diagn
 	body, err := dynamic.ToJSON(dyn)
 	if err != nil {
 		diags.AddError("json error", fmt.Sprintf("could not convert dynamic to json: %v", err))
+		return nil, diags
 	}
 
 	err = json.Unmarshal(body, &converted)
