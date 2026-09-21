@@ -156,6 +156,7 @@ func (r *dbaasBackupScheduleResource) Update(ctx context.Context, req resource.U
 	)
 	if !ok && err == nil {
 		resp.Diagnostics.AddError("Unknown Backup Schedule error", "")
+		return
 	}
 	if err != nil {
 		resp.Diagnostics.AddError(

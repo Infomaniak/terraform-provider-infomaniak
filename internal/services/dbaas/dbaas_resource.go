@@ -364,6 +364,9 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 
 	cidrs := make([]string, 0, len(data.AllowedCIDRs.Elements()))
 	resp.Diagnostics.Append(data.AllowedCIDRs.ElementsAs(ctx, &cidrs, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	allowedCIDRs := dbaas.AllowedCIDRs{
 		IpFilters: cidrs,
 	}
@@ -375,6 +378,7 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	)
 	if !ok && err == nil {
 		resp.Diagnostics.AddError("Unknown IP filter error", "")
+		return
 	}
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -541,13 +545,15 @@ func refreshEffectiveConfiguration(apiClient dbaas.Api, publicCloudId, publicClo
 		return types.DynamicNull(), diags
 	}
 
-	jsonEffectiveSettigs, err := json.Marshal(effectiveSettings)
+	jsonEffectiveSettings, err := json.Marshal(effectiveSettings)
 	if err != nil {
-		diags.AddError("could not marshall", "effective settings json marshall fail")
+		diags.AddError("could not marshal", fmt.Sprintf("could not marshal effective settings: %v", err))
+		return types.DynamicNull(), diags
 	}
-	dynamicObj, err := dynamic.FromJSONImplied(jsonEffectiveSettigs)
+	dynamicObj, err := dynamic.FromJSONImplied(jsonEffectiveSettings)
 	if err != nil {
-		diags.AddError("could not create dynamic object", "effective settings dynamic object from json creation failure")
+		diags.AddError("could not create dynamic object", fmt.Sprintf("could not create dynamic object from effective settings: %v", err))
+		return types.DynamicNull(), diags
 	}
 
 	return dynamicObj, diags
