@@ -24,7 +24,7 @@ resource "infomaniak_dbaas" "db" {
   allowed_cidrs = [
     "0.0.0.0/0"
   ]
-  pack_name = "essential-1"
+  pack_name = "essential-db-4"
 }
 
 
